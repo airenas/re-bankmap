@@ -16,7 +16,7 @@ def is_recognized(param):
 def prepare_data(df):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Recognized', 'Mapped', 'Amount', 'Date']
-    with tqdm("format data", total=len(df)) as pbar:
+    with tqdm("format cmp-matrix", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
@@ -26,7 +26,7 @@ def prepare_data(df):
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Extracts data from bank statement entries table",
+    parser = argparse.ArgumentParser(description="Extracts cmp-matrix from bank statement entries table",
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file")
@@ -34,9 +34,9 @@ def main(argv):
 
     logger.info("Starting")
 
-    logger.info("loading data {}".format(args.input))
+    logger.info("loading cmp-matrix {}".format(args.input))
     data = pd.read_csv(args.input, sep=',')
-    logger.info("loaded data {} rows".format(len(data)))
+    logger.info("loaded cmp-matrix {} rows".format(len(data)))
     logger.info("{}".format(data.head(n=10)))
     hd = list(data)
     logger.info("Headers: {}".format(hd))

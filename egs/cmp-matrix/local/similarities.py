@@ -27,7 +27,7 @@ def e_to_str(r):
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Extracts data from bank statement entries table",
+    parser = argparse.ArgumentParser(description="Extracts cmp-matrix from bank statement entries table",
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
@@ -38,12 +38,12 @@ def main(argv):
     logger.info("Starting")
 
     entries = pd.read_csv(args.input, sep=',')
-    logger.info("loaded data {} rows".format(len(entries)))
+    logger.info("loaded cmp-matrix {} rows".format(len(entries)))
     logger.info("Headers: {}".format(list(entries)))
     logger.info("{}".format(entries.head(n=10)))
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
-    logger.info("loaded data {} rows".format(len(ledgers)))
+    logger.info("loaded cmp-matrix {} rows".format(len(ledgers)))
     logger.info("Headers: {}".format(list(ledgers)))
     logger.info("{}".format(ledgers.head(n=10)))
 
@@ -51,7 +51,7 @@ def main(argv):
     logger.info("Testing: {}".format(e_to_str(row)))
 
     res = []
-    with tqdm(desc="format data", total=len(ledgers)) as pbar:
+    with tqdm(desc="format cmp-matrix", total=len(ledgers)) as pbar:
         for i in range(len(ledgers)):
             pbar.update(1)
             res.append(similarity(ledgers.iloc[i], row))
