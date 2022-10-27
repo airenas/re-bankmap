@@ -1,0 +1,36 @@
+############################################
+-include Makefile.options
+############################################
+data_dir?=../../data
+zip?=Softera_data_v1.zip
+out_dir?=data
+extr_dir?=Softera_data_v1
+python_dir=${CURDIR}/../../src/utils
+python_cmd=PYTHONPATH=../../ LOG_LEVEL=INFO python
+i?=0
+############################################
+${out_dir}/extracted: 
+	mkdir -p $@
+${out_dir}: 
+	mkdir -p $@	
+############################################
+${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
+	unzip $(data_dir)/${zip} -d ${out_dir}/extracted
+	touch $@
+${out_dir}/entries.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_entries.py --input ${out_dir}/extracted/$(extr_dir)/Bank_Statement_Entries.csv > $@_
+	mv $@_ $@
+${out_dir}/cust.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
+	mv $@_ $@
+############################################
+build: ${out_dir}/entries.txt ${out_dir}/cust.txt
+.PHONY: build
+sim: ${out_dir}/entries.txt ${out_dir}/cust.txt
+	$(python_cmd) local/similarities.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/cust.txt --i $(i)
+.PHONY: sim
+############################################
+clean:
+	rm -rf $(out_dir)
+.PHONY: clean	
+.EXPORT_ALL_VARIABLES:	
