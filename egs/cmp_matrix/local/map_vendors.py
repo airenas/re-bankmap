@@ -18,7 +18,7 @@ ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Docume
 
 def prepare_data(df, names, accounts):
     res = []
-    with tqdm("format cmp-matrix", total=len(df)) as pbar:
+    with tqdm("format cmp_matrix", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
             _id = df['Vendor_No_'].iloc[i]
@@ -29,7 +29,7 @@ def prepare_data(df, names, accounts):
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Extracts cmp-matrix for customers ledger entries",
+    parser = argparse.ArgumentParser(description="Extracts cmp_matrix for customers ledger entries",
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file prefix for customers")
@@ -37,11 +37,11 @@ def main(argv):
 
     logger.info("Starting")
     ledgers = pd.read_csv(args.input + "_Ledger_Entries.csv", sep=',')
-    logger.info("loaded cmp-matrix {} rows".format(len(ledgers)))
+    logger.info("loaded cmp_matrix {} rows".format(len(ledgers)))
     accounts = pd.read_csv(args.input + "_Bank_Accounts.csv", sep=',')
-    logger.info("loaded cmp-matrix {} rows".format(len(accounts)))
+    logger.info("loaded cmp_matrix {} rows".format(len(accounts)))
     names = pd.read_csv(args.input + "s.csv", sep=',')
-    logger.info("loaded cmp-matrix {} rows".format(len(names)))
+    logger.info("loaded cmp_matrix {} rows".format(len(names)))
 
     # logger.info("Headers: {}".format(list(accounts)))
     names_d = {r['No_']: r['Name'] for _, r in names.iterrows()}
