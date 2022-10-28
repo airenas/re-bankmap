@@ -8,18 +8,24 @@ from src.utils.logger import logger
 from src.utils.similarity import name_sim
 
 
+def e_str(p):
+    if p != p:
+        return ''
+    return str(p)
+
+
 def similarity(ledger, entry):
     res = [ledger]
-    nl = ledger['Name']
-    ne = entry['Description']
+    nl = e_str(ledger['Name'])
+    ne = e_str(entry['Description'])
     res.append(1 if nl.lower() == ne.lower() else 0)
-    # res.append(1 if ledger['IBAN'] == entry['IBAN'] else 0)
     res.append(name_sim(nl, ne))
+    res.append(1 if e_str(ledger['IBAN']) == e_str(entry['IBAN']) else 0)
     return res
 
 
 def to_str(param):
-    return "{} - {} - {}".format(param["Customer_No"], param["Name"], param["Due_Date"])
+    return "{}:{} - {} - {}".format(param["Type"], param["No"], param["Name"], param["Due_Date"])
 
 
 def e_to_str(r):
@@ -40,12 +46,12 @@ def main(argv):
     entries = pd.read_csv(args.input, sep=',')
     logger.info("loaded cmp-matrix {} rows".format(len(entries)))
     logger.info("Headers: {}".format(list(entries)))
-    logger.info("{}".format(entries.head(n=10)))
+    logger.info("\n{}".format(entries.head(n=10)))
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded cmp-matrix {} rows".format(len(ledgers)))
     logger.info("Headers: {}".format(list(ledgers)))
-    logger.info("{}".format(ledgers.head(n=10)))
+    logger.info("\n{}".format(ledgers.head(n=10)))
 
     row = entries.iloc[int(args.i)]
     logger.info("Testing: {}".format(e_to_str(row)))
