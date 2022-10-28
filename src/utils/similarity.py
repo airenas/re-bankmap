@@ -28,7 +28,8 @@ def name_sim(a, b):
 
     a_uniq = sequence_uniqueness(a_tokens)
     b_uniq = sequence_uniqueness(b_tokens)
-
+    if a_uniq == 0 or b_uniq == 0:
+        return 0
     return 0.7 * sequence_uniqueness(set(a_tokens).intersection(b_tokens)) / (a_uniq * b_uniq) ** 0.5 \
            + 0.2 * jellyfish.jaro_winkler_similarity(al, bl) \
            + 0.1 * jellyfish.jaro_winkler_similarity(a, b)
