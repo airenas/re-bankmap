@@ -20,14 +20,22 @@ ${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
 ${out_dir}/entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_entries.py --input ${out_dir}/extracted/$(extr_dir)/Bank_Statement_Entries.csv > $@_
 	mv $@_ $@
-${out_dir}/cust.txt: ${out_dir}/extracted/.done
+${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
 	mv $@_ $@
+${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
+	mv $@_ $@	
+${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt
+	cat ${out_dir}/cust_l_entries.txt > $@
+	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
+
+
 ############################################
-build: ${out_dir}/entries.txt ${out_dir}/cust.txt
+build: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 .PHONY: build
-sim: ${out_dir}/entries.txt ${out_dir}/cust.txt
-	$(python_cmd) local/similarities.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/cust.txt --i $(i)
+sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
+	$(python_cmd) local/similarities.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i)
 .PHONY: sim
 ############################################
 clean:

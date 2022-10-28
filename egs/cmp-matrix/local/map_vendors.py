@@ -21,10 +21,10 @@ def prepare_data(df, names, accounts):
     with tqdm("format cmp-matrix", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
-            _id = df['Customer_No_'].iloc[i]
-            res.append(['Customer', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
-                        df['Due_Date'].iloc[i], df['Document_Date'].iloc[i],
-                        df['External_Document_No_'].iloc[i], ])
+            _id = df['Vendor_No_'].iloc[i]
+            res.append(['Vendor', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
+                        df['Due_Date'].iloc[i],
+                        df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i]])
     return res, ledger_cols
 
 
@@ -45,7 +45,7 @@ def main(argv):
 
     # logger.info("Headers: {}".format(list(accounts)))
     names_d = {r['No_']: r['Name'] for _, r in names.iterrows()}
-    accounts_d = {r['Customer_No_']: r['Bank_Account_No_'] for _, r in accounts.iterrows()}
+    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for _, r in accounts.iterrows()}
 
     logger.info("{}".format(names.head(n=10)))
     logger.info("Headers: {}".format(list(ledgers)))
