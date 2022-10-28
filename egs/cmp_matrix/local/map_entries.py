@@ -21,13 +21,12 @@ def iban(p):
 
 def prepare_data(df):
     res = []
-    cols = ['Description', 'Message', 'CdtDbtInd', 'Recognized', 'Mapped', 'Amount', 'Date', 'IBAN', 'E2EId',
+    cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
             'RecAccount', 'RecDoc']
     with tqdm("format cmp_matrix", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
-                        is_recognized(df['Recognized_Account_No_'].iloc[i]), df['Recognized_Account_No_'].iloc[i],
                         df['N_Amt'].iloc[i], df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),
                         df['N_ND_TD_Refs_EndToEndId'].iloc[i],
                         df['Recognized_Account_No_'].iloc[i],

@@ -21,6 +21,8 @@ def similarity(ledger, entry):
     res.append(1 if nl.lower() == ne.lower() else 0)
     res.append(name_sim(nl, ne))
     res.append(1 if e_str(ledger['IBAN']) == e_str(entry['IBAN']) else 0)
+    res.append(1 if len(e_str(ledger['ExtDoc'])) > 5 and e_str(ledger['ExtDoc']) in e_str(entry['Message']) else 0)
+
     return res
 
 
