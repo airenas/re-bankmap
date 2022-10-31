@@ -1,11 +1,36 @@
 import argparse
 import sys
+from datetime import datetime
 
 import pandas as pd
 from tqdm import tqdm
 
 from src.utils.logger import logger
 from src.utils.similarity import name_sim
+
+
+class Entry:
+    def __init__(self, row):
+        self.who = e_str(row['Description'])
+        self.iban = e_str(row['IBAN'])
+        self.msg = e_str(row['Message'])
+        self.date = datetime.fromisoformat(row['Date'])
+
+    def to_str(self):
+        return "{} - {} - {}".format(self.who, self.msg, self.date)
+
+
+class LEntry:
+    def __init__(self, row):
+        self.type = e_str(row['Type'])
+        self.id = e_str(row['No'])
+        self.name = e_str(row['Name'])
+        self.iban = e_str(row['IBAN'])
+        self.ext_doc = e_str(row['ExtDoc'])
+        self.due_date = datetime.fromisoformat(row['Due_Date'])
+
+    def to_str(self):
+        return "{} - {} - {}".format(self.type, self.id, self.name, self.due_date)
 
 
 def e_str(p):
@@ -16,22 +41,18 @@ def e_str(p):
 
 def similarity(ledger, entry):
     res = [ledger]
-    nl = e_str(ledger['Name'])
-    ne = e_str(entry['Description'])
+    nl = ledger.name
+    ne = entry.who
     res.append(1 if nl.lower() == ne.lower() else 0)
     res.append(name_sim(nl, ne))
-    res.append(1 if e_str(ledger['IBAN']) == e_str(entry['IBAN']) else 0)
-    res.append(1 if len(e_str(ledger['ExtDoc'])) > 5 and e_str(ledger['ExtDoc']) in e_str(entry['Message']) else 0)
+    res.append(1 if ledger.iban == entry.iban else 0)
+    res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
 
     return res
 
 
 def to_str(param):
     return "{}:{} - {} - {}".format(param["Type"], param["No"], param["Name"], param["Due_Date"])
-
-
-def e_to_str(r):
-    return "{} - {} - {}".format(r["Description"], r["Message"], r["Date"])
 
 
 def main(argv):
@@ -45,28 +66,30 @@ def main(argv):
 
     logger.info("Starting")
 
-    entries = pd.read_csv(args.input, sep=',')
-    logger.info("loaded cmp_matrix {} rows".format(len(entries)))
-    logger.info("Headers: {}".format(list(entries)))
-    logger.info("\n{}".format(entries.head(n=10)))
+    entries_t = pd.read_csv(args.input, sep=',')
+    logger.info("loaded cmp_matrix {} rows".format(len(entries_t)))
+    logger.info("Headers: {}".format(list(entries_t)))
+    logger.info("\n{}".format(entries_t.head(n=10)))
+    entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded cmp_matrix {} rows".format(len(ledgers)))
     logger.info("Headers: {}".format(list(ledgers)))
     logger.info("\n{}".format(ledgers.head(n=10)))
+    l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
 
-    row = entries.iloc[int(args.i)]
-    logger.info("Testing: {}".format(e_to_str(row)))
+    row = entries[int(args.i)]
+    logger.info("Testing: {}".format(row.to_str()))
 
     res = []
-    with tqdm(desc="format cmp_matrix", total=len(ledgers)) as pbar:
+    with tqdm(desc="format cmp_matrix", total=len(l_entries)) as pbar:
         for i in range(len(ledgers)):
             pbar.update(1)
-            res.append(similarity(ledgers.iloc[i], row))
+            res.append(similarity(l_entries[i], row))
     res.sort(key=lambda x: sum(x[1:]), reverse=True)
     logger.info("Res:")
     for i, r in enumerate(res[:10]):
-        logger.info("\t{} - {}, {}".format(i, to_str(r[0]), r[1:]))
+        logger.info("\t{} - {}, {}".format(i, r[0].to_str(), r[1:]))
     logger.info("Done")
 
 
