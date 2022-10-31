@@ -13,7 +13,7 @@ def is_recognized(param):
     return False
 
 
-ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Document_Date', 'ExtDoc']
+ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount']
 
 
 def prepare_data(df, names, accounts):
@@ -24,7 +24,7 @@ def prepare_data(df, names, accounts):
             _id = df['Customer_No_'].iloc[i]
             res.append(['Customer', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
                         df['Due_Date'].iloc[i], df['Document_Date'].iloc[i],
-                        df['External_Document_No_'].iloc[i], ])
+                        df['External_Document_No_'].iloc[i], df['Amount'].iloc[i]])
     return res, ledger_cols
 
 

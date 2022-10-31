@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from egs.cmp_matrix.local.map_customers import ledger_cols
 from src.utils.logger import logger
 
 
@@ -11,9 +12,6 @@ def is_recognized(param):
     if param or param.strip() != "":
         return True
     return False
-
-
-ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Document_Date', 'ExtDoc']
 
 
 def prepare_data(df, names, accounts):
@@ -24,7 +22,8 @@ def prepare_data(df, names, accounts):
             _id = df['Vendor_No_'].iloc[i]
             res.append(['Vendor', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
                         df['Due_Date'].iloc[i],
-                        df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i]])
+                        df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i],
+                        df['Amount'].iloc[i]])
     return res, ledger_cols
 
 
