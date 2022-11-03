@@ -36,10 +36,11 @@ def main(argv):
 
     with open(args.out, 'w') as f:
         for i, y in enumerate(y_true):
-            if y == y_pred[i]:
+            v = y_pred[i].split('\t')
+            if v[0] == y:
                 print("{}".format(y))
             else:
-                print("{}\t{} <--diff-->".format(y, y_pred[i]))
+                print("{}\t{} <--diff-->\t{}".format(y, v[0], v[1] if len(v) > 0 else ""))
 
     logger.info("Acc all        : {} from {}".format(accuracy_score(y_true, y_pred), len(y_true)))
     y_true_n = [x for x in y_true if str(x) != 'nan']

@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from egs.cmp_matrix.local.similarities import e_float
 from src.utils.logger import logger
 
 
@@ -24,7 +25,7 @@ def prepare_data(df, names, accounts):
             _id = df['Customer_No_'].iloc[i]
             res.append(['Customer', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
                         df['Due_Date'].iloc[i], df['Document_Date'].iloc[i],
-                        df['External_Document_No_'].iloc[i], df['Amount'].iloc[i]])
+                        df['External_Document_No_'].iloc[i], e_float(df['Amount'].iloc[i])])
     return res, ledger_cols
 
 

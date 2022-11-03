@@ -9,7 +9,7 @@ python_dir=${CURDIR}/../../src/utils
 python_cmd=PYTHONPATH=../../ LOG_LEVEL=INFO python
 i?=0
 take_n?=100000000000000
-model?=${out_dir}/models/feat/1
+model?=${out_dir}/dt.model
 batch?=10
 hidden?=10
 ############################################
@@ -36,8 +36,8 @@ ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entrie
 	cat ${out_dir}/cust_l_entries.txt > $@
 	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
 ${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${model}
-	$(python_cmd) local/predict_dt.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --model ${model} > $@_
+	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+	    > $@_
 	mv $@_ $@
 ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/make_features.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt > $@_

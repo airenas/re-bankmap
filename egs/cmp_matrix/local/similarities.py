@@ -15,8 +15,9 @@ class Entry:
         self.iban = e_str(row['IBAN'])
         self.msg = e_str(row['Message'])
         self.date = datetime.fromisoformat(row['Date'])
-        self.amount = float(e_str(row['Amount']).replace(",", "."))
+        self.amount = e_float(row['Amount'])
         self.rec_id = e_str(row['RecAccount'])
+        self.doc_id = e_str(row['RecDoc'])
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -31,7 +32,7 @@ class LEntry:
         self.ext_doc = e_str(row['ExtDoc'])
         self.due_date = datetime.fromisoformat(row['Due_Date'])
         self.doc_date = datetime.fromisoformat(row['Document_Date'])
-        self.amount = float(e_str(row['Amount']).replace(",", "."))
+        self.amount = e_float(row['Amount'])
 
     def to_str(self):
         return "{} - {} - {}".format(self.type, self.id, self.name, self.due_date)
@@ -41,6 +42,12 @@ def e_str(p):
     if p != p:
         return ''
     return str(p)
+
+
+def e_float(p):
+    if p != p:
+        return 0
+    return float(e_str(p).replace(",", "."))
 
 
 def similarity(ledger, entry):
