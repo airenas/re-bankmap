@@ -3,43 +3,34 @@ import sys
 from datetime import timedelta
 
 import pandas as pd
-import tensorflow
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry
 from src.utils.logger import logger
 
 
-def get_best_account(ledgers, row, from_i, model):
-    bv, b, fr = 0, None, from_i
+def calc_features(ledgers, row, from_i):
+    res, fr = [], from_i
     from_t = row.date - timedelta(days=60)
-    with tqdm(desc="predicting one", total=len(ledgers)) as pbar:
-        for i in range(from_i, len(ledgers)):
-            pbar.update(1)
-            le = ledgers[i]
-            if le.doc_date < from_t:
-                fr = i + 1
-                continue
-            if le.doc_date > row.date:
-                break
-            v = similarity(le, row)
-            inp = tensorflow.constant([v[1:]])
-            r = model.predict(inp)
-            out = r[0]
-            if bv < out[0]:
-                logger.info("Found better: {} - {}".format(v[1:], out[0]))
-                bv = out[0]
-                b = v[0]
-    return b, fr
+    for i in range(from_i, len(ledgers)):
+        le = ledgers[i]
+        if le.doc_date < from_t:
+            fr = i + 1
+            continue
+        if le.doc_date > row.date:
+            break
+        v = similarity(le, row)
+        v.append(1 if row.rec_id != le.id else 0)
+        res.append(v)
+    return res, fr
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Predicts similarities for all item",
+    parser = argparse.ArgumentParser(description="Make similarity features",
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
-    parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
-    parser.add_argument("--model", nargs='?', required=True, help="Input model")
+    parser.add_argument("--ledgers", nargs='?', required=True, help="Ledger entries file")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -57,16 +48,21 @@ def main(argv):
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
     l_entries.sort(key=lambda e: e.doc_date)
 
-    logger.info("loading model {}".format(args.model))
-    model = tensorflow.keras.models.load_model(args.model)
-    model.summary()
-
     i_from = 0
-    with tqdm(desc="predicting", total=len(entries)) as pbar:
+    with tqdm(desc="make features", total=len(entries)) as pbar:
         for i in range(len(entries)):
             pbar.update(1)
-            best, i_from = get_best_account(l_entries[i_from:], entries[i], i_from, model)
-            print("{}".format(best.id if best is not None else ""))
+            res, i_from = calc_features(l_entries[i_from:], entries[i], i_from)
+            for r in res:
+                # numpy.savetxt(sys.stdout, r[1:], delimiter=",")
+                for i, v in enumerate(r[1:]):
+                    if i == 0:
+                        print("{}".format(v), end="")
+                    else:
+                        print(", {}".format(v), end="")
+                if r[-1] == 1:
+                   pass
+                print("")
     logger.info("Done")
 
 

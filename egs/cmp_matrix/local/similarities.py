@@ -16,6 +16,7 @@ class Entry:
         self.msg = e_str(row['Message'])
         self.date = datetime.fromisoformat(row['Date'])
         self.amount = float(e_str(row['Amount']).replace(",", "."))
+        self.rec_id = e_str(row['RecAccount'])
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -51,7 +52,7 @@ def similarity(ledger, entry):
     res.append(1 if ledger.iban == entry.iban else 0)
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
     res.append((ledger.due_date - entry.date).days)
-    res.append((ledger.doc_date - entry.date).days)
+    res.append((entry.date - ledger.doc_date).days)
     res.append(ledger.amount - entry.amount)
 
     return res
