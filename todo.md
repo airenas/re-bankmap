@@ -1,0 +1,4 @@
+- take possible l_entries
+    - for each bank_entry find best l_entry
+    - improve name comparisson
+    -  
