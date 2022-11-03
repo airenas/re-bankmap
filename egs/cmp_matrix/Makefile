@@ -10,8 +10,8 @@ python_cmd=PYTHONPATH=../../ LOG_LEVEL=INFO python
 i?=0
 take_n?=100000000000000
 model?=${out_dir}/models/feat/1
-batch?=512
-hidden?=50
+batch?=10
+hidden?=10
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@
@@ -36,7 +36,7 @@ ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entrie
 	cat ${out_dir}/cust_l_entries.txt > $@
 	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
 ${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${model}
-	$(python_cmd) local/predict.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+	$(python_cmd) local/predict_dt.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    --model ${model} > $@_
 	mv $@_ $@
 ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
@@ -46,7 +46,7 @@ ${out_dir}/cmp.txt: ${out_dir}/predicted.txt ${out_dir}/entries.txt
 	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt --out $@_
 # 	mv $@_ $@
 ${model}: ${out_dir}/features.txt
-	$(python_cmd) local/train.py --input $^ --out $@ --batch $(batch) --hidden $(hidden)
+	$(python_cmd) local/train_dt.py --input $^ --out $@
 ############################################
 build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build

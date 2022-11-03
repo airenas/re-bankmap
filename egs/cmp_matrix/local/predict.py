@@ -11,7 +11,7 @@ from src.utils.logger import logger
 
 
 def get_best_account(ledgers, row, from_i, model):
-    bv, b, fr = 0, None, from_i
+    bv, b, fr = -1, None, from_i
     from_t = row.date - timedelta(days=60)
     with tqdm(desc="predicting one", total=len(ledgers)) as pbar:
         for i in range(from_i, len(ledgers)):
