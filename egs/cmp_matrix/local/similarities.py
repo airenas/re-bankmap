@@ -2,6 +2,7 @@ import argparse
 import sys
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -65,6 +66,13 @@ def similarity(ledger, entry):
     return res
 
 
+sim_imp = np.array([0.5, 1, 1, 2, 0.0, .0, .0])
+
+
+def sim_val(v):
+    return np.dot(np.array(v), sim_imp)
+
+
 def to_str(param):
     return "{}:{} - {} - {}".format(param["Type"], param["No"], param["Name"], param["Due_Date"])
 
@@ -93,16 +101,16 @@ def main(argv):
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
 
     row = entries[int(args.i)]
-    logger.info("Testing: {}".format(row.to_str()))
+    logger.info("Testing: \n{}".format(entries_t.iloc[int(args.i)]))
 
     res = []
     with tqdm(desc="format cmp_matrix", total=len(l_entries)) as pbar:
         for i in range(len(ledgers)):
             pbar.update(1)
             res.append(similarity(l_entries[i], row))
-    res.sort(key=lambda x: sum(x[1:]), reverse=True)
+    res.sort(key=lambda x: sim_val(x[1:]), reverse=True)
     logger.info("Res:")
-    for i, r in enumerate(res[:10]):
+    for i, r in enumerate(res[:20]):
         logger.info("\t{} - {}, {}".format(i, r[0].to_str(), r[1:]))
     logger.info("Done")
 

@@ -43,8 +43,7 @@ ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/make_features.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt > $@_
 	mv $@_ $@
 ${out_dir}/cmp.txt: ${out_dir}/predicted.txt ${out_dir}/entries.txt
-	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt --out $@_
-# 	mv $@_ $@
+	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt --out $@
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
 ############################################

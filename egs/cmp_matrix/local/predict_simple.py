@@ -2,18 +2,16 @@ import argparse
 import sys
 from datetime import timedelta
 
-import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry
+from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val
 from src.utils.logger import logger
 
 
 def get_best_account(ledgers, row, from_i):
     bv, b, fr = -1, None, from_i
     from_t = row.date - timedelta(days=60)
-    importance = np.array([0.5, 1, 1, 2, 0.0, .0, .0])
     # with tqdm(desc="predicting one", total=len(ledgers)) as pbar:
     for i in range(from_i, len(ledgers)):
         # pbar.update(1)
@@ -25,7 +23,7 @@ def get_best_account(ledgers, row, from_i):
             break
         v = similarity(le, row)
         r = v[1:]
-        out = np.dot(np.array(r), importance)
+        out = sim_val(r)
         if bv < out:
             # logger.info("Found better: {} - {}".format(v[1:], out))
             bv = out
