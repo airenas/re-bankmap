@@ -29,12 +29,16 @@ ${out_dir}/entries.txt: ${out_dir}/entries.csv
 ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
 	mv $@_ $@
+${out_dir}/gl_entries.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_gl.py --input ${out_dir}/extracted/$(extr_dir)/GL_Accounts.csv > $@_
+	mv $@_ $@
 ${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
 	mv $@_ $@	
-${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt
+${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt
 	cat ${out_dir}/cust_l_entries.txt > $@
 	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
+	tail -n +2 ${out_dir}/gl_entries.txt >> $@
 ${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${model}
 	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    > $@_

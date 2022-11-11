@@ -5,30 +5,37 @@ from datetime import timedelta
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val
+from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key, LType
 from src.utils.logger import logger
 
 
-def get_best_account(ledgers, row, from_i):
+def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
     bv, b, fr = -1, None, from_i
+
+    def sim(entries):
+        nonlocal bv, b
+        for e in entries:
+            # pbar.update(1)
+            if e.type != LType.GL and e.doc_date > row.date:
+                break
+            v = similarity(e, row, entry_dict)
+            r = v[1:]
+            out = sim_val(r)
+            if bv < out:
+                # logger.info("Found better: {} - {}".format(v[1:], out))
+                bv = out
+                b = v
+
+    sim(gl_entries)
     from_t = row.date - timedelta(days=60)
-    # with tqdm(desc="predicting one", total=len(ledgers)) as pbar:
     for i in range(from_i, len(ledgers)):
-        # pbar.update(1)
         le = ledgers[i]
         if le.doc_date < from_t:
-            fr = i + 1
+            fr = i
             continue
-        if le.doc_date > row.date:
-            break
-        v = similarity(le, row)
-        r = v[1:]
-        out = sim_val(r)
-        if bv < out:
-            # logger.info("Found better: {} - {}".format(v[1:], out))
-            bv = out
-            b = v
-    return b[0], fr, b[1:]
+        break
+    sim(ledgers[fr:])
+    return b[0], fr + 1, b[1:]
 
 
 def main(argv):
@@ -52,13 +59,22 @@ def main(argv):
     logger.info("Headers: {}".format(list(ledgers)))
     logger.info("\n{}".format(ledgers.head(n=10)))
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
-    l_entries.sort(key=lambda e: e.doc_date)
+    l_entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
+    gl_entries = [l for l in filter(lambda x: x.type == LType.GL, l_entries)]
+    doc_entries = [l for l in filter(lambda x: x.type in [LType.VEND, LType.CUST], l_entries)]
+
+    entry_dic = {}
+    for e in entries:
+        k = e_key(e)
+        arr = entry_dic.get(k, [])
+        arr.append(e)
+        entry_dic[k] = arr
 
     i_from = 0
     with tqdm(desc="predicting", total=len(entries)) as pbar:
         for i in range(len(entries)):
             pbar.update(1)
-            best, i_from, sim = get_best_account(l_entries[i_from:], entries[i], i_from)
+            best, i_from, sim = get_best_account(gl_entries, doc_entries[i_from:], entries[i], i_from, entry_dic)
             print("{}\t{}".format(best.id if best is not None else "", sim))
     logger.info("Done")
 
