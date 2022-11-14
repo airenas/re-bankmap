@@ -100,7 +100,7 @@ def cmp_date(due_date, date):
 
 
 def similarity(ledger, entry, prev_entries):
-    res = [ledger]
+    res = []
     nl = ledger.name
     ne = entry.who
     res.append(1 if nl.lower() == ne.lower() else 0)
@@ -140,18 +140,18 @@ def main(argv):
 
     entries_t = pd.read_csv(args.input, sep=',')
     logger.info("loaded cmp_matrix {} rows".format(len(entries_t)))
-    logger.info("Headers: {}".format(list(entries_t)))
-    logger.info("\n{}".format(entries_t.head(n=10)))
+    # logger.info("Headers: {}".format(list(entries_t)))
+    # logger.info("\n{}".format(entries_t.head(n=10)))
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded cmp_matrix {} rows".format(len(ledgers)))
-    logger.info("Headers: {}".format(list(ledgers)))
-    logger.info("\n{}".format(ledgers.head(n=10)))
+    # logger.info("Headers: {}".format(list(ledgers)))
+    # logger.info("\n{}".format(ledgers.head(n=10)))
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
 
     row = entries[int(args.i)]
-    logger.info("Testing: \n{}".format(entries_t.iloc[int(args.i)]))
+    logger.info("Testing bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
     entry_dic = {}
     for e in entries:
         k = e_key(e)
@@ -163,11 +163,12 @@ def main(argv):
     with tqdm(desc="comparing", total=len(l_entries)) as pbar:
         for i in range(len(ledgers)):
             pbar.update(1)
-            res.append(similarity(l_entries[i], row, entry_dic))
-    res.sort(key=lambda x: sim_val(x[1:]), reverse=True)
+            res.append({"i": i, "sim": similarity(l_entries[i], row, entry_dic), "entry": l_entries[i]})
+    res.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
     logger.info("Res:")
     for i, r in enumerate(res[:args.top]):
-        logger.info("\t{} - {}, {} - {}".format(i, r[0].to_str(), r[1:], sim_val(r[1:])))
+        logger.info(
+            "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
     logger.info("Done")
 
 

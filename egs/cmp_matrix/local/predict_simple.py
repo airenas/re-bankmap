@@ -10,21 +10,21 @@ from src.utils.logger import logger
 
 
 def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
-    bv, b, fr = -1, None, from_i
+    bv, be, b, fr = -1, None, [], from_i
 
     def sim(entries):
-        nonlocal bv, b
+        nonlocal bv, b, be
         for e in entries:
             # pbar.update(1)
             if e.type in [LType.VEND, LType.CUST] and e.doc_date > row.date:
                 break
             v = similarity(e, row, entry_dict)
-            r = v[1:]
-            out = sim_val(r)
+            out = sim_val(v)
             if bv < out:
                 # logger.info("Found better: {} - {}".format(v[1:], out))
                 bv = out
                 b = v
+                be = e
 
     sim(gl_entries)
     from_t = row.date - timedelta(days=60)
@@ -35,7 +35,7 @@ def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
             continue
         break
     sim(ledgers[fr:])
-    return b[0], fr + 1, b[1:]
+    return be, fr + 1, b
 
 
 def main(argv):
