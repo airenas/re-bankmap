@@ -13,6 +13,7 @@ model?=${out_dir}/dt.model
 batch?=10
 hidden?=10
 skip=0
+top=20
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@
@@ -69,7 +70,8 @@ inspect: ${out_dir}/features.txt
 eval: ${out_dir}/cmp.txt
 .PHONY: eval
 sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
-	$(python_cmd) local/similarities.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i)
+	$(python_cmd) local/similarities.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
+		--top ${top}
 .PHONY: sim
 ############################################
 clean:

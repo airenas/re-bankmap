@@ -37,7 +37,9 @@ class LType(Enum):
     CUST = 1
     VEND = 2
     GL = 3
+    BA = 4
 
+    @staticmethod
     def from_s(s):
         if s == "Customer":
             return LType.CUST
@@ -45,6 +47,8 @@ class LType(Enum):
             return LType.VEND
         if s == "GL":
             return LType.GL
+        if s == "BA":
+            return LType.BA
         raise Exception("Unknown type {}".format(s))
 
 
@@ -129,6 +133,7 @@ def main(argv):
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--i", nargs='?', required=True, help="Number of entries file to check")
+    parser.add_argument("--top", nargs='?', default=20, type=int, help="Show the top most similar items")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -155,14 +160,14 @@ def main(argv):
         entry_dic[k] = arr
 
     res = []
-    with tqdm(desc="format cmp_matrix", total=len(l_entries)) as pbar:
+    with tqdm(desc="comparing", total=len(l_entries)) as pbar:
         for i in range(len(ledgers)):
             pbar.update(1)
             res.append(similarity(l_entries[i], row, entry_dic))
     res.sort(key=lambda x: sim_val(x[1:]), reverse=True)
     logger.info("Res:")
-    for i, r in enumerate(res[:50]):
-        logger.info("\t{} - {}, {}".format(i, r[0].to_str(), r[1:]))
+    for i, r in enumerate(res[:args.top]):
+        logger.info("\t{} - {}, {} - {}".format(i, r[0].to_str(), r[1:], sim_val(r[1:])))
     logger.info("Done")
 
 

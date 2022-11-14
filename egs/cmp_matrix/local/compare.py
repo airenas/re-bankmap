@@ -19,7 +19,7 @@ def main(argv):
     parser.add_argument("--f1", nargs='?', required=True, help="File 1")
     parser.add_argument("--f2", nargs='?', required=True, help="File 2")
     parser.add_argument("--out", nargs='?', required=True, help="Output File")
-    parser.add_argument("--skip", nargs='?', default=0, help="Skip [n] first items in comparison")
+    parser.add_argument("--skip", nargs='?', default=0, type=int, help="Skip [n] first items in comparison")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -34,7 +34,7 @@ def main(argv):
     logger.info("Headers: {}".format(list(entries)))
     y_true = entries["RecAccount"].values.tolist()
 
-    skip = int(args.skip)
+    skip = args.skip
     y_true = y_true[skip:len(y_pred)]
 
     g = 0
