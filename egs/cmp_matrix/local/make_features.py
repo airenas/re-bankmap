@@ -14,10 +14,10 @@ def calc_features(ledgers, row, from_i, entry_dict):
     from_t = row.date - timedelta(days=60)
     for i in range(from_i, len(ledgers)):
         le = ledgers[i]
-        if le.type != LType.GL and le.doc_date < from_t:
+        if le.type in [LType.VEND, LType.CUST] and le.doc_date < from_t:
             fr = i + 1
             continue
-        if le.type != LType.GL and le.doc_date > row.date:
+        if le.type in [LType.VEND, LType.CUST] and le.doc_date > row.date:
             break
         v = similarity(le, row, entry_dict)
         v.append(1 if row.rec_id == le.id else 0)

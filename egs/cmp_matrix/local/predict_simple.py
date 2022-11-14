@@ -16,7 +16,7 @@ def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
         nonlocal bv, b
         for e in entries:
             # pbar.update(1)
-            if e.type != LType.GL and e.doc_date > row.date:
+            if e.type in [LType.VEND, LType.CUST] and e.doc_date > row.date:
                 break
             v = similarity(e, row, entry_dict)
             r = v[1:]
@@ -60,7 +60,7 @@ def main(argv):
     logger.info("\n{}".format(ledgers.head(n=10)))
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
     l_entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
-    gl_entries = [l for l in filter(lambda x: x.type == LType.GL, l_entries)]
+    gl_entries = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
     doc_entries = [l for l in filter(lambda x: x.type in [LType.VEND, LType.CUST], l_entries)]
 
     entry_dic = {}
