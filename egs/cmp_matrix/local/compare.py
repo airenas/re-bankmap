@@ -19,6 +19,7 @@ def main(argv):
     parser.add_argument("--f1", nargs='?', required=True, help="File 1")
     parser.add_argument("--f2", nargs='?', required=True, help="File 2")
     parser.add_argument("--out", nargs='?', required=True, help="Output File")
+    parser.add_argument("--skip", nargs='?', default=0, help="Skip [n] first items in comparison")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -32,21 +33,28 @@ def main(argv):
     logger.info("loaded entries {} rows".format(len(entries)))
     logger.info("Headers: {}".format(list(entries)))
     y_true = entries["RecAccount"].values.tolist()
-    y_true = y_true[:len(y_pred)]
 
+    skip = int(args.skip)
+    y_true = y_true[skip:len(y_pred)]
+
+    g = 0
     with open(args.out, 'w') as f:
         for i, y in enumerate(y_true):
-            v = y_pred[i].split('\t')
+            ir = i + skip
+            v = y_pred[ir].split('\t')
             if v[0] == y:
-                print("{}\t{}".format(i, y), file=f)
+                print("{}\t{}".format(ir, y), file=f)
+                g += 1
             else:
-                print("{}\t{}\t{} <--diff-->\t{}".format(i, y, v[0], v[1] if len(v) > 0 else ""), file=f)
+                print("{}\t{}\t{} <--diff-->\t{}".format(ir, y, v[0], v[1] if len(v) > 0 else ""), file=f)
 
-    y_pred = [y.split('\t')[0] for y in y_pred]
+    y_pred = [y.split('\t')[0] for y in y_pred[skip:]]
     logger.info("Acc all        : {} from {}".format(accuracy_score(y_true, y_pred), len(y_true)))
     y_true_n = [x for x in y_true if str(x) != 'nan']
     y_pred_n = [x for i, x in enumerate(y_pred) if str(y_true[i]) != 'nan']
-    logger.info("Acc with values: {} from {}".format(accuracy_score(y_true_n, y_pred_n), len(y_true_n)))
+    logger.info(
+        "Acc with values: {} from {} ({}/{})".format(accuracy_score(y_true_n, y_pred_n), len(y_true_n),
+                                                     len(y_true_n) - g, g))
 
     logger.info("Done")
 

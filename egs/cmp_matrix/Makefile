@@ -12,6 +12,7 @@ take_n?=100000000000000
 model?=${out_dir}/dt.model
 batch?=10
 hidden?=10
+skip=0
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@
@@ -32,22 +33,29 @@ ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 ${out_dir}/gl_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_gl.py --input ${out_dir}/extracted/$(extr_dir)/GL_Accounts.csv > $@_
 	mv $@_ $@
+${out_dir}/ba_entries.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_ba.py --input ${out_dir}/extracted/$(extr_dir)/Bank_Accounts.csv > $@_
+	mv $@_ $@
 ${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
 	mv $@_ $@	
-${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt
+${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt \
+        ${out_dir}/ba_entries.txt
 	cat ${out_dir}/cust_l_entries.txt > $@
 	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
 	tail -n +2 ${out_dir}/gl_entries.txt >> $@
-${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${model}
+	tail -n +2 ${out_dir}/ba_entries.txt >> $@
+${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt # ${model}
 	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    > $@_
 	mv $@_ $@
 ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/make_features.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt > $@_
 	mv $@_ $@
-${out_dir}/cmp.txt: ${out_dir}/predicted.txt ${out_dir}/entries.txt
-	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt --out $@
+${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
+	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
+		--out ${out_dir}/cmp.txt  --skip ${skip}
+>PHONY: compare
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
 ############################################
