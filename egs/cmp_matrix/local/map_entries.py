@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import e_float
+from egs.cmp_matrix.local.similarities import e_float, e_str
 from src.utils.logger import logger
 
 
@@ -20,18 +20,22 @@ def iban(p):
     return p["N_ND_TD_RP_DbtrAcct_Id_IBAN"]
 
 
-def prepare_data(df):
+def prepare_data(df, map):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc']
-    with tqdm("format cmp_matrix", total=len(df)) as pbar:
+            'RecAccount', 'RecDoc', 'Recognized']
+    with tqdm("read entries", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
+            rec_no, rec = e_str(df['Recognized_Account_No_'].iloc[i]), True
+            if not is_recognized(rec_no):
+                rec_no, rec = map.get(e_str(df['External_Document_No_'].iloc[i]), ""), False
+
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
                         e_float(df['N_Amt'].iloc[i]), df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),
                         df['N_ND_TD_Refs_EndToEndId'].iloc[i],
-                        df['Recognized_Account_No_'].iloc[i],
-                        df['Recognized_Document_No_'].iloc[i]])
+                        rec_no,
+                        df['Recognized_Document_No_'].iloc[i], rec])
     return res, cols
 
 
@@ -40,17 +44,29 @@ def main(argv):
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file")
+    parser.add_argument("--input_map", nargs='?', required=True, help="Custom mapping file")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
 
-    logger.info("loading cmp_matrix {}".format(args.input))
+    logger.info("loading cmp_matrix {}".format(args.input_map))
+    data = pd.read_csv(args.input_map, sep=',')
+    logger.info("loaded input_map {} rows".format(len(data)))
+    logger.info("{}".format(data.head(n=10)))
+    logger.info("Headers: {}".format(list(data)))
+    map = {}
+    with tqdm("read mappings", total=len(data)) as pbar:
+        for i in range(len(data)):
+            pbar.update(1)
+            map[e_str(data['Statement_External_Document_No_'].iloc[i])] = e_str(data['Bal__Account_No_'].iloc[i])
+
+    logger.info("loading entries {}".format(args.input))
     data = pd.read_csv(args.input, sep=',')
-    logger.info("loaded cmp_matrix {} rows".format(len(data)))
+    logger.info("loaded entries {} rows".format(len(data)))
     logger.info("{}".format(data.head(n=10)))
     hd = list(data)
     logger.info("Headers: {}".format(hd))
-    res, cols = prepare_data(data)
+    res, cols = prepare_data(data, map)
     df = pd.DataFrame(res, columns=cols)
     df.to_csv(sys.stdout, index=False)
     logger.info("Done")

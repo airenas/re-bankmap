@@ -20,6 +20,7 @@ class Entry:
         self.amount = e_float(row['Amount'])
         self.rec_id = e_str(row['RecAccount'])
         self.doc_id = e_str(row['RecDoc'])
+        self.recognized = row['Recognized']
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)

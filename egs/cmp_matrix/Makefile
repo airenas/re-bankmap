@@ -14,6 +14,7 @@ batch?=10
 hidden?=10
 skip=0
 top=20
+limit=0.3
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@
@@ -26,7 +27,8 @@ ${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
 ${out_dir}/entries.csv: ${out_dir}/extracted/.done
 	cat ${out_dir}/extracted/$(extr_dir)/Bank_Statement_Entries.csv | head -n $(take_n) > $@
 ${out_dir}/entries.txt: ${out_dir}/entries.csv
-	$(python_cmd) local/map_entries.py --input $^ > $@_
+	$(python_cmd) local/map_entries.py --input $^ \
+	    --input_map ${out_dir}/extracted/$(extr_dir)/Bank_Account_Recognitions.csv > $@_
 	mv $@_ $@
 ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
@@ -55,7 +57,7 @@ ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	mv $@_ $@
 ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
 	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
-		--out ${out_dir}/cmp.txt  --skip ${skip}
+		--out ${out_dir}/cmp.txt  --skip ${skip} --limit ${limit}
 >PHONY: compare
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
