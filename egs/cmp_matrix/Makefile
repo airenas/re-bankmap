@@ -68,6 +68,8 @@ train: ${model}
 .PHONY: train
 inspect: ${out_dir}/features.txt
 	$(python_cmd) local/inspect_data.py --i $^
+inspect/entries: ${out_dir}/entries.txt
+	$(python_cmd) local/inspect_entries.py --i $^	
 .PHONY: inspect
 eval: ${out_dir}/cmp.txt
 .PHONY: eval
