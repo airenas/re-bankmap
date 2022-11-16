@@ -51,11 +51,11 @@ def main(argv):
             v = y_pred[i]
             vec = y_pred_v[i]
             val = sim_val(vec)
-            if v[0] == y and val > args.limit:
+            if v == y and val > args.limit:
                 print("{}\t{}\t{}".format(ir, y, 'r' if y_recognized[i] else 'n'), file=f)
             else:
-                print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v[0], 'r' if y_recognized[i] else 'n',
-                                                                 v[1] if len(v) > 0 else "", val), file=f)
+                print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, 'r' if y_recognized[i] else 'n',
+                                                                 vec, val), file=f)
 
     logger.info("Acc all        : {} ({}/{})".format(accuracy_score(y_true, y_pred),
                                                      sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
