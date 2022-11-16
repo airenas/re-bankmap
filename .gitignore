@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.idea/**
+docubank-src/**
+egs/cmp_matrix/data/**
+egs/cmp_matrix/st/**
