@@ -114,7 +114,7 @@ def similarity(ledger, entry, prev_entries):
     ne = entry.who
     res.append(1 if nl.lower() == ne.lower() else 0)
     res.append(name_sim(nl, ne))
-    res.append(1 if ledger.iban == entry.iban else 0)
+    res.append(1 if len(ledger.iban) > 5 and ledger.iban == entry.iban else 0)
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
     res.append(cmp_date(ledger.due_date, entry.date))
     res.append(cmp_date(entry.date, ledger.doc_date))
