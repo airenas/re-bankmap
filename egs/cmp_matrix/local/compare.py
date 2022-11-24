@@ -14,6 +14,16 @@ def first_word(l1):
     return w1[0].strip()
 
 
+def show_no_rejected(y_true, y_pred, name):
+    y_true_nr = [x for i, x in enumerate(y_true) if y_pred[i] != 'rejected']
+    y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected']
+
+    logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
+                                                 sum([1 for i, x in enumerate(y_true_nr) if y_pred_nr[i] != x]),
+                                                 len(y_true_nr),
+                                                 sum([1 for x in y_pred if x == 'rejected'])))
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description="Compares two files",
                                      epilog="E.g. " + sys.argv[0] + "",
@@ -62,30 +72,13 @@ def main(argv):
                                                      len(y_true)))
     y_true_n = [x for x in y_true if str(x) != 'nan']
     y_pred_n = [x for i, x in enumerate(y_pred) if str(y_true[i]) != 'nan']
-    logger.info(
-        "Acc not empty : {} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
-                                            sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
-                                            len(y_true_n)))
-    y_true_n = [x for i, x in enumerate(y_true) if
-                str(y_true[i]) != 'nan' and y_pred[i] != 'rejected']
-    y_pred_n = [x for i, x in enumerate(y_pred) if str(y_true[i]) != 'nan'
-                and x != 'rejected']
-    logger.info(
-        "Acc w/o rejected: {} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
-                                              sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
-                                              len(y_true_n)))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc not empty     ')
     y_true_n = [x for i, x in enumerate(y_true) if not y_recognized[i] and str(y_true[i]) != 'nan']
     y_pred_n = [x for i, x in enumerate(y_pred) if not y_recognized[i] and str(y_true[i]) != 'nan']
-    logger.info(
-        "Acc not rec before: {} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
-                                                sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
-                                                len(y_true_n)))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc not rec before')
     y_true_n = [x for i, x in enumerate(y_true) if y_recognized[i] and str(y_true[i]) != 'nan']
     y_pred_n = [x for i, x in enumerate(y_pred) if y_recognized[i] and str(y_true[i]) != 'nan']
-    logger.info(
-        "Acc rec before: {} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
-                                            sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
-                                            len(y_true_n)))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc rec before    ')
     logger.info("Done")
 
 
