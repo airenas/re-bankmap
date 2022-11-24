@@ -24,12 +24,18 @@ def prepare_data(df, map):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
             'RecAccount', 'RecDoc', 'Recognized', 'Currency']
+    found = set()
     with tqdm("read entries", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
+            ext_id = e_str(df['External_Document_No_'].iloc[i])
+            if ext_id in found:
+                continue
+            found.add(ext_id)
             rec_no, rec = e_str(df['Recognized_Account_No_'].iloc[i]), True
             if not is_recognized(rec_no):
-                rec_no, rec = map.get(e_str(df['External_Document_No_'].iloc[i]), ""), False
+                rec_no, rec = map.get(ext_id, ""), False
+
 
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
                         e_float(df['N_Amt'].iloc[i]), df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),
