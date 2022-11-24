@@ -21,6 +21,7 @@ class Entry:
         self.rec_id = e_str(row['RecAccount'])
         self.doc_id = e_str(row['RecDoc'])
         self.recognized = row['Recognized']
+        self.currency = row['Currency']
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -63,6 +64,7 @@ class LEntry:
         self.due_date = to_date(row['Due_Date'])
         self.doc_date = to_date(row['Document_Date'])
         self.amount = e_float(row['Amount'])
+        self.currency = row['Currency']
 
     def to_str(self):
         return "{} - {} - {}, {}".format(self.type, self.id, self.name, self.due_date, self.ext_doc)
@@ -78,6 +80,12 @@ def e_float(p):
     if p != p:
         return 0
     return float(e_str(p).replace(",", "."))
+
+
+def e_currency(p):
+    if p != p:
+        return "EUR"
+    return e_str(p).upper()
 
 
 def e_key(e):
@@ -112,11 +120,12 @@ def similarity(ledger, entry, prev_entries):
     res.append(cmp_date(entry.date, ledger.doc_date))
     res.append(ledger.amount - entry.amount)
     res.append(has_past_transaction(ledger.id, prev_entries, entry))
+    res.append(1 if ledger.currency == entry.currency else 0)
 
     return res
 
 
-sim_imp = np.array([0.5, 1, 1, 2, 0.0, .0, .0, 2])
+sim_imp = np.array([0.5, 1, 1, 2, 0.0, .0, .0, 2, 1])
 
 
 def sim_val(v):

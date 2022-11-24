@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.map_customers import ledger_cols
+from egs.cmp_matrix.local.similarities import e_currency
 from src.utils.logger import logger
 
 
@@ -19,11 +20,13 @@ def prepare_data(df, names, accounts):
     with tqdm("format cmp_matrix", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
+            if df['Document_Type'].iloc[i] == "Mokėjimas":
+                continue
             _id = df['Vendor_No_'].iloc[i]
             res.append(['Vendor', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
                         df['Due_Date'].iloc[i],
                         df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i],
-                        df['Amount'].iloc[i]])
+                        df['Amount'].iloc[i], e_currency(df['Currency_Code'].iloc[i])])
     return res, ledger_cols
 
 

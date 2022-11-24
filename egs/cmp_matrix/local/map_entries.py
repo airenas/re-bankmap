@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import e_float, e_str
+from egs.cmp_matrix.local.similarities import e_float, e_str, e_currency
 from src.utils.logger import logger
 
 
@@ -23,7 +23,7 @@ def iban(p):
 def prepare_data(df, map):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc', 'Recognized']
+            'RecAccount', 'RecDoc', 'Recognized', 'Currency']
     with tqdm("read entries", total=len(df)) as pbar:
         for i in range(len(df)):
             pbar.update(1)
@@ -35,7 +35,8 @@ def prepare_data(df, map):
                         e_float(df['N_Amt'].iloc[i]), df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),
                         df['N_ND_TD_Refs_EndToEndId'].iloc[i],
                         rec_no,
-                        df['Recognized_Document_No_'].iloc[i], rec])
+                        df['Recognized_Document_No_'].iloc[i], rec,
+                        e_currency(df['Acct_Ccy'].iloc[i])])
     return res, cols
 
 
