@@ -35,7 +35,7 @@ def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
             continue
         break
     sim(ledgers[fr:])
-    return be, fr + 1, b
+    return be, fr, b
 
 
 def main(argv):
@@ -74,7 +74,7 @@ def main(argv):
     with tqdm(desc="predicting", total=len(entries)) as pbar:
         for i in range(len(entries)):
             pbar.update(1)
-            best, i_from, sim = get_best_account(gl_entries, doc_entries[i_from:], entries[i], i_from, entry_dic)
+            best, i_from, sim = get_best_account(gl_entries, doc_entries, entries[i], i_from, entry_dic)
             print("{}\t{}".format(best.id if best is not None else "", sim))
     logger.info("Done")
 
