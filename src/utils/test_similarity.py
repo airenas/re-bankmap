@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.utils.similarity import name_sim, date_sim
+from src.utils.similarity import name_sim, date_sim, num_sim
 
 
 def test_str_sim():
@@ -20,3 +20,12 @@ def test_date_sim():
     assert date_sim(datetime(2020, 5, 17), datetime(2020, 5, 1)) < 0.5
     assert date_sim(datetime(2020, 5, 17), datetime(2020, 4, 1)) < .1
     assert date_sim(datetime(2020, 5, 17), datetime(2020, 7, 1)) < .1
+
+
+def test_num_sim():
+    assert num_sim(0) == 1
+    assert num_sim(1) > 0.5
+    assert num_sim(-1) > 0.5
+    assert num_sim(10) < 0.5
+    assert num_sim(20) < .1
+    assert num_sim(-20) < .1
