@@ -1,3 +1,4 @@
+import math
 import re
 
 import jellyfish
@@ -33,3 +34,14 @@ def name_sim(a, b):
     return 0.7 * sequence_uniqueness(set(a_tokens).intersection(b_tokens)) / (a_uniq * b_uniq) ** 0.5 \
            + 0.2 * jellyfish.jaro_winkler_similarity(al, bl) \
            + 0.1 * jellyfish.jaro_winkler_similarity(a, b)
+
+
+def date_sim(due_date, date):
+    if date is None or due_date is None:
+        return 0
+    diff = (due_date - date).days
+    return 1 - math.tanh(abs(diff / 20))
+
+
+def num_sim(val):
+    return 1 - math.tanh(abs(val / 10))

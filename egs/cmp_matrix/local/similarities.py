@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from src.utils.logger import logger
-from src.utils.similarity import name_sim
+from src.utils.similarity import name_sim, date_sim, num_sim
 
 
 class Entry:
@@ -22,6 +22,7 @@ class Entry:
         self.doc_id = e_str(row['RecDoc'])
         self.recognized = row['Recognized']
         self.currency = row['Currency']
+        self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -33,6 +34,38 @@ def to_date(p):
     except BaseException as err:
         logger.info("{}".format(p))
         raise err
+
+
+class PaymentType(Enum):
+    DBIT = 1
+    CRDT = 2
+
+    @staticmethod
+    def from_s(s):
+        if s == "CRDT":
+            return PaymentType.CRDT
+        if s == "DBIT":
+            return PaymentType.DBIT
+        raise Exception("Unknown doc type '{}'".format(s))
+
+
+class DocType(Enum):
+    SF = 1
+    GRAZ_PAZ = 2
+    GL = 3
+    BA = 4
+
+    @staticmethod
+    def from_s(s):
+        if s == "SF":
+            return DocType.SF
+        if s == "Grąž. paž.":
+            return DocType.GRAZ_PAZ
+        if s == "GL":
+            return DocType.GL
+        if s == "BA":
+            return DocType.BA
+        raise Exception("Unknown doc type '{}'".format(s))
 
 
 class LType(Enum):
@@ -56,24 +89,29 @@ class LType(Enum):
 
 class LEntry:
     def __init__(self, row):
-        self.type = LType.from_s(e_str(row['Type']))
-        self.id = e_str(row['No'])
-        self.name = e_str(row['Name'])
-        self.iban = e_str(row['IBAN'])
-        self.ext_doc = e_str(row['ExtDoc'])
-        self.due_date = to_date(row['Due_Date'])
-        self.doc_date = to_date(row['Document_Date'])
-        self.amount = e_float(row['Amount'])
-        self.currency = row['Currency']
+        try:
+            self.type = LType.from_s(e_str(row['Type']))
+            self.id = e_str(row['No'])
+            self.name = e_str(row['Name'])
+            self.iban = e_str(row['IBAN'])
+            self.ext_doc = e_str(row['ExtDoc'])
+            self.due_date = to_date(row['Due_Date'])
+            self.doc_date = to_date(row['Document_Date'])
+            self.amount = e_float(row['Amount'])
+            self.currency = row['Currency']
+            self.doc_type = DocType.from_s(e_str(row['Document_Type']))
+        except BaseException as err:
+            raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {} - {}, {}".format(self.type, self.id, self.name, self.due_date, self.ext_doc)
+        return "{} - {} - {}, {}, {}, {}, {}".format(self.type, self.id, self.name, self.due_date, self.ext_doc,
+                                                 self.doc_type, self.amount)
 
 
 def e_str(p):
     if p != p:
         return ''
-    return str(p)
+    return str(p).strip()
 
 
 def e_float(p):
@@ -102,10 +140,29 @@ def has_past_transaction(e_id, prev_entries, entry):
     return 0
 
 
-def cmp_date(due_date, date):
-    if date is None or due_date is None:
-        return 100
-    return (due_date - date).days
+def payment_match(ledger, entry):
+    if entry.type == PaymentType.CRDT and ledger.type == LType.CUST and ledger.doc_type == DocType.SF:
+        return True
+    if entry.type == PaymentType.DBIT and ledger.type == LType.VEND and ledger.doc_type == DocType.SF:
+        return True
+    if entry.type == PaymentType.DBIT and ledger.type == LType.CUST and ledger.doc_type == DocType.GRAZ_PAZ:
+        return True
+    if entry.type == PaymentType.CRDT and ledger.type == LType.VEND and ledger.doc_type == DocType.GRAZ_PAZ:
+        return True
+
+    if ledger.type == LType.BA or ledger.type == LType.GL:
+        return True
+    return False
+
+
+def amount_match(ledger, entry):
+    if ledger.type == LType.BA or ledger.type == LType.GL:
+        return 0.5
+
+    diff = entry.amount - ledger.amount
+    if not payment_match(ledger, entry):
+        diff = entry.amount + ledger.amount
+    return num_sim(diff)
 
 
 def similarity(ledger, entry, prev_entries):
@@ -116,16 +173,17 @@ def similarity(ledger, entry, prev_entries):
     res.append(name_sim(nl, ne))
     res.append(1 if len(ledger.iban) > 5 and ledger.iban == entry.iban else 0)
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
-    res.append(cmp_date(ledger.due_date, entry.date))
-    res.append(cmp_date(entry.date, ledger.doc_date))
-    res.append(ledger.amount - entry.amount)
+    res.append(date_sim(ledger.due_date, entry.date))
+    res.append(date_sim(entry.date, ledger.doc_date))
+    res.append(amount_match(ledger, entry))
     res.append(has_past_transaction(ledger.id, prev_entries, entry))
     res.append(1 if ledger.currency == entry.currency else 0)
+    res.append(1 if payment_match(ledger, entry) else 0)
 
     return res
 
 
-sim_imp = np.array([0.5, 1, 1, 2, 0.0, .0, .0, 2, 1])
+sim_imp = np.array([0.5, 1, 1, 2, 0.1, .4, .3, 2, 1, 1])
 
 
 def sim_val(v):
@@ -176,7 +234,14 @@ def main(argv):
             res.append({"i": i, "sim": similarity(l_entries[i], row, entry_dic), "entry": l_entries[i]})
     res.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
     logger.info("Res:")
-    for i, r in enumerate(res[:args.top]):
+    i, was = 0, set()
+    for r in res:
+        if i > args.top:
+            break
+        if r["entry"].id in was:
+            continue
+        i += 1
+        was.add(r["entry"].id)
         logger.info(
             "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
     logger.info("Done")
