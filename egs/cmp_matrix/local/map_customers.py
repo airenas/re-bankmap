@@ -14,7 +14,7 @@ def is_recognized(param):
     return False
 
 
-ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
+ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
                'Currency', 'Document_Type']
 
 

@@ -4,10 +4,9 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from egs.cmp_matrix.local.map_customers_app import app_cols
 from egs.cmp_matrix.local.similarities import e_currency
 from src.utils.logger import logger
-
-app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_No', 'Entry_No']
 
 
 def prepare_data(df):

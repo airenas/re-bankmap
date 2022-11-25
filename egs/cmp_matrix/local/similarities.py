@@ -1,4 +1,5 @@
 import argparse
+import math
 import sys
 from datetime import datetime
 from enum import Enum
@@ -9,6 +10,19 @@ from tqdm import tqdm
 
 from src.utils.logger import logger
 from src.utils.similarity import name_sim, date_sim, num_sim
+
+
+class App:
+    def __init__(self, row):
+        self.type = LType.from_s(e_str(row['Type']))
+        self.doc_no = e_str(row['Document_No'])
+        self.entry_no = e_str(row['Entry_No'])
+        self.apply_date = to_date(row['Apply_Date'])
+        self.amount = e_float(row['Apply_Amount'])
+        self.remaining = e_float(row['Remaining_Amount'])
+
+    def to_str(self):
+        return "{} - {} - {} ({})".format(self.type, self.apply_date, self.amount, math.isclose(self.remaining, 0))
 
 
 class Entry:
@@ -95,6 +109,7 @@ class LEntry:
             self.name = e_str(row['Name'])
             self.iban = e_str(row['IBAN'])
             self.ext_doc = e_str(row['ExtDoc'])
+            self.doc_no = e_str(row['Document_No'])
             self.due_date = to_date(row['Due_Date'])
             self.doc_date = to_date(row['Document_Date'])
             self.amount = e_float(row['Amount'])
@@ -104,8 +119,8 @@ class LEntry:
             raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {} - {}, {}, {}, {}, {}".format(self.type, self.id, self.name, self.due_date, self.ext_doc,
-                                                 self.doc_type, self.amount)
+        return "{} - {} - {}, {}, {}, {}, {}".format(self.type, self.id, self.name, self.doc_date, self.ext_doc,
+                                                     self.doc_type, self.amount)
 
 
 def e_str(p):
