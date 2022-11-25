@@ -41,14 +41,23 @@ ${out_dir}/ba_entries.txt: ${out_dir}/extracted/.done
 	mv $@_ $@
 ${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
-	mv $@_ $@	
+	mv $@_ $@
+${out_dir}/cust_l_apps.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_customers_app.py --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv > $@_
+	mv $@_ $@
+${out_dir}/vend_l_apps.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/map_vendors_app.py --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv > $@_
+	mv $@_ $@			
 ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt \
         ${out_dir}/ba_entries.txt
 	cat ${out_dir}/cust_l_entries.txt > $@
 	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
 	tail -n +2 ${out_dir}/gl_entries.txt >> $@
 	tail -n +2 ${out_dir}/ba_entries.txt >> $@
-${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt # ${model}
+${out_dir}/l_apps.txt: ${out_dir}/cust_l_apps.txt ${out_dir}/vend_l_apps.txt 
+	cat ${out_dir}/cust_l_apps.txt > $@
+	tail -n +2 ${out_dir}/vend_l_apps.txt >> $@
+${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    > $@_
 	mv $@_ $@
@@ -58,7 +67,7 @@ ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
 	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
 		--out ${out_dir}/cmp.txt  --skip ${skip} --limit ${limit}
->PHONY: compare
+.PHONY: compare
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
 ############################################
