@@ -6,7 +6,8 @@ from datetime import timedelta
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key, LType, App
+from egs.cmp_matrix.local.data import App
+from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key, LType
 from src.utils.logger import logger
 
 

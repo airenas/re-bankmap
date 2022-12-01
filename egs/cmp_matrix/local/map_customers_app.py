@@ -4,10 +4,10 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import e_currency
+from egs.cmp_matrix.local.data import e_currency
 from src.utils.logger import logger
 
-app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_No', 'Entry_No']
+app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_No', 'Entry_No', 'CV_No', 'CV_Name']
 
 
 def prepare_data(df):
@@ -19,7 +19,10 @@ def prepare_data(df):
                         e_currency(df['Applied_Cust_Sales__LCY_'].iloc[i]),
                         e_currency(df['Applied_Cust_Remaining_Amount'].iloc[i]),
                         df['Applied_Cust_Document_No_'].iloc[i],
-                        df['Statement_External_Document_No_'].iloc[i]])
+                        df['Statement_External_Document_No_'].iloc[i],
+                        df['Cust_Customer_No_'].iloc[i],
+                        df['Cust_Customer_Name'].iloc[i]
+                        ])
     return res, app_cols
 
 

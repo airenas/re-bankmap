@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.map_customers_app import app_cols
-from egs.cmp_matrix.local.similarities import e_currency
+from egs.cmp_matrix.local.data import e_currency
 from src.utils.logger import logger
 
 
@@ -18,7 +18,10 @@ def prepare_data(df):
                         e_currency(df['Applied_Vend_Purchase__LCY_'].iloc[i]),
                         e_currency(df['Applied_Vend_Remaining_Amount'].iloc[i]),
                         df['Applied_Vend_Document_No_'].iloc[i],
-                        df['Statement_External_Document_No_'].iloc[i]])
+                        df['Statement_External_Document_No_'].iloc[i],
+                        df['Vend_Vendor_No_'].iloc[i],
+                        df['Vend_Vendor_Name'].iloc[i]
+                        ])
     return res, app_cols
 
 

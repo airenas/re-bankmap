@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import e_float, e_currency, e_str
+from egs.cmp_matrix.local.data import e_float, e_currency, e_str
 from src.utils.logger import logger
 
 

@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import e_float, e_str, e_currency
+from egs.cmp_matrix.local.data import e_float, e_str, e_currency
 from src.utils.logger import logger
 
 
@@ -35,7 +35,6 @@ def prepare_data(df, map):
             rec_no, rec = e_str(df['Recognized_Account_No_'].iloc[i]), True
             if not is_recognized(rec_no):
                 rec_no, rec = map.get(ext_id, ""), False
-
 
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
                         e_float(df['N_Amt'].iloc[i]), df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),

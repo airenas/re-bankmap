@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.map_customers import ledger_cols
-from egs.cmp_matrix.local.similarities import e_currency, e_str
+from egs.cmp_matrix.local.data import e_currency, e_str
 from src.utils.logger import logger
 
 
