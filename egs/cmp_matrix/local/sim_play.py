@@ -2,10 +2,10 @@ import argparse
 import sys
 
 import pandas as pd
-from tqdm import tqdm
 
+from egs.cmp_matrix.local.data import Entry, LEntry, App
 from egs.cmp_matrix.local.predict_play import Arena
-from egs.cmp_matrix.local.similarities import Entry, LEntry, App, e_key, similarity, sim_val
+from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val
 from src.utils.logger import logger
 
 

@@ -1,62 +1,12 @@
 import argparse
-import math
 import sys
-from datetime import timedelta
 
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key, LType
+from egs.cmp_matrix.local.data import App, Arena
+from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key
 from src.utils.logger import logger
-
-
-class Arena:
-    def __init__(self, l_entries, apps):
-        self.l_entries = l_entries
-        self.gl_entries = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
-        self.entries = [l for l in filter(lambda x: x.type in [LType.CUST, LType.VEND], l_entries)]
-        self.apps = apps
-        self.date = None
-        logger.info("GL, BA count: {}".format(len(self.gl_entries)))
-        logger.info("L count     : {}".format(len(self.entries)))
-        logger.info("Apps count  : {}".format(len(self.apps)))
-        self.entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
-        self.apps.sort(key=lambda e: e.apply_date.timestamp() if e.apply_date else 1)
-        self.date = self.entries[0].doc_date - timedelta(days=1)
-        self.playground = {}
-        self.from_entry, self.from_apps = 0, 0
-        logger.info("Start date  : {}".format(self.date))
-
-    def move(self, dt):
-        if self.date < dt:
-            logger.info("Move to date  : {}".format(dt))
-            while self.from_entry < len(self.entries):
-                entry = self.entries[self.from_entry]
-                if entry.doc_date > dt:
-                    break
-                logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
-                self.playground[entry.doc_no] = entry
-                self.from_entry += 1
-            while self.from_apps < len(self.apps):
-                app = self.apps[self.from_apps]
-                if app.apply_date >= dt:
-                    break
-                entry = self.playground.get(app.doc_no, None)
-                if entry is not None:
-                    if math.isclose(app.remaining, 0):
-                        logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
-                        del self.playground[app.doc_no]
-                    else:
-                        logger.info("Change amount {}: from {} to {}".format(app.doc_no, entry.amount, app.remaining))
-                        entry.amount = app.remaining
-                else:
-                    logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
-                self.from_apps += 1
-            logger.info("Items to compare : {}".format(len(self.playground)))
-            self.date = dt
-        else:
-            logger.debug("Up to date  : {}".format(dt))
 
 
 def get_best_account(arena, row, entry_dict):
