@@ -55,6 +55,9 @@ def main(argv):
     logger.info("Testing bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
     dt = row.date
     logger.info("Entry date: {}".format(dt))
+
+    arena.add_cust(row.rec_id)
+
     arena.move(dt)
     res = []
 

@@ -33,6 +33,7 @@ class Entry:
         self.recognized = row['Recognized']
         self.currency = row['Currency']
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
+        self.doc_ids = e_str(row['Docs'])
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -115,8 +116,9 @@ class LEntry:
             raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {} - {}, {}, {}, {}, {}".format(self.type, self.id, self.name, self.doc_date, self.ext_doc,
-                                                     self.doc_type, self.amount)
+        return "{} - {}:{} - {}, {}, {}, {}, {}".format(self.type, self.id, self.doc_no, self.name, self.doc_date,
+                                                        self.ext_doc,
+                                                        self.doc_type, self.amount)
 
 
 def e_str(p):
@@ -153,33 +155,79 @@ class Arena:
         self.playground = {}
         self.from_entry, self.from_apps = 0, 0
         logger.info("Start date  : {}".format(self.date))
+        self.cust_filter = ""
+        self.doc_filter = ""
 
     def move(self, dt):
         if self.date < dt:
-            logger.info("Move to date  : {}".format(dt))
-            while self.from_entry < len(self.entries):
-                entry = self.entries[self.from_entry]
-                if entry.doc_date > dt:
-                    break
-                logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
-                self.playground[entry.doc_no] = entry
-                self.from_entry += 1
-            while self.from_apps < len(self.apps):
-                app = self.apps[self.from_apps]
-                if app.apply_date >= dt:
-                    break
-                entry = self.playground.get(app.doc_no, None)
-                if entry is not None:
-                    if math.isclose(app.remaining, 0):
-                        logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
-                        del self.playground[app.doc_no]
+            while self.date < dt:
+                ndt = self.date + timedelta(days=1)
+                logger.debug("Move to date  : {}".format(ndt))
+                while self.from_entry < len(self.entries):
+                    entry = self.entries[self.from_entry]
+                    if entry.doc_date > ndt:
+                        break
+                    if self.doc_filter:
+                        if self.doc_filter == entry.doc_no:
+                            logger.info("Add  : {} {}".format(entry.doc_no, entry.to_str()))
+                    elif self.cust_filter:
+                        if self.cust_filter == entry.id:
+                            logger.info("Add  : {} {}".format(entry.doc_no, entry.to_str()))
                     else:
-                        logger.info("Change amount {}: from {} to {}".format(app.doc_no, entry.amount, app.remaining))
-                        entry.amount = app.remaining
-                else:
-                    logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
-                self.from_apps += 1
+                        logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
+                    self.playground[entry.doc_no] = entry
+                    self.from_entry += 1
+                while self.from_apps < len(self.apps):
+                    app = self.apps[self.from_apps]
+                    if app.apply_date >= ndt:
+                        break
+                    entry = self.playground.get(app.doc_no, None)
+                    if entry is not None:
+                        if math.isclose(app.remaining, 0):
+                            if self.doc_filter:
+                                if self.doc_filter == app.doc_no:
+                                    logger.info("Drop: {} {}".format(entry.doc_no, entry.to_str()))
+                            elif self.cust_filter:
+                                if self.cust_filter == app.cv_no:
+                                    logger.info("Drop: {} {}".format(entry.doc_no, entry.to_str()))
+                            else:
+                                logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
+                            del self.playground[app.doc_no]
+                        else:
+                            if self.cust_filter:
+                                if self.cust_filter == app.cv_no:
+                                    logger.info(
+                                        "Change amount {}: from {} to {}".format(app.doc_no, entry.amount,
+                                                                                 app.remaining))
+                            else:
+                                logger.info(
+                                    "Change amount {}: from {} to {}".format(app.doc_no, entry.amount, app.remaining))
+                            entry.amount = app.remaining
+                    else:
+                        if self.doc_filter:
+                            if self.doc_filter == app.doc_no:
+                                logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                                changed = True
+                        elif self.cust_filter:
+                            if self.cust_filter == app.cv_no:
+                                logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                        else:
+                            logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                    self.from_apps += 1
+                self.date = ndt
+                if self.date > dt:
+                    self.date = dt
             logger.info("Items to compare : {}".format(len(self.playground)))
-            self.date = dt
+            if self.cust_filter:
+                logger.info("Active docs:")
+                for e in self.playground.values():
+                    if e.id == self.cust_filter:
+                        logger.info("{}".format(e.to_str()))
         else:
             logger.debug("Up to date  : {}".format(dt))
+
+    def add_cust(self, c):
+        self.cust_filter = c
+
+    def add_doc(self, doc):
+        self.doc_filter = doc

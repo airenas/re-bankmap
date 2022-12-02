@@ -26,9 +26,21 @@ ${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
 	touch $@
 ${out_dir}/entries.csv: ${out_dir}/extracted/.done
 	cat ${out_dir}/extracted/$(extr_dir)/Bank_Statement_Entries.csv | head -n $(take_n) > $@
-${out_dir}/entries.txt: ${out_dir}/entries.csv
-	$(python_cmd) local/map_entries.py --input $^ \
-	    --input_map ${out_dir}/extracted/$(extr_dir)/Bank_Account_Recognitions.csv > $@_
+${out_dir}/docs_map.txt: ${out_dir}/c_docs_map.txt ${out_dir}/v_docs_map.txt
+	cat ${out_dir}/c_docs_map.txt > $@
+	tail -n +2 ${out_dir}/v_docs_map.txt >> $@
+${out_dir}/c_docs_map.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/extract_docs.py --name Cust \
+	    --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv > $@_
+	mv $@_ $@
+${out_dir}/v_docs_map.txt: ${out_dir}/extracted/.done
+	$(python_cmd) local/extract_docs.py --name Vend \
+	    --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv > $@_
+	mv $@_ $@		
+${out_dir}/entries.txt: ${out_dir}/entries.csv ${out_dir}/docs_map.txt
+	$(python_cmd) local/map_entries.py --input ${out_dir}/entries.csv \
+	    --input_map ${out_dir}/extracted/$(extr_dir)/Bank_Account_Recognitions.csv \
+	    --docs_map ${out_dir}/docs_map.txt > $@_
 	mv $@_ $@
 ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
@@ -88,6 +100,17 @@ sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 	$(python_cmd) local/sim_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
 		--top ${top} --apps ${out_dir}/l_apps.txt
 .PHONY: sim
+############################################
+inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
+	$(python_cmd) local/inspect_play.py --ledgers ${out_dir}/l_entries.txt --c $(ic) \
+		--doc ${idoc} --apps ${out_dir}/l_apps.txt --date "$(idate)"
+.PHONY: inspect/play
+############################################
+${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
+	$(python_cmd) local/tune_params.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+	    --apps ${out_dir}/l_apps.txt > $@_
+	mv $@_ $@
+tune: ${out_dir}/params.txt
 ############################################
 clean:
 	rm -rf $(out_dir)

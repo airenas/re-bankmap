@@ -20,10 +20,10 @@ def iban(p):
     return p["N_ND_TD_RP_DbtrAcct_Id_IBAN"]
 
 
-def prepare_data(df, map):
+def prepare_data(df, map, dm):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc', 'Recognized', 'Currency']
+            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs']
     found = set()
     with tqdm("read entries", total=len(df)) as pbar:
         for i in range(len(df)):
@@ -41,7 +41,8 @@ def prepare_data(df, map):
                         df['N_ND_TD_Refs_EndToEndId'].iloc[i],
                         rec_no,
                         df['Recognized_Document_No_'].iloc[i], rec,
-                        e_currency(df['Acct_Ccy'].iloc[i])])
+                        e_currency(df['Acct_Ccy'].iloc[i]),
+                        dm.get(ext_id, "")])
     return res, cols
 
 
@@ -50,7 +51,8 @@ def main(argv):
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file")
-    parser.add_argument("--input_map", nargs='?', required=True, help="Custom mapping file")
+    parser.add_argument("--input_map", nargs='?', required=True, help="Customers mapping file")
+    parser.add_argument("--docs_map", nargs='?', required=True, help="Docs map file")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -72,7 +74,10 @@ def main(argv):
     logger.info("{}".format(data.head(n=10)))
     hd = list(data)
     logger.info("Headers: {}".format(hd))
-    res, cols = prepare_data(data, map)
+    logger.info("loading docs map {}".format(args.docs_map))
+    docs = pd.read_csv(args.docs_map, sep=',')
+    dm = {docs.iloc[i]["ID"]: docs.iloc[i]["Ext_ID"] for i in range(len(docs))}
+    res, cols = prepare_data(data, map, dm)
     df = pd.DataFrame(res, columns=cols)
     df.to_csv(sys.stdout, index=False)
     logger.info("Done")
