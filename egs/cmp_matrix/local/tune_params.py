@@ -1,13 +1,10 @@
 import argparse
 import sys
-import threading
-from queue import Queue
-from random import shuffle
 
 import numpy as np
 import pandas as pd
+from hyperopt import fmin, tpe, hp
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.data import App, Arena
@@ -83,6 +80,7 @@ def main(argv):
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
+    parser.add_argument("--out", nargs='?', required=True, help="Out file")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -127,78 +125,40 @@ def main(argv):
     model = Selector(mtrx)
 
     param_grid = {
-        "name_eq": np.linspace(0, 2, num=3),
-        "name_sim": np.linspace(0, 2, num=3),
-        "iban_match": np.linspace(0, 2, num=3),
-        "ext_doc": np.linspace(0, 2, num=3),
-        "due_date": np.linspace(0, 2, num=3),
-        "entry_date": np.linspace(0, 2, num=3),
-        "amount_match": np.linspace(0, 2, num=3),
-        "has_past": np.linspace(0, 2, num=3),
-        "curr_match": np.linspace(0, 2, num=3),
-        "payment_match": np.linspace(0, 2, num=3),
+        "name_eq": hp.uniform("name_eq", 0, 2),
+        "name_sim": hp.uniform("name_sim", 0, 2),
+        "iban_match": hp.uniform("iban_match", 0, 2),
+        "ext_doc": hp.uniform("ext_doc", 0, 2),
+        "due_date": hp.uniform("due_date", 0, 2),
+        "entry_date": hp.uniform("entry_date", 0, 2),
+        "amount_match": hp.uniform("amount_match", 0, 2),
+        "has_past": hp.uniform("has_past", 0, 2),
+        "curr_match": hp.uniform("curr_match", 0, 2),
+        "payment_match": hp.uniform("payment_match", 0, 2),
     }
-    # run grid search
-    pg = ParameterGrid(param_grid)
-    pgl = list(pg)
-    shuffle(pgl)
-
-    workQ = Queue(maxsize=1)
-    resQ = Queue(maxsize=1)
-
-    def work():
-        while True:
-            p = workQ.get()
-            if p is None:
-                break
-            y_pred = model.predict(X, model.get_params(p))
-            logger.info("predicted")
-            score = accuracy_score(y[50:], y_pred[50:])
-            logger.info("done")
-            resQ.put((score, p))
-        logger.info("exit work")
-
     scores = []
 
-    def res_work():
-        while True:
-            score, p = resQ.get()
-            if score is None:
-                break
-            logger.info("{} - {}".format(score, p))
-            print("got result {}\t{}".format(score, p), flush=True)
-            scores.append([score, p])
-        logger.info("exit res work")
+    f = open(args.out, "w")
 
-    workers = []
+    def estimate(p):
+        logger.info("start {}".format(p))
+        pa = model.get_params(p)
+        y_pred = model.predict(X, pa)
+        score = accuracy_score(y[50:], y_pred[50:])
+        scores.append([score, pa])
+        print("{}\t{}".format(score, ', '.join(str(x) for x in pa)), flush=True, file=f)
+        return 1 - score
 
-    def start_thread(method):
-        thread = threading.Thread(target=method, daemon=True)
-        thread.start()
-        workers.append(thread)
-
-    start_thread(res_work)
-    threads = 6
-    for i in range(threads):
-        start_thread(work)
-
-    with tqdm(desc="predicting", total=len(pgl)) as pbar:
-        for p in pgl:
-            pbar.update(1)
-            logger.info("put {}".format(p))
-            workQ.put(p)
-    logger.info("work done")
-
-    for i in range(threads):
-        workQ.put(None)
-    resQ.put((None, None))
-
-    for w in workers:
-        w.join()
+    best = fmin(fn=estimate,
+                space=param_grid,
+                algo=tpe.suggest,
+                max_evals=10000)
+    logger.info(best)
 
     if len(scores) > 0:
         scores.sort(key=lambda e: -e[0])
         logger.info("BEST Value: {}".format(scores[0]))
+    f.close()
     logger.info("Done")
 
 
