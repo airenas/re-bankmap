@@ -24,7 +24,7 @@ def has_past_transaction(e_id, prev_entries, entry):
     return 0
 
 
-def payment_match(ledger, entry):
+def payment_match(ledger: LEntry, entry: Entry):
     if entry.type == PaymentType.CRDT and ledger.type == LType.CUST and ledger.doc_type == DocType.SF:
         return True
     if entry.type == PaymentType.DBIT and ledger.type == LType.VEND and ledger.doc_type == DocType.SF:
@@ -69,6 +69,8 @@ def similarity(ledger, entry, prev_entries):
 
 
 sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
+
+
 # sim_imp = np.array(
 #     [0.2670326530041369, 0.6522307530530618, 0.9347364895419178, 0.8688850152395576, 0.019829561804123555,
 #      0.11253895189811422, 0.19235562325068553, 0.9601100546445708, 0.3121823395348446, 0.44248828278554747])

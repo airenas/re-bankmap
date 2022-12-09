@@ -1,6 +1,7 @@
 import math
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import List, Dict
 
 from src.utils.logger import logger
 
@@ -142,7 +143,7 @@ def e_currency(p):
 class Arena:
     def __init__(self, l_entries, apps):
         self.l_entries = l_entries
-        self.gl_entries = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
+        self.gl_entries: List[LEntry] = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
         self.entries = [l for l in filter(lambda x: x.type in [LType.CUST, LType.VEND], l_entries)]
         self.apps = apps
         self.date = None
@@ -152,7 +153,7 @@ class Arena:
         self.entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
         self.apps.sort(key=lambda e: e.apply_date.timestamp() if e.apply_date else 1)
         self.date = self.entries[0].doc_date - timedelta(days=1)
-        self.playground = {}
+        self.playground: Dict[str, LEntry] = {}
         self.from_entry, self.from_apps = 0, 0
         logger.info("Start date  : {}".format(self.date))
         self.cust_filter = ""

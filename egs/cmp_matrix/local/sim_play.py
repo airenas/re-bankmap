@@ -1,12 +1,46 @@
 import argparse
+import math
 import sys
 
 import pandas as pd
 
-from egs.cmp_matrix.local.data import Entry, LEntry, App
+from egs.cmp_matrix.local.data import Entry, LEntry, App, LType
 from egs.cmp_matrix.local.predict_play import Arena
-from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val
+from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val, payment_match
 from src.utils.logger import logger
+from src.utils.similarity import sf_sim
+
+
+def find_docs(arena, row: Entry, cust: LEntry):
+    available = [x for x in arena.playground.values() if x.id == cust.id and payment_match(x, row)]
+    res = []
+    remaining_amount = row.amount
+
+    def amount(a: LEntry):
+        return abs(a.amount)
+
+    def add(a: LEntry, why: str):
+        nonlocal remaining_amount
+        res.append({"s": why, "entry": a})
+        remaining_amount -= amount(a)
+        available.remove(a)
+
+    if len(available) == 1 and math.isclose(available[0].amount, row.amount):
+        add(available[0], "one && amount")
+
+    # by sf amount
+    for a in list(available):  # sf number
+        if a.ext_doc in row.msg and a.amount <= remaining_amount:
+            add(a, "sf && amount")
+    # by sf sim && amount
+    for a in list(available):  # sf number
+        if sf_sim(a.ext_doc, row.msg) > 0 and a.amount <= remaining_amount:
+            add(a, "sf sim && amount")
+    # by date
+    for a in list(available):  # sf number
+        if a.amount <= remaining_amount:
+            add(a, "amount")
+    return res
 
 
 def main(argv):
@@ -24,20 +58,20 @@ def main(argv):
 
     entries_t = pd.read_csv(args.input, sep=',')
     logger.info("loaded entries {} rows".format(len(entries_t)))
-    logger.info("Headers: {}".format(list(entries_t)))
-    logger.info("\n{}".format(entries_t.head(n=10)))
+    # logger.info("Headers: {}".format(list(entries_t)))
+    # logger.info("\n{}".format(entries_t.head(n=10)))
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    logger.info("Headers: {}".format(list(ledgers)))
-    logger.info("\n{}".format(ledgers.head(n=10)))
+    # logger.info("Headers: {}".format(list(ledgers)))
+    # logger.info("\n{}".format(ledgers.head(n=10)))
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
 
     apps_t = pd.read_csv(args.apps, sep=',')
     logger.info("loaded apps {} rows".format(len(apps_t)))
-    logger.info("Headers: {}".format(list(apps_t)))
-    logger.info("\n{}".format(apps_t.head(n=10)))
+    # logger.info("Headers: {}".format(list(apps_t)))
+    # logger.info("\n{}".format(apps_t.head(n=10)))
     apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
 
     arena = Arena(l_entries, apps)
@@ -53,6 +87,7 @@ def main(argv):
 
     row = entries[int(args.i)]
     logger.info("Testing bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
+    logger.info("Msg: {}".format(row.msg))
     dt = row.date
     logger.info("Entry date: {}".format(dt))
 
@@ -75,7 +110,7 @@ def main(argv):
     logger.info("Res:")
     i, was = 0, set()
     for r in res:
-        if i > args.top:
+        if i >= args.top:
             break
         if r["entry"].id in was:
             continue
@@ -83,6 +118,13 @@ def main(argv):
         was.add(r["entry"].id)
         logger.info(
             "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
+
+    if res[0]["entry"].type in [LType.VEND, LType.CUST]:
+        res = find_docs(arena, row, res[0]["entry"])
+        logger.info("Docs selected {}:".format(len(res)))
+        for r in res:
+            logger.info(
+                "\t{} -> {}".format(r["s"], r["entry"].to_str()))
     logger.info("Done")
 
 
