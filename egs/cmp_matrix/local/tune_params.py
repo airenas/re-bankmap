@@ -52,7 +52,7 @@ class Selector:
 
     def predict(self, X, params):
         res = []
-        logger.info("predict called {}".format(params))
+        # logger.info("predict called {}".format(params))
         for i in range(len(X)):
             res.append(find_best(self.mtrx[i], params))
 
@@ -64,12 +64,13 @@ class Selector:
         out[1] = params["name_sim"]
         out[2] = params.get("iban_match", out[2])
         out[3] = params.get("ext_doc", out[3])
-        out[4] = params.get("due_date", out[4])
-        out[5] = params.get("entry_date", out[5])
-        out[6] = params.get("amount_match", out[6])
-        out[7] = params.get("has_past", out[7])
-        out[8] = params.get("curr_match", out[8])
-        out[9] = params.get("payment_match", out[9])
+        out[4] = params.get("ext_doc_sim", out[3])
+        out[5] = params.get("due_date", out[4])
+        out[6] = params.get("entry_date", out[5])
+        out[7] = params.get("amount_match", out[6])
+        out[8] = params.get("has_past", out[7])
+        out[9] = params.get("curr_match", out[8])
+        out[10] = params.get("payment_match", out[9])
         return out
 
 
@@ -106,8 +107,10 @@ def main(argv):
     arena = Arena(l_entries, apps)
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
-    X = entries
-    y = [e.rec_id for e in entries]
+    X = [e for e in entries if e.rec_id]
+    y = [e.rec_id for e in X]
+
+    logger.info("Dropped without cust/vend: {}".format(len(entries) - len(X)))
 
     entry_dic = {}
     for e in entries:
@@ -117,36 +120,44 @@ def main(argv):
         entry_dic[k] = arr
 
     mtrx = []
-    with tqdm(desc="preparinng", total=len(entries)) as pbar:
-        for i in range(len(entries)):
+    with tqdm(desc="preparing", total=len(X)) as pbar:
+        for i in range(len(X)):
             pbar.update(1)
-            mtrx.append(calc_sims(arena, entries[i], entry_dic))
+            mtrx.append(calc_sims(arena, X[i], entry_dic))
 
     model = Selector(mtrx)
 
     param_grid = {
-        "name_eq": hp.uniform("name_eq", 0, 2),
-        "name_sim": hp.uniform("name_sim", 0, 2),
-        "iban_match": hp.uniform("iban_match", 0, 2),
-        "ext_doc": hp.uniform("ext_doc", 0, 2),
-        "due_date": hp.uniform("due_date", 0, 2),
-        "entry_date": hp.uniform("entry_date", 0, 2),
-        "amount_match": hp.uniform("amount_match", 0, 2),
-        "has_past": hp.uniform("has_past", 0, 2),
-        "curr_match": hp.uniform("curr_match", 0, 2),
-        "payment_match": hp.uniform("payment_match", 0, 2),
+        "name_eq": hp.uniform("name_eq", 0, 1),
+        "name_sim": hp.uniform("name_sim", 0, 1),
+        "iban_match": hp.uniform("iban_match", 0, 1),
+        "ext_doc": hp.uniform("ext_doc", 0, 1),
+        "ext_doc_sim": hp.uniform("ext_doc_sim", 0, 1),
+        "due_date": hp.uniform("due_date", 0, 1),
+        "entry_date": hp.uniform("entry_date", 0, 1),
+        "amount_match": hp.uniform("amount_match", 0, 1),
+        "has_past": hp.uniform("has_past", 0, 1),
+        "curr_match": hp.uniform("curr_match", 0, 1),
+        "payment_match": hp.uniform("payment_match", 0, 1),
     }
     scores = []
 
     f = open(args.out, "w")
+    bv = 0
 
     def estimate(p):
-        logger.info("start {}".format(p))
+        nonlocal bv
+        # logger.info("start {}".format(p))
         pa = model.get_params(p)
         y_pred = model.predict(X, pa)
         score = accuracy_score(y[50:], y_pred[50:])
         scores.append([score, pa])
         print("{}\t{}".format(score, ', '.join(str(x) for x in pa)), flush=True, file=f)
+        if bv < score:
+            bv = score
+            logger.info(
+                "found {} - ({} of {} bad)".format(bv, len([i for i, x in enumerate(y[50:]) if x != y_pred[50:][i]]),
+                                                   len(y_pred[50:])))
         return 1 - score
 
     best = fmin(fn=estimate,

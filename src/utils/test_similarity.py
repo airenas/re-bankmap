@@ -1,6 +1,7 @@
+import math
 from datetime import datetime
 
-from src.utils.similarity import name_sim, date_sim, num_sim
+from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim, sf_dist
 
 
 def test_str_sim():
@@ -29,3 +30,18 @@ def test_num_sim():
     assert num_sim(10) < 0.5
     assert num_sim(20) < .1
     assert num_sim(-20) < .1
+
+
+def test_sf_dist():
+    assert sf_dist("SF012345", "SF012345") == 0
+    assert sf_dist("SF012345", "SF0142345") == 1
+    assert math.isclose(sf_dist("SF012345", "012345"), .6)
+    assert math.isclose(sf_dist("SF012345", "01234"), .9)
+    assert math.isclose(sf_dist("SF012345", "0123222"), 2.4)
+
+
+def test_sf_sim():
+    assert sf_sim("SF012345", "123 SF012345") == 1
+    assert sf_sim("SF012345", "olia SF0142345") == 0
+    assert sf_sim("SF012345", "tata 012345;aaa") == .4
+    assert math.isclose(sf_sim("SF012345", "tata 01234;aaa"), .1)

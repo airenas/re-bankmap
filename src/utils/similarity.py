@@ -2,8 +2,12 @@ import math
 import re
 
 import jellyfish
+import nltk
+import strsimpy
 
-split_regex = re.compile(" |,|\"|'")
+nltk.edit_distance("humpty", "dumpty")
+
+split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~")
 
 
 def freq(t):
@@ -45,3 +49,51 @@ def date_sim(due_date, date):
 
 def num_sim(val):
     return 1 - math.tanh(abs(val / 10))
+
+
+def sf_dist(sf1, sf2):
+    def isnum(x):
+        return '0' <= x <= '9'
+
+    a = strsimpy.WeightedLevenshtein()
+
+    def deletion_cost(char, pos, l):
+        if pos < 3 and not isnum(char):
+            return 0.3
+        if pos == (l - 1) and isnum(char):
+            return 0.3
+        return 1.0
+
+    a.deletion_cost_fn = deletion_cost
+
+    def insertion_cost(char, pos):
+        if pos < 3:
+            return 0.3
+        return 1.0
+
+    a.insertion_cost_fn = insertion_cost
+
+    def subs_cost(ch1, ch2, pos):
+        if pos > 3 and isnum(ch1) and isnum(ch2):
+            return .4
+        return 1.0
+
+    a.substitution_cost_fn = subs_cost
+    return a.distance(sf1, sf2)
+
+
+def contains_number(string):
+    return any(char.isdigit() for char in string)
+
+
+def sf_sim(sf1, txt):
+    tl = drop_empty(split_regex.split(txt))
+    res = 1
+    for t in tl:
+        if contains_number(t):
+            v = sf_dist(sf1, t)
+            if v == 0:
+                return 1
+            if v < 1 and v < res:
+                res = v
+    return 1 - res

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from egs.cmp_matrix.local.data import PaymentType, LType, DocType, Entry, LEntry
 from src.utils.logger import logger
-from src.utils.similarity import name_sim, date_sim, num_sim
+from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim
 
 
 def e_key(e):
@@ -57,6 +57,7 @@ def similarity(ledger, entry, prev_entries):
     res.append(name_sim(nl, ne))
     res.append(1 if len(ledger.iban) > 5 and ledger.iban == entry.iban else 0)
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
+    res.append(sf_sim(ledger.ext_doc, entry.msg) if len(ledger.ext_doc) > 5 else 0)
     res.append(date_sim(ledger.due_date, entry.date))
     res.append(date_sim(entry.date, ledger.doc_date))
     res.append(amount_match(ledger, entry))
@@ -67,7 +68,10 @@ def similarity(ledger, entry, prev_entries):
     return res
 
 
-sim_imp = np.array([0.5, 1, 1, 2, 0.1, .4, .3, 2, 1, 1])
+sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
+# sim_imp = np.array(
+#     [0.2670326530041369, 0.6522307530530618, 0.9347364895419178, 0.8688850152395576, 0.019829561804123555,
+#      0.11253895189811422, 0.19235562325068553, 0.9601100546445708, 0.3121823395348446, 0.44248828278554747])
 
 
 def sim_val(v):

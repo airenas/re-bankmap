@@ -4,3 +4,4 @@ numpy~=1.23.3
 jellyfish~=0.9.0
 scikit-learn~=1.1.2
 tensorflow~=2.10.0
+git+https://github.com/airenas/python-string-similarity.git@v0.2.87#egg=strsimpy
