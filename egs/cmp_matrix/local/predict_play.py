@@ -4,7 +4,8 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena
+from egs.cmp_matrix.local.data import App, Arena, LType
+from egs.cmp_matrix.local.predict_docs import find_best_docs
 from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key
 from src.utils.logger import logger
 
@@ -72,11 +73,17 @@ def main(argv):
         arr.append(e)
         entry_dic[k] = arr
 
+    def predict_docs(arena, entry, lentry: LEntry):
+        if lentry is None or lentry.type not in [LType.CUST, LType.VEND]:
+            return ""
+        docs = find_best_docs(arena, entry, lentry)
+        return ";".join([d["entry"].doc_no for d in docs])
+
     with tqdm(desc="predicting", total=len(entries)) as pbar:
         for i in range(len(entries)):
             pbar.update(1)
             best, sim = get_best_account(arena, entries[i], entry_dic)
-            print("{}\t{}".format(best.id if best is not None else "", sim))
+            print("{}\t{}\t{}".format(best.id if best is not None else "", predict_docs(arena, entries[i], best), sim))
     logger.info("Done")
 
 
