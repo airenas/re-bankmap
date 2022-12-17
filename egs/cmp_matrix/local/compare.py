@@ -97,28 +97,32 @@ def main(argv):
     show_no_rejected(y_true_n, y_pred_n, 'Acc rec before    ')
 
     logger.info("Docs ...")
-    rda, rds, rdi, rdd, rs = 0, 0, 0, 0, 0
+    rda, rds, rdi, rdd, rs, ny = 0, 0, 0, 0, 0, 0
     with open(args.out + '.docs', 'w') as f:
         for i, y in enumerate(y_true_docs):
+            if not y:
+                ny += 1
+                continue
             ir = i + skip
             pa = y_pred_docs[i].split(";")
             ya = y.split(";")
             vec = y_pred_v[i]
             val = sim_val(vec)
-            s, i, d = 0, 0, 0
+            se, ie, de, r = 0, 0, 0, ""
             if val > args.limit:
-                a, s, i, d = cmp_arr(ya, pa)
-                rda, rds, rdi, rdd = rda + a, rds + s, rdi + i, rdd + d
+                a, se, ie, de = cmp_arr(ya, pa)
+                rda, rds, rdi, rdd = rda + a, rds + se, rdi + ie, rdd + de
             else:
+                r = "rejected"
                 rs += len(ya)
-            if (s + i + d) == 0 and val > args.limit:
+            if (se + ie + de) == 0 and val > args.limit:
                 print("{}\t{}".format(ir, y), file=f)
             else:
-                print("{}\t{} <--diff-->\t{}".format(ir, y, y_pred_docs[i]), file=f)
+                print("{}\t{} {}<--diff-->\t{}".format(ir, y, r, y_pred_docs[i]), file=f)
 
     logger.info(
-        "Acc all {} ({}/{}) s:{}, i:{}, d:{}\trejected {})".format((rds + rdd + rdi) / rda, (rds + rdd + rdi), rda, rds,
-                                                                   rdi, rdd, rs))
+        "Acc all {} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda), (rds + rdd + rdi), rda, rds,
+                                                                   rdi, rdd, rs, ny))
     logger.info("Done")
 
 
