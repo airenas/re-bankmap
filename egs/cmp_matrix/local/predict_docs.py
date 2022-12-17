@@ -13,13 +13,13 @@ def find_best_docs(arena, row: Entry, cust: LEntry):
         return abs(a.amount)
 
     def amount_ok(v):
-        return v <= (remaining_amount + 1)
+        return abs(v) <= (remaining_amount + 1)
 
     def add(a: LEntry, why: str):
         nonlocal remaining_amount
         res.append({"s": why, "entry": a})
         remaining_amount -= amount(a)
-        logger.info("rem: {}".format(remaining_amount))
+        logger.info("rem: %.2f - %s" % (remaining_amount, a.doc_no))
         available.remove(a)
 
     if len(available) == 1 and amount_ok(available[0].amount):
