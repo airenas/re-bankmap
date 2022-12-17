@@ -84,6 +84,9 @@ ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
 .PHONY: compare
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
+oracle/docs: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
+	$(python_cmd) local/oracle_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+	    --apps ${out_dir}/l_apps.txt
 ############################################
 build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build
