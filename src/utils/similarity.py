@@ -87,13 +87,20 @@ def contains_number(string):
 
 
 def sf_sim(sf1, txt):
-    tl = drop_empty(split_regex.split(txt))
-    res = 1
+    res, _ = sf_sim_out(sf1, txt)
+    return res
+
+
+def sf_sim_out(sf1: str, txt: str):
+    sf1 = sf1.casefold()
+    tl = drop_empty(split_regex.split(txt.casefold()))
+    res, bt = 1, ""
     for t in tl:
         if contains_number(t):
             v = sf_dist(sf1, t)
             if v == 0:
-                return 1
+                return 1, t
             if v < 1 and v < res:
                 res = v
-    return 1 - res
+                bt = t
+    return 1 - res, bt

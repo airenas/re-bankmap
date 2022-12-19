@@ -1,7 +1,7 @@
 import math
 from datetime import datetime
 
-from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim, sf_dist
+from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim, sf_dist, sf_sim_out
 
 
 def test_str_sim():
@@ -45,3 +45,14 @@ def test_sf_sim():
     assert sf_sim("SF012345", "olia SF0142345") == 0
     assert sf_sim("SF012345", "tata 012345;aaa") == .4
     assert math.isclose(sf_sim("SF012345", "tata 01234;aaa"), .1)
+    assert sf_sim("SF012345", "123 sf012345") == 1
+    assert sf_sim("SF012345", "tata f012345;aaa") == .7
+
+
+def test_sf_sim_out():
+    s, v = sf_sim_out("SF012345", "123 SF012345")
+    assert s == 1
+    assert v == "SF012345"
+    s, v = sf_sim_out("SF012345", "tata f012345;aaa")
+    assert s == .7
+    assert v == "f012345"

@@ -11,7 +11,7 @@ from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim
 
 
 def e_key(e):
-    return e.who + e.iban
+    return e.who.casefold() + e.iban.casefold()
 
 
 def has_past_transaction(e_id, prev_entries, entry):
@@ -53,16 +53,16 @@ def similarity(ledger, entry, prev_entries):
     res = []
     nl = ledger.name
     ne = entry.who
-    res.append(1 if nl.lower() == ne.lower() else 0)
+    res.append(1 if nl.casefold() == ne.casefold() else 0)
     res.append(name_sim(nl, ne))
-    res.append(1 if len(ledger.iban) > 5 and ledger.iban == entry.iban else 0)
-    res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc in entry.msg else 0)
+    res.append(1 if len(ledger.iban) > 5 and ledger.iban.casefold() == entry.iban.casefold() else 0)
+    res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc.casefold() in entry.msg.casefold() else 0)
     res.append(sf_sim(ledger.ext_doc, entry.msg) if len(ledger.ext_doc) > 5 else 0)
     res.append(date_sim(ledger.due_date, entry.date))
     res.append(date_sim(entry.date, ledger.doc_date))
     res.append(amount_match(ledger, entry))
     res.append(has_past_transaction(ledger.id, prev_entries, entry))
-    res.append(1 if ledger.currency == entry.currency else 0)
+    res.append(1 if ledger.currency.casefold() == entry.currency.casefold() else 0)
     res.append(1 if payment_match(ledger, entry) else 0)
 
     return res
