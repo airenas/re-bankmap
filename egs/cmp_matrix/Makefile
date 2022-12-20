@@ -12,7 +12,8 @@ take_n?=100000000000000
 model?=${out_dir}/dt.model
 batch?=10
 hidden?=10
-skip=0
+skip?=0
+split?=3000
 top=20
 limit=0.3
 ############################################
@@ -84,9 +85,11 @@ ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
 .PHONY: compare
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
-oracle/docs: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
+show/oracle: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/oracle_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt
+show/params:
+	$(python_cmd) local/show_params.py
 ############################################
 build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build
@@ -111,7 +114,7 @@ inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 ############################################
 ${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 	$(python_cmd) local/tune_params.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --apps ${out_dir}/l_apps.txt --out $@_
+	    --apps ${out_dir}/l_apps.txt --skip $(skip) --split_at $(split) --out $@_
 	mv $@_ $@
 tune: ${out_dir}/params.txt
 ############################################
