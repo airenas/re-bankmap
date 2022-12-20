@@ -81,6 +81,8 @@ def main(argv):
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
+    parser.add_argument("--skip", nargs='?', default=50, type=int, help="Skip initial items for evaluation")
+    parser.add_argument("--split_at", nargs='?', default=3000, type=int, help="Skip train/val at pos")
     parser.add_argument("--out", nargs='?', required=True, help="Out file")
     args = parser.parse_args(args=argv)
 
@@ -107,10 +109,13 @@ def main(argv):
     arena = Arena(l_entries, apps)
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
-    X = [e for e in entries if e.rec_id]
+    X_all = [e for e in entries if e.rec_id]
+    logger.info("Dropped without cust/vend: {}".format(len(entries) - len(X_all)))
+    Xv = X_all[args.split_at:]
+    X = X_all[:args.split_at]
     y = [e.rec_id for e in X]
-
-    logger.info("Dropped without cust/vend: {}".format(len(entries) - len(X)))
+    yv = [e.rec_id for e in Xv]
+    logger.info("Train set {}, val set: {}".format(len(X), len(Xv)))
 
     entry_dic = {}
     for e in entries:
@@ -120,12 +125,20 @@ def main(argv):
         entry_dic[k] = arr
 
     mtrx = []
-    with tqdm(desc="preparing", total=len(X)) as pbar:
+    with tqdm(desc="preparing train", total=len(X)) as pbar:
         for i in range(len(X)):
             pbar.update(1)
             mtrx.append(calc_sims(arena, X[i], entry_dic))
 
     model = Selector(mtrx)
+
+    mtrx_v = []
+    with tqdm(desc="preparing val", total=len(Xv)) as pbar:
+        for i in range(len(Xv)):
+            pbar.update(1)
+            mtrx_v.append(calc_sims(arena, Xv[i], entry_dic))
+
+    model_v = Selector(mtrx_v)
 
     param_grid = {
         "name_eq": hp.uniform("name_eq", 0, 1),
@@ -150,14 +163,21 @@ def main(argv):
         # logger.info("start {}".format(p))
         pa = model.get_params(p)
         y_pred = model.predict(X, pa)
-        score = accuracy_score(y[50:], y_pred[50:])
+        score = accuracy_score(y[args.skip:], y_pred[args.skip:])
         scores.append([score, pa])
         print("{}\t{}".format(score, ', '.join(str(x) for x in pa)), flush=True, file=f)
         if bv < score:
             bv = score
+            yv_pred = model_v.predict(Xv, pa)
+            vs = accuracy_score(yv, yv_pred)
             logger.info(
-                "found {} - ({} of {} bad)".format(bv, len([i for i, x in enumerate(y[50:]) if x != y_pred[50:][i]]),
-                                                   len(y_pred[50:])))
+                "found {} - ({} of {} bad), val({} - ({} of {}))".
+                    format(bv,
+                           len([i for i, x in enumerate(y[args.skip:]) if x != y_pred[args.skip:][i]]),
+                           len(y_pred[args.skip:]),
+                           vs,
+                           len([i for i, x in enumerate(yv) if x != yv_pred[i]]),
+                           len(yv)))
         return 1 - score
 
     best = fmin(fn=estimate,
