@@ -201,7 +201,7 @@ class Arena:
                                         "Change amount {}: from {} to {}".format(app.doc_no, entry.amount,
                                                                                  app.remaining))
                             else:
-                                logger.info(
+                                logger.debug(
                                     "Change amount {}: from {} to {}".format(app.doc_no, entry.amount, app.remaining))
                             entry.amount = app.remaining
                     else:
@@ -213,17 +213,17 @@ class Arena:
                             if self.cust_filter == app.cv_no:
                                 logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
                         else:
-                            logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                            logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                     self.from_apps += 1
                 self.date = ndt
                 if self.date > dt:
                     self.date = dt
             logger.info("Items to compare : {}".format(len(self.playground)))
             if self.cust_filter:
-                logger.info("Active docs:")
-                for e in self.playground.values():
-                    if e.id == self.cust_filter:
-                        logger.info("{}".format(e.to_str()))
+                ad = [x for x in self.playground.values() if x.id == self.cust_filter]
+                logger.info("Active docs ({}):".format(len(ad)))
+                for e in ad:
+                    logger.info("{}".format(e.to_str()))
         else:
             logger.debug("Up to date  : {}".format(dt))
 
