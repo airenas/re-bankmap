@@ -7,7 +7,7 @@ import strsimpy
 
 nltk.edit_distance("humpty", "dumpty")
 
-split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~")
+split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 
 
 def freq(t):
@@ -60,7 +60,11 @@ def sf_dist(sf1, sf2):
     def deletion_cost(char, pos, l):
         if pos < 3 and not isnum(char):
             return 0.3
+        if pos < 4 and char == '0':
+            return 0.3
         if pos == (l - 1) and isnum(char):
+            return 0.3
+        if pos == (l - 2) and char == '-':
             return 0.3
         return 1.0
 

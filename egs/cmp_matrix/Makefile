@@ -88,6 +88,8 @@ ${model}: ${out_dir}/features.txt
 show/oracle: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/oracle_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt
+show/sf: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
+	$(python_cmd) local/show_sf.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt
 show/params:
 	$(python_cmd) local/show_params.py
 ############################################
