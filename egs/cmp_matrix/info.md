@@ -34,9 +34,9 @@ optim (cust/vend) = `115/3400`, docs: `756/3232` s:384, i:161, d:211
 naudojant slenkstį = `0.999 (1/3182)`, rejected: `218`
 
 
-### Su validavimo imtimi
+### Su test/val imtimis
 
-3000 parametrų optimizavimui, 511 - validavimui
+3000 įrašų optimizavimui, 511 - validavimui
 ```
 ### val set manual
 Acc not empty     : 0.9448979591836735 (27/490)	rejected: 0
@@ -57,9 +57,9 @@ https://github.com/airenas/re-bankmap/blob/bd93bbe2898ebeb04e35bebea48a8d8977435
 - Raidžių priekyje arba `0` praleidimas - `0.3`
 - Simbolio sukeitimas - `0.4` ???
 - Pask sk. praleidimas - `0.3` ???
-- Žodis yra SF pabaiga, pvz.: `SB034451` ir `SF SB 034775,51` 1133
+- Žodis yra SF pabaiga, pvz.: `SB034451` ir `SF SB 034775,51` (1133)
 
-## SF sugretinimas
+## SF sugretinimo tyrimas
 
 1. Nustatome GL, BA, VEND, CUST.
 2. Jei [VEND, CUST], ieškome SF:
@@ -73,7 +73,7 @@ Su atmetimo sleksčiu:
 Acc all 0.797 (634/3125) s:304, i:134, d:196	(rejected 107, no doc: 1108)
 
 Oracle SF acc: 
-0.879, (395/3268) (nėra SF?, išmesta per anksti iš "playground"?)
+0.879, (395/3268) (nėra SF?, išmesta per anksti iš aktyvių, išankstinės?)
 ```
 ### Problemos
 
@@ -83,7 +83,7 @@ Kada nuspręsti, kad negalima susieti
 - Lieka kažkokia nepadengta suma?
 - pranešime yra Sf numeris, bet nesisieja nei su vienu įrašu
 
-## Pvz.:
+### Pvz.:
 
 OK: 3459, 51
 
