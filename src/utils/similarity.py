@@ -107,4 +107,12 @@ def sf_sim_out(sf1: str, txt: str):
             if v < 1 and v < res:
                 res = v
                 bt = t
+    # check SF endings
+    for t in tl:
+        if len(t) > 1:
+            if sf1.endswith(t):
+                v = 1 - (0.1 + 0.05 * (len(t)-2))
+                if v < 1 and v < res:
+                    res = v
+                    bt = t
     return 1 - res, bt

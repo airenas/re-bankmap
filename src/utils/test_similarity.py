@@ -48,8 +48,11 @@ def test_sf_sim():
     assert sf_sim("SF012345", "123 sf012345") == 1
     assert sf_sim("SF012345", "tata f012345;aaa") == .7
     assert sf_sim("SF012345", "sf01255+012345") == .4
-    assert math.isclose(sf_sim("SF012345", "12345"), .1)
+    assert math.isclose(sf_sim("SF012345", "12345"), .25)
     assert math.isclose(sf_sim("SF012345-1", "SF012345"), .4)
+    assert math.isclose(sf_sim("SF012345", "olia 45"), 0.1)
+    assert math.isclose(sf_sim("SF012345", "olia 345"), 0.15)
+    assert math.isclose(sf_sim("SF012345", "olia 2345"), 0.2)
 
 
 def test_sf_sim_out():
