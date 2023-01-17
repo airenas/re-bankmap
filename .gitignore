@@ -131,3 +131,4 @@ dmypy.json
 docubank-src/**
 egs/cmp_matrix/data/**
 egs/cmp_matrix/st/**
+egs/cmp_matrix/data*/**
