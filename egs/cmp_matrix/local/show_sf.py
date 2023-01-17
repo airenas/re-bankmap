@@ -45,10 +45,10 @@ def main(argv):
             for t in target:
                 if t not in e.msg:
                     v = sf_sim(t, e.msg)
-                    if v == 0:
+                    if v < 0.9 and v > 0.05:
                         pt.append(t)
             if len(pt):
-                logger.info("{}\t{}\t==> {}".format(i, e.msg, " ".join(pt)))
+                print("{}\t{}\t==> {}".format(i, e.msg, " ".join(pt)))
     logger.info("Done")
 
 
