@@ -20,9 +20,8 @@ title Doc Import
 
 ' skinparam handwritten true
 
-actor User
 participant "DocuBank" as docu
-participant "Bank System" as bank
+participant "External\nBank System" as bank
 participant "Azure Storage" as storage
 participant "Azure ServiceBus" as bus
 
@@ -88,7 +87,7 @@ deactivate mapper
 
 == 3. Docubank updates DB ==
 
-loop once/several times a day
+loop for each msg
     docu -> bus: get new MapMsg
     activate docu
     activate bus
