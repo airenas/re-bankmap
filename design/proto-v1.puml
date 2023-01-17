@@ -1,0 +1,101 @@
+@startuml Doc import
+skinparam sequence {
+ParticipantBorderColor Black
+ActorBorderColor Black
+
+ParticipantBackgroundColor White
+ActorBackgroundColor White
+
+ArrowColor black
+LifeLineBorderColor black
+LifeLineBackgroundColor lightgray
+
+BoxBorderColor black
+}
+skinparam databaseBackgroundColor White
+skinparam dataBaseBorderColor Blue
+
+hide footbox
+title Doc Import
+
+' skinparam handwritten true
+
+actor User
+participant "DocuBank" as docu
+participant "Bank System" as bank
+participant "Azure Storage" as storage
+participant "Azure ServiceBus" as bus
+
+box "On AKS" #LightBlue
+participant "Doc Mapper\npython container" as mapper #LightGreen
+end box
+
+== 1. Docubank puts import msg ==
+
+loop once/several times a day
+docu -> bank: get new statements
+activate docu
+activate bank
+bank --> docu: 
+deactivate bank
+
+docu -> storage: put data(importID)
+activate storage
+storage --> docu
+deactivate storage
+
+docu -> bus: add newStatementsMsg(imporyID)
+activate bus
+bus --> docu
+deactivate bus
+deactivate docu
+end 
+
+== 2. Mapper does recognition ==
+
+loop for each msg
+
+mapper -> bus: getMsgs
+activate mapper
+activate bus
+bus -> mapper: msg with importID
+
+mapper -> storage: get data(importID)
+activate storage
+storage -> mapper: data
+deactivate storage
+
+mapper -> mapper: recognize
+
+
+loop for each statement
+    mapper -> bus: put MapMsg(importID, statementID, recognized client/vendor/gl/ba, [sf id, sum])
+    bus --> mapper
+end
+
+alt everything OK
+    mapper -> storage: drop data(importID)
+    activate storage
+    storage --> mapper
+    deactivate storage
+else some Failure
+    mapper -> bus: put error info to DLQ
+    bus --> mapper
+end
+deactivate bus
+end
+deactivate mapper
+
+== 3. Docubank updates DB ==
+
+loop once/several times a day
+    docu -> bus: get new MapMsg
+    activate docu
+    activate bus
+    bus --> docu: 
+    deactivate bus
+    docu -> docu: update DB
+end
+deactivate docu
+
+@enduml
