@@ -71,7 +71,7 @@ class DocType(Enum):
     def from_s(s):
         if s == "SF":
             return DocType.SF
-        if s == "Grąž. paž.":
+        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas":
             return DocType.GRAZ_PAZ
         if s == "GL":
             return DocType.GL

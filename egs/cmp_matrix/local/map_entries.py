@@ -1,5 +1,6 @@
 import argparse
 import sys
+from datetime import datetime
 
 import pandas as pd
 from tqdm import tqdm
@@ -78,6 +79,12 @@ def main(argv):
     docs = pd.read_csv(args.docs_map, sep=',')
     dm = {docs.iloc[i]["ID"]: docs.iloc[i]["Ext_ID"] for i in range(len(docs))}
     res, cols = prepare_data(data, map, dm)
+
+    # stable sort by date
+    sr = [v for v in enumerate(res)]
+    sr.sort(key=lambda e: (datetime.fromisoformat(e[1][4]).timestamp(), e[0]))
+    res = [v[1] for v in sr]
+
     df = pd.DataFrame(res, columns=cols)
     df.to_csv(sys.stdout, index=False)
     logger.info("Done")
