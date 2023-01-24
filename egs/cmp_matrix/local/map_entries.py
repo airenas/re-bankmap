@@ -11,7 +11,8 @@ from src.utils.logger import logger
 
 def is_recognized(param):
     if param or param.strip() != "":
-        return True
+        if param != "91":  # special clients ID //todo workaround
+            return True
     return False
 
 
