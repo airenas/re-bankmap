@@ -121,6 +121,7 @@ ${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir
 tune: ${out_dir}/params.txt
 ############################################
 clean:
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	rm -rf $(out_dir)
 clean/model:
 	rm -rf $(model)
