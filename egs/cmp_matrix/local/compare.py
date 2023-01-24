@@ -19,7 +19,8 @@ def show_no_rejected(y_true, y_pred, name):
     y_true_nr = [x for i, x in enumerate(y_true) if y_pred[i] != 'rejected']
     y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected']
 
-    logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
+    if len(y_true_nr) > 0:
+        logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
                                                       sum([1 for i, x in enumerate(y_true_nr) if y_pred_nr[i] != x]),
                                                       len(y_true_nr),
                                                       sum([1 for x in y_pred if x == 'rejected'])))
