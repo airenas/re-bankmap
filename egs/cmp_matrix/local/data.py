@@ -70,7 +70,7 @@ class DocType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "SF":
+        if s == "SF" or s == "Delspinigių pažyma":
             return DocType.SF
         if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas":
             return DocType.GRAZ_PAZ
@@ -159,6 +159,7 @@ class Arena:
         logger.info("Start date  : {}".format(self.date))
         self.cust_filter = ""
         self.doc_filter = ""
+        self.drop_not_found = dict()
 
     def move(self, dt):
         if self.date < dt:
@@ -179,6 +180,8 @@ class Arena:
                         logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
                     self.playground[entry.doc_no] = entry
                     self.from_entry += 1
+                    # if self.drop_not_found.get(entry.doc_no) == 1:
+                    #     logger.warn("Add {}, but wanted to drop before".format(entry.doc_no))
                 while self.from_apps < len(self.apps):
                     app = self.apps[self.from_apps]
                     if app.apply_date >= ndt:
@@ -215,6 +218,7 @@ class Arena:
                                 logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
                         else:
                             logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
+                        self.drop_not_found[app.doc_no] = 1
                     self.from_apps += 1
                 self.date = ndt
                 if self.date > dt:
