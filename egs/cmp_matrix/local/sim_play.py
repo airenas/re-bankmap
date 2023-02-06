@@ -53,8 +53,11 @@ def main(argv):
         entry_dic[k] = arr
 
     row = entries[int(args.i)]
-    logger.info("Testing bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
-    logger.info("Msg: {}".format(row.msg))
+    logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
+    logger.info("Msg       : {}".format(row.msg))
+    logger.info("Wanted    : {}".format(row.doc_ids))
+    # logger.info("Ext doc no: {}".format(row.ext_id))
+    logger.info("=============================\n\n")
     dt = row.date
     logger.info("Entry date: {}".format(dt))
 
@@ -74,7 +77,8 @@ def main(argv):
         check(e)
 
     res.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
-    logger.info("Res:")
+    logger.info("\n\n=============================")
+    logger.info("Recognized:")
     i, was = 0, set()
     for r in res:
         if i >= args.top:
@@ -85,13 +89,22 @@ def main(argv):
         was.add(r["entry"].id)
         logger.info(
             "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
-
+    logger.info("=============================\n\n")
     if res[0]["entry"].type in [LType.VEND, LType.CUST]:
         res = find_best_docs(arena, row, res[0]["entry"])
+        logger.info("\n\n=============================")
         logger.info("Docs selected {}:".format(len(res)))
-        for r in res:
+        for r in res[:50]:
             logger.info(
                 "\t{} -> {}".format(r["s"], r["entry"].to_str()))
+        sel = [r["entry"].doc_no for r in res]
+        sel.sort()
+        wanted = row.doc_ids.split(";")
+        wanted.sort()
+        logger.info("\n\n=============================")
+        logger.info("Msg       : {}".format(row.msg))
+        logger.info("Wanted    : {}".format(",".join(wanted)))
+        logger.info("Selected  : {}".format(",".join(sel)))
     logger.info("Done")
 
 

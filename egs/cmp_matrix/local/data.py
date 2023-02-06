@@ -35,6 +35,7 @@ class Entry:
         self.currency = row['Currency']
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
         self.doc_ids = e_str(row['Docs'])
+        self.ext_id = row['DocNo']
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -221,6 +222,7 @@ class Arena:
             logger.info("Items to compare : {}".format(len(self.playground)))
             if self.cust_filter:
                 ad = [x for x in self.playground.values() if x.id == self.cust_filter]
+                logger.info("\n\n=============================")
                 logger.info("Active docs ({}):".format(len(ad)))
                 for e in ad:
                     logger.info("{}".format(e.to_str()))

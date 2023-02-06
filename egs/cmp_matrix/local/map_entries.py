@@ -25,7 +25,7 @@ def iban(p):
 def prepare_data(df, map, dm):
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs']
+            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo']
     found = set()
     with tqdm("read entries", total=len(df)) as pbar:
         for i in range(len(df)):
@@ -44,7 +44,8 @@ def prepare_data(df, map, dm):
                         rec_no,
                         df['Recognized_Document_No_'].iloc[i], rec,
                         e_currency(df['Acct_Ccy'].iloc[i]),
-                        dm.get(ext_id, "")])
+                        dm.get(ext_id, ""),
+                        df['External_Document_No_'].iloc[i]])
     return res, cols
 
 

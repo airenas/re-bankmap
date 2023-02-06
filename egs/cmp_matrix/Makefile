@@ -14,8 +14,8 @@ batch?=10
 hidden?=10
 skip?=0
 split?=3000
-top=20
-limit=0.3
+top?=20
+limit?=1.5
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@

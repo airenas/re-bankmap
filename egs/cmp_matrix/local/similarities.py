@@ -98,7 +98,7 @@ sim_imp_H = np.array(
         0.49163849484216277
     ])
 
-sim_imp = sim_imp_S
+sim_imp = sim_imp_H
 
 
 def sim_val(v):
