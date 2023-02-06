@@ -71,13 +71,6 @@ def main(argv):
         arr.append(e)
         entry_dic[k] = arr
 
-    def predict_docs(arena, entry, lentry: LEntry):
-        if lentry is None or lentry.type not in [LType.CUST, LType.VEND]:
-            return ""
-        docs = find_best_docs(arena, entry, lentry)
-        return ";".join([d["entry"].doc_no for d in docs])
-
-
     pr_bar = tqdm(desc="predicting", total=len(entries))
 
     def run(entries, entry_dic, start, queue: Queue):
@@ -88,7 +81,7 @@ def main(argv):
         logger.info("run thread {}:{}".format(start, start + len(entries)))
         for i in range(len(entries)):
             best, sim = get_best_account(arena, entries[i], entry_dic)
-            _res = "{}\t{}\t{}".format(best.id if best is not None else "", predict_docs(arena, entries[i], best), sim)
+            _res = "{}\t{}\t{}".format(best.id if best is not None else "", "", sim)
             queue.put((i+start, _res))
         logger.info("done thread {}:{}".format(start, start + len(entries)))
 

@@ -70,11 +70,15 @@ ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entrie
 ${out_dir}/l_apps.txt: ${out_dir}/cust_l_apps.txt ${out_dir}/vend_l_apps.txt 
 	cat ${out_dir}/cust_l_apps.txt > $@
 	tail -n +2 ${out_dir}/vend_l_apps.txt >> $@
-${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
+${out_dir}/predicted_type.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/predict_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt > $@_
 # 	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 # 	    > $@_
+	mv $@_ $@
+${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/predicted_type.txt
+	$(python_cmd) local/predict_play_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+	    --apps ${out_dir}/l_apps.txt --pred ${out_dir}/predicted_type.txt > $@_
 	mv $@_ $@
 ${out_dir}/features.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/make_features.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt > $@_

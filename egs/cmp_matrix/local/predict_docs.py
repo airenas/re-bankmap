@@ -4,8 +4,8 @@ from src.utils.logger import logger
 from src.utils.similarity import sf_sim_out
 
 
-def find_best_docs(arena, row: Entry, cust: LEntry):
-    available = [x for x in arena.playground.values() if x.id == cust.id and payment_match(x, row)]
+def find_best_docs(arena, row: Entry, id: str):
+    available = [x for x in arena.playground.values() if x.id == id and payment_match(x, row) ]
     res = []
     remaining_amount = row.amount
     msg = row.msg.casefold()
