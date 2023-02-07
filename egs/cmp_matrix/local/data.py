@@ -223,7 +223,7 @@ class Arena:
                 self.date = ndt
                 if self.date > dt:
                     self.date = dt
-            logger.info("Items to compare : {}".format(len(self.playground)))
+            logger.debug("Items to compare : {}".format(len(self.playground)))
             if self.cust_filter:
                 ad = [x for x in self.playground.values() if x.id == self.cust_filter]
                 logger.info("\n\n=============================")

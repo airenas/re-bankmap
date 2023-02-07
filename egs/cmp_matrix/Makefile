@@ -96,6 +96,8 @@ show/sf: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/show_sf.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt
 show/params:
 	$(python_cmd) local/show_params.py
+show/doc-err: ${out_dir}/cmp.txt.docs
+	cat ${out_dir}/cmp.txt.docs | grep diff | grep -v rejected
 ############################################
 build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build
@@ -127,7 +129,7 @@ tune: ${out_dir}/params.txt
 clean:
 	@echo -n "Drop $(out_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	rm -rf $(out_dir)
-clean/model:
-	rm -rf $(model)
-.PHONY: clean	
-.EXPORT_ALL_VARIABLES:	
+.PHONY: clean
+clean/docs-predictions:
+	rm -f ${out_dir}/predicted.txt
+.EXPORT_ALL_VARIABLES:

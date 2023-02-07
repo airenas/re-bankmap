@@ -49,18 +49,18 @@ def main(argv):
 
     entries_t = pd.read_csv(args.input, sep=',')
     logger.info("loaded entries {} rows".format(len(entries_t)))
-    logger.info("Headers: {}".format(list(entries_t)))
-    logger.info("\n{}".format(entries_t.head(n=10)))
+    logger.debug("Headers: {}".format(list(entries_t)))
+    logger.debug("\n{}".format(entries_t.head(n=10)))
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    logger.info("Headers: {}".format(list(ledgers)))
-    logger.info("\n{}".format(ledgers.head(n=10)))
+    logger.debug("Headers: {}".format(list(ledgers)))
+    logger.debug("\n{}".format(ledgers.head(n=10)))
 
     apps_t = pd.read_csv(args.apps, sep=',')
     logger.info("loaded apps {} rows".format(len(apps_t)))
-    logger.info("Headers: {}".format(list(apps_t)))
-    logger.info("\n{}".format(apps_t.head(n=10)))
+    logger.debug("Headers: {}".format(list(apps_t)))
+    logger.debug("\n{}".format(apps_t.head(n=10)))
 
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
