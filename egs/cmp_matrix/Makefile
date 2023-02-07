@@ -6,7 +6,8 @@ zip?=Softera_data_v1.zip
 out_dir?=data
 extr_dir?=Softera_data_v1
 python_dir=${CURDIR}/../../src/utils
-python_cmd=PYTHONPATH=../../ LOG_LEVEL=INFO python
+log?=INFO
+python_cmd=PYTHONPATH=../../ LOG_LEVEL=$(log) python
 i?=0
 take_n?=100000000000000
 model?=${out_dir}/dt.model
@@ -96,8 +97,10 @@ show/sf: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
 	$(python_cmd) local/show_sf.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt
 show/params:
 	$(python_cmd) local/show_params.py
-show/doc-err: ${out_dir}/cmp.txt.docs
-	cat ${out_dir}/cmp.txt.docs | grep diff | grep -v rejected
+show/errs-docs: ${out_dir}/cmp.txt.docs
+	cat $^ | grep diff | grep -v rejected
+show/errs: ${out_dir}/cmp.txt
+	cat $^ | grep diff | grep -v rejected
 ############################################
 build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build

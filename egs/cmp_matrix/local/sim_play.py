@@ -91,7 +91,7 @@ def main(argv):
             "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
     logger.info("=============================\n\n")
     if res[0]["entry"].type in [LType.VEND, LType.CUST]:
-        res = find_best_docs(arena, row, res[0]["entry"])
+        res = find_best_docs(arena, row, res[0]["entry"].id)
         logger.info("\n\n=============================")
         logger.info("Docs selected {}:".format(len(res)))
         for r in res[:50]:

@@ -57,7 +57,7 @@ def main(argv):
 
     entries = pd.read_csv(args.f1, sep=',')
     logger.info("loaded entries {} rows".format(len(entries)))
-    logger.info("Headers: {}".format(list(entries)))
+    logger.debug("Headers: {}".format(list(entries)))
     y_true = entries["RecAccount"].values.tolist()
     y_recognized = entries["Recognized"].values.tolist()
     y_true_docs = entries["Docs"].values.tolist()
