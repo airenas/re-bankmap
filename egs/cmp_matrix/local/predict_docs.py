@@ -5,13 +5,14 @@ from src.utils.similarity import sf_sim_out
 
 
 def find_best_docs(arena, row: Entry, id: str):
-    available = [x for x in arena.playground.values() if x.id == id and payment_match(x, row) ]
-    res = []
-    remaining_amount = row.amount
-    msg = row.msg.casefold()
-
     def amount(a: LEntry):
         return abs(a.amount)
+
+    available = [x for x in arena.playground.values() if x.id == id and payment_match(x, row) and amount(x) > 0.01 ]
+    res = []
+    remaining_amount = row.amount
+
+    msg = row.msg.casefold()
 
     def amount_ok(v):
         return abs(v) <= (remaining_amount + 1)
@@ -20,7 +21,7 @@ def find_best_docs(arena, row: Entry, id: str):
         nonlocal remaining_amount, msg
         res.append({"s": why, "entry": a})
         remaining_amount -= amount(a)
-        logger.info("rem: %.2f - %s:%s" % (remaining_amount, a.doc_no, a.ext_doc))
+        logger.debug("rem: %.2f - %s:%s" % (remaining_amount, a.doc_no, a.ext_doc))
         available.remove(a)
         if sf_in_msg:
             msg = msg.replace(sf_in_msg.casefold(), " ", 1)
@@ -37,7 +38,7 @@ def find_best_docs(arena, row: Entry, id: str):
         sim, sf_in_msg = sf_sim_out(a.ext_doc, msg)
         if sim > 0 and amount_ok(a.amount):
             add(a, "sf sim && amount", sf_in_msg)
-            logger.info("sim: %.2f - %s vs %s" % (sim, a.ext_doc, sf_in_msg))
+            logger.debug("sim: %.2f - %s vs %s" % (sim, a.ext_doc, sf_in_msg))
     # by date
     for a in list(available):  # sf number
         if amount_ok(a.amount):
