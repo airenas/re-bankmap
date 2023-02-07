@@ -8,7 +8,7 @@ def find_best_docs(arena, row: Entry, id: str):
     def amount(a: LEntry):
         return abs(a.amount)
 
-    available = [x for x in arena.playground.values() if x.id == id and payment_match(x, row) and amount(x) > 0.01 ]
+    available = [x for x in arena.playground.values() if x.id == id and payment_match(x, row) and amount(x) > 0.01]
     res = []
     remaining_amount = row.amount
 
@@ -33,14 +33,38 @@ def find_best_docs(arena, row: Entry, id: str):
     for a in list(available):  # sf number
         if a.ext_doc.casefold() in msg and amount_ok(a.amount):
             add(a, "sf && amount", a.ext_doc)
+    # by sf
+    for a in list(available):  # sf number
+        if a.ext_doc.casefold() in msg and remaining_amount > 0:
+            add(a, "sf", a.ext_doc)
+
+    def sim_sort_key(e):
+        _sim, _ = sf_sim_out(e.ext_doc, msg)
+        return -_sim
+
+    available.sort(key=sim_sort_key)
     # by sf sim && amount
     for a in list(available):  # sf number
         sim, sf_in_msg = sf_sim_out(a.ext_doc, msg)
         if sim > 0 and amount_ok(a.amount):
             add(a, "sf sim && amount", sf_in_msg)
             logger.debug("sim: %.2f - %s vs %s" % (sim, a.ext_doc, sf_in_msg))
-    # by date
+    # by sf sim
     for a in list(available):  # sf number
+        sim, sf_in_msg = sf_sim_out(a.ext_doc, msg)
+        if sim > 0 and remaining_amount > 0:
+            add(a, "sf sim", sf_in_msg)
+            logger.debug("sim: %.2f - %s vs %s" % (sim, a.ext_doc, sf_in_msg))
+
+    # by due date
+    def sort_due_key(e: LEntry):
+        _key = (row.date - e.due_date).total_seconds()
+        if _key < 0:  # add minimal preference to on time payment
+            _key = abs(_key) + 1
+        return _key
+
+    available.sort(key=sort_due_key)
+    for a in list(available):  # amount
         if amount_ok(a.amount):
             add(a, "amount", None)
     return res

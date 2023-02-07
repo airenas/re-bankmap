@@ -118,9 +118,10 @@ class LEntry:
             raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {}:{} - {}, {}, {}, {}, {}".format(self.type, self.id, self.doc_no, self.name, self.doc_date,
-                                                        self.ext_doc,
-                                                        self.doc_type, self.amount)
+        return "{} - {}:{} - {}, {}[due {}], {}, {}, {}".format(self.type, self.id, self.doc_no, self.name,
+                                                                self.doc_date, self.due_date,
+                                                                self.ext_doc,
+                                                                self.doc_type, self.amount)
 
 
 def e_str(p):
@@ -156,7 +157,7 @@ class Arena:
         self.date = self.entries[0].doc_date - timedelta(days=1)
         self.playground: Dict[str, LEntry] = {}
         self.from_entry, self.from_apps = 0, 0
-        logger.info("Start date  : {}".format(self.date))
+        logger.debug("Start date  : {}".format(self.date))
         self.cust_filter = ""
         self.doc_filter = ""
         self.drop_not_found = dict()
@@ -172,10 +173,10 @@ class Arena:
                         break
                     if self.doc_filter:
                         if self.doc_filter == entry.doc_no:
-                            logger.info("Add  : {} {}".format(entry.doc_no, entry.to_str()))
+                            logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
                     elif self.cust_filter:
                         if self.cust_filter == entry.id:
-                            logger.info("Add  : {} {}".format(entry.doc_no, entry.to_str()))
+                            logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
                     else:
                         logger.debug("Add  : {} {}".format(entry.doc_no, entry.to_str()))
                     self.playground[entry.doc_no] = entry
@@ -191,10 +192,10 @@ class Arena:
                         if math.isclose(app.remaining, 0):
                             if self.doc_filter:
                                 if self.doc_filter == app.doc_no:
-                                    logger.info("Drop: {} {}".format(entry.doc_no, entry.to_str()))
+                                    logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
                             elif self.cust_filter:
                                 if self.cust_filter == app.cv_no:
-                                    logger.info("Drop: {} {}".format(entry.doc_no, entry.to_str()))
+                                    logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
                             else:
                                 logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
                             del self.playground[app.doc_no]
@@ -211,11 +212,11 @@ class Arena:
                     else:
                         if self.doc_filter:
                             if self.doc_filter == app.doc_no:
-                                logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                                logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                                 changed = True
                         elif self.cust_filter:
                             if self.cust_filter == app.cv_no:
-                                logger.info("Not found {}: {}".format(app.doc_no, app.to_str()))
+                                logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                         else:
                             logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                         self.drop_not_found[app.doc_no] = 1
