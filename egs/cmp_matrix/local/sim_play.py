@@ -6,8 +6,18 @@ import pandas as pd
 from egs.cmp_matrix.local.data import Entry, LEntry, App, LType
 from egs.cmp_matrix.local.predict_docs import find_best_docs
 from egs.cmp_matrix.local.predict_play import Arena
-from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val
+from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val, param_names, sim_imp
 from src.utils.logger import logger
+
+
+def show_sim_importance(sim):
+    res = []
+    params = param_names()
+    for i, s in enumerate(sim):
+        res.append((params[i], s, sim_imp[i], s * sim_imp[i]))
+    res.sort(key=lambda v: -v[3])
+    for r in res:
+        logger.debug(r)
 
 
 def main(argv):
@@ -89,6 +99,7 @@ def main(argv):
         was.add(r["entry"].id)
         logger.info(
             "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
+        show_sim_importance(r["sim"])
     logger.info("=============================\n\n")
     if res[0]["entry"].type in [LType.VEND, LType.CUST]:
         res = find_best_docs(arena, row, res[0]["entry"].id)
