@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena
+from egs.cmp_matrix.local.data import App, Arena, LType
 from egs.cmp_matrix.local.similarities import Entry, LEntry
 from src.utils.logger import logger
 
@@ -58,8 +58,20 @@ def main(argv):
 
     doc_nrs = set(l.doc_no for l in l_entries)
 
-
     arena = Arena(l_entries, apps)
+
+    logger.info(
+        "GL, BA count: {}".format(len([l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)])))
+    logger.info(
+        "Vend SF count: {}".format(len([l for l in filter(lambda x: x.type in [LType.VEND], l_entries)])))
+    logger.info(
+        "Vend SF closed count: {}".format(
+            len([l for l in filter(lambda x: x.type in [LType.VEND] and x.closed_date, l_entries)])))
+    logger.info(
+        "Cust SF count: {}".format(len([l for l in filter(lambda x: x.type in [LType.CUST], l_entries)])))
+    logger.info(
+        "Cust SF closed count: {}".format(
+            len([l for l in filter(lambda x: x.type in [LType.CUST] and x.closed_date, l_entries)])))
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
 
