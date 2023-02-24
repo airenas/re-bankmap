@@ -1,5 +1,5 @@
 import math
-from datetime import datetime, timedelta
+from datetime import timedelta
 from enum import Enum
 from typing import List, Dict
 
@@ -234,10 +234,14 @@ class Arena:
                             logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                         self.drop_not_found[app.doc_no] = 1
                     self.from_apps += 1
+                for e in list(self.playground.values()):
+                    if e.closed_date and e.closed_date < ndt:
+                        logger.debug("Drop by closed date value: {} {}, {}".format(e.closed_date, e.doc_no, e.to_str()))
+                        del self.playground[e.doc_no]
                 self.date = ndt
                 if self.date > dt:
                     self.date = dt
-            logger.debug("Items to compare : {}".format(len(self.playground)))
+            logger.debug("Items to compare : {} at {}".format(len(self.playground), self.date))
             if self.cust_filter:
                 ad = [x for x in self.playground.values() if x.id == self.cust_filter]
                 logger.info("\n\n=============================")
