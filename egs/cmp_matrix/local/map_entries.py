@@ -1,11 +1,10 @@
 import argparse
 import sys
-from datetime import datetime
 
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_float, e_str, e_currency
+from egs.cmp_matrix.local.data import e_float, e_str, e_currency, to_date
 from src.utils.logger import logger
 
 
@@ -84,7 +83,7 @@ def main(argv):
 
     # stable sort by date
     sr = [v for v in enumerate(res)]
-    sr.sort(key=lambda e: (datetime.fromisoformat(e[1][4]).timestamp(), e[0]))
+    sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
     res = [v[1] for v in sr]
 
     df = pd.DataFrame(res, columns=cols)

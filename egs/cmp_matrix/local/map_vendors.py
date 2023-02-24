@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.map_customers import ledger_cols
-from egs.cmp_matrix.local.data import e_currency, e_str
+from egs.cmp_matrix.local.data import e_currency, e_str, e_date
 from src.utils.logger import logger
 
 
@@ -29,7 +29,8 @@ def prepare_data(df, names, accounts):
                         df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i],
                         df['Amount'].iloc[i],
                         e_currency(df['Currency_Code'].iloc[i]),
-                        dt])
+                        dt,
+                        e_date(df['ClosedAtDate'].iloc[i])])
     return res, ledger_cols
 
 

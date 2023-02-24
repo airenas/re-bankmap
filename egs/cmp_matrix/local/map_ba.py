@@ -26,7 +26,7 @@ def prepare_data(df):
             res.append(['BA', _id, df['Search_Name'].iloc[i], df['IBAN'].iloc[i], '',
                         '',
                         '', '', 0, e_currency(df['Currency_Code'].iloc[i]),
-                        'BA'])
+                        'BA', ''])
     return res, ledger_cols
 
 

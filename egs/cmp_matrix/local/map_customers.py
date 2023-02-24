@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_float, e_currency, e_str
+from egs.cmp_matrix.local.data import e_float, e_currency, e_str, e_date
 from src.utils.logger import logger
 
 
@@ -15,7 +15,7 @@ def is_recognized(param):
 
 
 ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
-               'Currency', 'Document_Type']
+               'Currency', 'Document_Type', 'Closed_Date']
 
 
 def prepare_data(df, names, accounts):
@@ -32,7 +32,8 @@ def prepare_data(df, names, accounts):
                         df['External_Document_No_'].iloc[i],
                         e_float(df['Amount'].iloc[i]),
                         e_currency(df['Currency_Code'].iloc[i]),
-                        dt])
+                        dt,
+                        e_date(df['ClosedAtDate'].iloc[i])])
     return res, ledger_cols
 
 

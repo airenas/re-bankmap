@@ -3,7 +3,11 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Dict
 
+from dateutil.parser import parser
+
 from src.utils.logger import logger
+
+time_parser = parser()
 
 
 class App:
@@ -27,7 +31,7 @@ class Entry:
         self.who = e_str(row['Description'])
         self.iban = e_str(row['IBAN'])
         self.msg = e_str(row['Message'])
-        self.date = datetime.fromisoformat(row['Date'])
+        self.date = to_date(row['Date'])
         self.amount = e_float(row['Amount'])
         self.rec_id = e_str(row['RecAccount'])
         self.doc_id = e_str(row['RecDoc'])
@@ -43,7 +47,7 @@ class Entry:
 
 def to_date(p):
     try:
-        return None if p != p else datetime.fromisoformat(p)
+        return None if p != p else time_parser.parse(p)
     except BaseException as err:
         logger.info("{}".format(p))
         raise err
@@ -114,6 +118,7 @@ class LEntry:
             self.amount = e_float(row['Amount'])
             self.currency = row['Currency']
             self.doc_type = DocType.from_s(e_str(row['Document_Type']))
+            self.closed_date = to_date(row['Closed_Date'])
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 
@@ -135,6 +140,14 @@ def e_float(p):
         return 0
     return float(e_str(p).replace(",", "."))
 
+
+def e_date(p):
+    if p != p:
+        return ""
+    res = e_str(p)
+    if res == "0":
+        return ""
+    return to_date(res)
 
 def e_currency(p):
     if p != p:
