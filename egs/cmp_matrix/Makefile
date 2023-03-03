@@ -33,11 +33,11 @@ ${out_dir}/docs_map.txt: ${out_dir}/c_docs_map.txt ${out_dir}/v_docs_map.txt
 	tail -n +2 ${out_dir}/v_docs_map.txt >> $@
 ${out_dir}/c_docs_map.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/extract_docs.py --name Cust \
-	    --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv > $@_
+	    --input ${out_dir}/extracted/$(extr_dir)/Customer_Recognitions.csv > $@_
 	mv $@_ $@
 ${out_dir}/v_docs_map.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/extract_docs.py --name Vend \
-	    --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv > $@_
+	    --input ${out_dir}/extracted/$(extr_dir)/Vendor_Recognitions.csv > $@_
 	mv $@_ $@		
 ${out_dir}/entries.txt: ${out_dir}/entries.csv ${out_dir}/docs_map.txt
 	$(python_cmd) local/map_entries.py --input ${out_dir}/entries.csv \
@@ -56,12 +56,16 @@ ${out_dir}/ba_entries.txt: ${out_dir}/extracted/.done
 ${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
 	mv $@_ $@
-${out_dir}/cust_l_apps.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_customers_app.py --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv > $@_
+##### map apps ################################
+${out_dir}/cust_l_apps.txt: ${out_dir}/extracted/.done ${out_dir}/l_entries.txt
+	$(python_cmd) local/map_customers_app.py --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv \
+		--ledgers ${out_dir}/l_entries.txt > $@_
 	mv $@_ $@
-${out_dir}/vend_l_apps.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_vendors_app.py --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv > $@_
-	mv $@_ $@			
+${out_dir}/vend_l_apps.txt: ${out_dir}/l_entries.txt ${out_dir}/extracted/.done
+	$(python_cmd) local/map_vendors_app.py --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv \
+		--ledgers ${out_dir}/l_entries.txt > $@_
+	mv $@_ $@
+##### ledger entries ##########################				
 ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt \
         ${out_dir}/ba_entries.txt
 	cat ${out_dir}/cust_l_entries.txt > $@

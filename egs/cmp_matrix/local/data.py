@@ -6,6 +6,7 @@ from typing import List, Dict
 from dateutil.parser import parser
 
 from src.utils.logger import logger
+from src.utils.similarity import num_close
 
 time_parser = parser()
 
@@ -14,16 +15,16 @@ class App:
     def __init__(self, row):
         self.type = LType.from_s(e_str(row['Type']))
         self.doc_no = e_str(row['Document_No'])
-        self.entry_no = e_str(row['Entry_No'])
+        # self.entry_no = e_str(row['Entry_No'])
         self.apply_date = to_date(row['Apply_Date'])
         self.amount = e_float(row['Apply_Amount'])
         self.remaining = e_float(row['Remaining_Amount'])
         self.cv_no = e_str(row['CV_No'])
-        self.cv_name = e_str(row['CV_Name'])
+        # self.cv_name = e_str(row['CV_Name'])
 
     def to_str(self):
         return "{} - {} - {} ({})[{}:{}]".format(self.type, self.apply_date, self.amount,
-                                                 math.isclose(self.remaining, 0), self.cv_no, self.cv_name)
+                                                 num_close(self.remaining, 0), "", "")
 
 
 class Entry:
@@ -149,6 +150,7 @@ def e_date(p):
         return ""
     return to_date(res)
 
+
 def e_currency(p):
     if p != p:
         return "EUR"
@@ -202,7 +204,8 @@ class Arena:
                         break
                     entry = self.playground.get(app.doc_no, None)
                     if entry is not None:
-                        if math.isclose(app.remaining, 0):
+                        remaining = self.remaining(entry.amount, app.amount)
+                        if num_close(remaining, 0):
                             if self.doc_filter:
                                 if self.doc_filter == app.doc_no:
                                     logger.debug("Drop: {} {}".format(entry.doc_no, entry.to_str()))
@@ -216,12 +219,11 @@ class Arena:
                             if self.cust_filter:
                                 if self.cust_filter == app.cv_no:
                                     logger.info(
-                                        "Change amount {}: from {} to {}".format(app.doc_no, entry.amount,
-                                                                                 app.remaining))
+                                        "Change amount {}: from {} to {}".format(app.doc_no, entry.amount, remaining))
                             else:
                                 logger.debug(
-                                    "Change amount {}: from {} to {}".format(app.doc_no, entry.amount, app.remaining))
-                            entry.amount = app.remaining
+                                    "Change amount {}: from {} to {}".format(app.doc_no, entry.amount, remaining))
+                            entry.amount = remaining
                     else:
                         if self.doc_filter:
                             if self.doc_filter == app.doc_no:
@@ -256,3 +258,13 @@ class Arena:
 
     def add_doc(self, doc):
         self.doc_filter = doc
+
+    def remaining(self, amount, value):
+        if amount >= 0:
+            res = amount - abs(value)
+        else:
+            res = amount + abs(value)
+        if amount >= 0 > res or amount <= 0 < res and not num_close(res, 0):
+            logger.warn("Amount change from {} to {}".format(amount, res))
+            res = 0
+        return res
