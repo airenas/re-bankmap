@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_float, e_currency, e_str, e_date
+from egs.cmp_matrix.local.data import e_float, e_currency, e_str, e_date, MapType
 from src.utils.logger import logger
 
 
@@ -15,10 +15,10 @@ def is_recognized(param):
 
 
 ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
-               'Currency', 'Document_Type', 'Closed_Date']
+               'Currency', 'Document_Type', 'Closed_Date', 'Map_Type']
 
 
-def prepare_data(df, names, accounts):
+def prepare_data(df, c_data, accounts):
     res = []
     with tqdm("format cmp_matrix", total=len(df)) as pbar:
         for i in range(len(df)):
@@ -27,13 +27,14 @@ def prepare_data(df, names, accounts):
             if not dt or dt == "Mokėjimas":
                 continue
             _id = df['Customer_No_'].iloc[i]
-            res.append(['Customer', _id, names.get(_id, ''), accounts.get(_id, ''), df['Document_No_'].iloc[i],
+            cd = c_data[_id]
+            res.append(['Customer', _id, cd[0], accounts.get(_id, ''), df['Document_No_'].iloc[i],
                         df['Due_Date'].iloc[i], df['Document_Date'].iloc[i],
                         df['External_Document_No_'].iloc[i],
                         e_float(df['Amount'].iloc[i]),
                         e_currency(df['Currency_Code'].iloc[i]),
                         dt,
-                        e_date(df['ClosedAtDate'].iloc[i])])
+                        e_date(df['ClosedAtDate'].iloc[i]), cd[1].to_s()])
     return res, ledger_cols
 
 
@@ -53,12 +54,12 @@ def main(argv):
     logger.info("loaded cmp_matrix {} rows".format(len(names)))
 
     # logger.info("Headers: {}".format(list(accounts)))
-    names_d = {r['No_']: r['Name'] for _, r in names.iterrows()}
+    c_data = {r['No_']: (r['Name'], MapType.from_s(r['Application_Method'])) for _, r in names.iterrows()}
     accounts_d = {r['Customer_No_']: r['Bank_Account_No_'] for _, r in accounts.iterrows()}
 
     logger.info("{}".format(names.head(n=10)))
     logger.info("Headers: {}".format(list(ledgers)))
-    res, cols = prepare_data(ledgers, names_d, accounts_d)
+    res, cols = prepare_data(ledgers, c_data, accounts_d)
     df = pd.DataFrame(res, columns=cols)
     df.to_csv(sys.stdout, index=False)
     logger.info("Done")

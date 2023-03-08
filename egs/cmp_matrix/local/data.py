@@ -1,4 +1,3 @@
-import math
 from datetime import timedelta
 from enum import Enum
 from typing import List, Dict
@@ -67,6 +66,31 @@ class PaymentType(Enum):
         raise Exception("Unknown doc type '{}'".format(s))
 
 
+class MapType(Enum):
+    UNUSED = 0
+    MANUAL = 1
+    OLDEST = 2
+
+    @staticmethod
+    def from_s(s):
+        if s == "Rankiniu būdu" or s == "ManualMap":
+            return MapType.MANUAL
+        if s == "Sugretinti su seniausiu" or s == "OldestMap":
+            return MapType.OLDEST
+        if s == "Unused" or s == '':
+            return MapType.UNUSED
+        raise Exception("Unknown map type '{}'".format(s))
+
+    def to_s(self):
+        if self == MapType.MANUAL:
+            return "ManualMap"
+        if self == MapType.OLDEST:
+            return "OldestMap"
+        if self == MapType.UNUSED:
+            return "Unused"
+        raise Exception("Unknown map type '{}'".format(self))
+
+
 class DocType(Enum):
     SF = 1
     GRAZ_PAZ = 2
@@ -120,6 +144,7 @@ class LEntry:
             self.currency = row['Currency']
             self.doc_type = DocType.from_s(e_str(row['Document_Type']))
             self.closed_date = to_date(row['Closed_Date'])
+            self.map_type = MapType.from_s(row['Map_Type'])
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 

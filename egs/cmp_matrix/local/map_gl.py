@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from egs.cmp_matrix.local.data import MapType
 from egs.cmp_matrix.local.map_customers import ledger_cols
 from src.utils.logger import logger
 
@@ -24,7 +25,7 @@ def prepare_data(df):
             _id = df['No_'].iloc[i]
             res.append(['GL', _id, df['Search_Name'].iloc[i], '', '',
                         '',
-                        '', '', 0, 'EUR', 'GL', ''])
+                        '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s()])
     return res, ledger_cols
 
 

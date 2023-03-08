@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from egs.cmp_matrix.local.map_customers import ledger_cols
-from egs.cmp_matrix.local.data import e_currency
+from egs.cmp_matrix.local.data import e_currency, MapType
 from src.utils.logger import logger
 
 
@@ -26,7 +26,7 @@ def prepare_data(df):
             res.append(['BA', _id, df['Search_Name'].iloc[i], df['IBAN'].iloc[i], '',
                         '',
                         '', '', 0, e_currency(df['Currency_Code'].iloc[i]),
-                        'BA', ''])
+                        'BA', '', MapType.UNUSED.to_s()])
     return res, ledger_cols
 
 
