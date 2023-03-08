@@ -92,7 +92,7 @@ def main(argv):
         wrk.start()
         workers.append(wrk)
 
-    threads = 8
+    threads = 12
     start, step = 0, int(len(entries) / threads)
     queue = Queue()
     for i in range(threads):
@@ -108,6 +108,7 @@ def main(argv):
             _res = queue.get()
             if _res is None:
                 return
+            logger.debug("got res")
             pr_bar.update(1)
             i, v = _res
             res[i] = v

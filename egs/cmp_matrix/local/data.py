@@ -272,10 +272,10 @@ class Arena:
                             logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
                         self.drop_not_found[app.doc_no] = 1
                     self.from_apps += 1
-                for e in list(self.playground.values()):
-                    if e.closed_date and e.closed_date < ndt:
-                        logger.debug("Drop by closed date value: {} {}, {}".format(e.closed_date, e.doc_no, e.to_str()))
-                        del self.playground[e.doc_no]
+                # for e in list(self.playground.values()):
+                #     if e.closed_date and e.closed_date < ndt:
+                #         logger.debug("Drop by closed date value: {} {}, {}".format(e.closed_date, e.doc_no, e.to_str()))
+                #         del self.playground[e.doc_no]
                 self.date = ndt
                 if self.date > dt:
                     self.date = dt
@@ -300,7 +300,7 @@ class Arena:
             res = amount - abs(value)
         else:
             res = amount + abs(value)
-        if amount >= 0 > res or amount <= 0 < res and not num_close(res, 0):
+        if (amount >= 0 > res or amount <= 0 < res) and not num_close(res, 0):
             logger.warn("Amount change from {} to {}".format(amount, res))
             res = 0
         return res
