@@ -36,6 +36,10 @@ def prepare_data(df, map, dm):
             rec_no, rec = e_str(df['Recognized_Account_No_'].iloc[i]), True
             if not is_recognized(rec_no):
                 rec_no, rec = map.get(ext_id, ""), False
+            docs = dm.get(ext_id, ("",""))
+            if docs[1] and docs[1] != rec_no:
+                logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
+                rec_no = docs[1]
 
             res.append([df['Description'].iloc[i], df['Message_to_Recipient'].iloc[i], df['N_CdtDbtInd'].iloc[i],
                         e_float(df['N_Amt'].iloc[i]), df['N_BookDt_Dt'].iloc[i], iban(df.iloc[i]),
@@ -43,7 +47,7 @@ def prepare_data(df, map, dm):
                         rec_no,
                         df['Recognized_Document_No_'].iloc[i], rec,
                         e_currency(df['Acct_Ccy'].iloc[i]),
-                        dm.get(ext_id, ""),
+                        docs[0],
                         df['External_Document_No_'].iloc[i]])
     return res, cols
 
@@ -78,7 +82,7 @@ def main(argv):
     logger.info("Headers: {}".format(hd))
     logger.info("loading docs map {}".format(args.docs_map))
     docs = pd.read_csv(args.docs_map, sep=',')
-    dm = {docs.iloc[i]["ID"]: docs.iloc[i]["Ext_ID"] for i in range(len(docs))}
+    dm = {docs.iloc[i]["ID"]: (docs.iloc[i]["Ext_ID"], docs.iloc[i]["Vend_Cust_No"]) for i in range(len(docs))}
     res, cols = prepare_data(data, map, dm)
 
     # stable sort by date

@@ -31,15 +31,16 @@ def main(argv):
             id = e_str(df['Statement_External_Document_No_'].iloc[i])
             st_date = e_date(df[args.name + '_Posting_Date'].iloc[i])
             doc_date = e_date(df['Applied_' + args.name + '_Document_Date'].iloc[i])
+            cv = e_str(df['Vend_Vendor_No_' if args.name == "Vend" else 'Cust_Customer_No_'].iloc[i])
             if st_date < doc_date:
                 skip += 1
                 continue
             iid = e_str(df['Applied_' + args.name + '_Document_No_'].iloc[i])
-            ra = res.get(id, set())
-            ra.add(iid)
+            ra = res.get(id, (set(), cv))
+            ra[0].add(iid)
             res[id] = ra
-    resc = [[k, ";".join(v)] for k, v in res.items()]
-    df = pd.DataFrame(resc, columns=["ID", "Ext_ID"])
+    resc = [[k, ";".join(v[0]), v[1]] for k, v in res.items()]
+    df = pd.DataFrame(resc, columns=["ID", "Ext_ID", "Vend_Cust_No"])
     df.to_csv(sys.stdout, index=False)
     logger.info("skipped future docs: {}".format(skip))
     logger.info("Done")
