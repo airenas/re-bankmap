@@ -81,7 +81,7 @@ def main(argv):
         logger.info("run thread {}:{}".format(start, start + len(entries)))
         for i in range(len(entries)):
             best, sim = get_best_account(arena, entries[i], entry_dic)
-            _res = "{}\t{}\t{}".format(best.id if best is not None else "", "", sim)
+            _res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
             queue.put((i+start, _res))
         logger.info("done thread {}:{}".format(start, start + len(entries)))
 

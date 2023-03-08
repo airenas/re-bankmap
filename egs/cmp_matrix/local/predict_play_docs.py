@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena
+from egs.cmp_matrix.local.data import App, Arena, LType
 from egs.cmp_matrix.local.predict_docs import find_best_docs
 from egs.cmp_matrix.local.similarities import Entry, LEntry
 from src.utils.logger import logger
@@ -40,10 +40,10 @@ def main(argv):
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
 
-    def predict_docs(arena, entry, id):
-        if not id:
+    def predict_docs(arena, entry, _id, _type: LType):
+        if not _id:
             return ""
-        docs = find_best_docs(arena, entry, id)
+        docs = find_best_docs(arena, entry, _id, _type)
         return ";".join([d["entry"].doc_no for d in docs])
 
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
@@ -56,9 +56,10 @@ def main(argv):
             for i in range(len(entries)):
                 cv_pred = next(pred_i).strip()
                 preds = cv_pred.split("\t")
+                cust = preds[0].split(":")
                 arena.move(entries[i].date)
                 pr_bar.update(1)
-                res = "{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], preds[0]), preds[2])
+                res = "{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], cust[1], LType.from_s(cust[0])), preds[2])
                 print(res)
 
     logger.info("Done")

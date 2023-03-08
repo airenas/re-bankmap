@@ -67,6 +67,7 @@ def main(argv):
     y_true = y_true[skip:len(y_pred_l)]
     y_true_docs = y_true_docs[skip:len(y_pred_l)]
     y_pred = [y.split('\t')[0] for y in y_pred_l[skip:]]
+    y_pred = [y.split(':')[1] for y in y_pred]
     y_pred_docs = [y.split('\t')[1] for y in y_pred_l[skip:]]
     y_pred_v = [json.loads(y.split('\t')[2]) for y in y_pred_l[skip:]]
 

@@ -40,6 +40,10 @@ def test_sf_dist():
     assert math.isclose(sf_dist("SF012345", "0123222"), 2.4)
 
 
+def test_sf_sim_dashed():
+    assert sf_sim("SF0012-23", "olia SF12-23") == 0.4
+
+
 def test_sf_sim():
     assert sf_sim("SF012345", "123 SF012345") == 1
     assert sf_sim("SF012345", "olia SF0142345") == 0

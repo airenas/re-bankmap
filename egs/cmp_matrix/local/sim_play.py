@@ -102,7 +102,7 @@ def main(argv):
         show_sim_importance(r["sim"])
     logger.info("=============================\n\n")
     if res[0]["entry"].type in [LType.VEND, LType.CUST]:
-        res = find_best_docs(arena, row, res[0]["entry"].id)
+        res = find_best_docs(arena, row, res[0]["entry"].id, res[0]["entry"].type)
         logger.info("\n\n=============================")
         logger.info("Docs selected {}:".format(len(res)))
         for r in res[:50]:

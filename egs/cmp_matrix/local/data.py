@@ -128,12 +128,23 @@ class LType(Enum):
             return LType.BA
         raise Exception("Unknown type {}".format(s))
 
+    def to_s(self):
+        if self == LType.CUST:
+            return "Customer"
+        if self == LType.VEND:
+            return "Vendor"
+        if self == LType.GL:
+            return "GL"
+        if self == LType.BA:
+            return "BA"
+        raise Exception("Unknown l type '{}'".format(self))
+
 
 class LEntry:
     def __init__(self, row):
         try:
             self.type = LType.from_s(e_str(row['Type']))
-            self.id = e_str(row['No'])
+            self.id = e_str(row['No'])  # vendor/cust/gl/ba
             self.name = e_str(row['Name'])
             self.iban = e_str(row['IBAN'])
             self.ext_doc = e_str(row['ExtDoc'])
@@ -149,10 +160,10 @@ class LEntry:
             raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {}:{} - {}, {}[due {}], {}, {}, {}".format(self.type, self.id, self.doc_no, self.name,
-                                                                self.doc_date, self.due_date,
-                                                                self.ext_doc,
-                                                                self.doc_type, self.amount)
+        return "{} - {}:{} - {}, {}[due {}], {}, {}, {}, {}".format(self.type, self.id, self.doc_no, self.name,
+                                                                    self.doc_date, self.due_date,
+                                                                    self.ext_doc,
+                                                                    self.doc_type, self.amount, self.map_type.to_s())
 
 
 def e_str(p):

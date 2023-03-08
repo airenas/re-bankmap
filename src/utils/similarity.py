@@ -9,6 +9,7 @@ nltk.edit_distance("humpty", "dumpty")
 
 split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 
+split_regex_no_dash = re.compile(" |,|;|:|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 
 def freq(t):
     if t in ["uab", "ab"]:
@@ -97,7 +98,10 @@ def sf_sim(sf1, txt):
 
 def sf_sim_out(sf1: str, txt: str):
     sf1 = sf1.casefold()
-    tl = drop_empty(split_regex.split(txt.casefold()))
+    rgx = split_regex
+    if "-" in sf1:
+        rgx = split_regex_no_dash
+    tl = drop_empty(rgx.split(txt.casefold()))
     res, bt = 1, ""
     for t in tl:
         if contains_number(t):
