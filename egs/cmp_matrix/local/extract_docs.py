@@ -4,8 +4,8 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_str, e_date
-from src.utils.logger import logger
+from bankmap.data import e_str, e_date
+from bankmap.logger import logger
 
 
 def main(argv):
