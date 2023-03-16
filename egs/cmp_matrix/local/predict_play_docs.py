@@ -4,10 +4,11 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena, LType
+from bankmap.data import App
+from bankmap.data import Arena, LType
+from bankmap.logger import logger
 from egs.cmp_matrix.local.predict_docs import find_best_docs
 from egs.cmp_matrix.local.similarities import Entry, LEntry
-from src.utils.logger import logger
 
 
 def main(argv):
@@ -59,7 +60,8 @@ def main(argv):
                 cust = preds[0].split(":")
                 arena.move(entries[i].date)
                 pr_bar.update(1)
-                res = "{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], cust[1], LType.from_s(cust[0])), preds[2])
+                res = "{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], cust[1], LType.from_s(cust[0])),
+                                          preds[2])
                 print(res)
 
     logger.info("Done")

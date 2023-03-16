@@ -5,9 +5,9 @@ import sys
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
-from egs.cmp_matrix.local.data import e_str
+from bankmap.data import e_str
+from bankmap.logger import logger
 from egs.cmp_matrix.local.similarities import sim_val
-from src.utils.logger import logger
 
 
 def first_word(l1):
@@ -21,9 +21,10 @@ def show_no_rejected(y_true, y_pred, name):
 
     if len(y_true_nr) > 0:
         logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
-                                                      sum([1 for i, x in enumerate(y_true_nr) if y_pred_nr[i] != x]),
-                                                      len(y_true_nr),
-                                                      sum([1 for x in y_pred if x == 'rejected'])))
+                                                          sum([1 for i, x in enumerate(y_true_nr) if
+                                                               y_pred_nr[i] != x]),
+                                                          len(y_true_nr),
+                                                          sum([1 for x in y_pred if x == 'rejected'])))
 
 
 def cmp_arr(ya, pa):
@@ -123,8 +124,9 @@ def main(argv):
                 print("{}\t{} {}<--diff-->\t{}".format(ir, y, r, y_pred_docs[i]), file=f)
 
     logger.info(
-        "Acc all {} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda), (rds + rdd + rdi), rda, rds,
-                                                                   rdi, rdd, rs, ny))
+        "Acc all {} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda),
+                                                                                (rds + rdd + rdi), rda, rds,
+                                                                                rdi, rdd, rs, ny))
     logger.info("Done")
 
 
