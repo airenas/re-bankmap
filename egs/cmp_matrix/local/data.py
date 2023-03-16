@@ -49,7 +49,7 @@ def to_date(p):
     try:
         return None if p != p else time_parser.parse(p)
     except BaseException as err:
-        logger.info("{}".format(p))
+        logger.error("date:'{}'".format(p))
         raise err
 
 

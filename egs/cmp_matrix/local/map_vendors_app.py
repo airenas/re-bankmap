@@ -15,9 +15,12 @@ def prepare_data(df, l_map):
         for i in range(len(df)):
             doc = df['Document_No_'].iloc[i]
             cv_no = l_map.get(doc, "")
+            date = df['Application_Created_Date'].iloc[i]
+            if date == "0":  # close same day if not set
+                date = df['Posting_Date'].iloc[i]
             pbar.update(1)
             if cv_no:
-                res.append(['Vendor', df['Application_Created_Date'].iloc[i],
+                res.append(['Vendor', date,
                             e_currency(df['Application_Amount'].iloc[i]),
                             e_currency(df['Remaining_Amount'].iloc[i]),
                             doc, cv_no
