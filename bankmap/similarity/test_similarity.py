@@ -1,7 +1,7 @@
 import math
 from datetime import datetime
 
-from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim, sf_dist, sf_sim_out
+from bankmap.similarity.similarity import name_sim, date_sim, num_sim, sf_sim, sf_dist, sf_sim_out
 
 
 def test_str_sim():

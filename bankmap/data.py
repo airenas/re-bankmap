@@ -5,7 +5,7 @@ from typing import List, Dict
 from dateutil.parser import parser
 
 from bankmap.logger import logger
-from src.utils.similarity import num_close
+from bankmap.similarity.similarity import num_close
 
 time_parser = parser()
 

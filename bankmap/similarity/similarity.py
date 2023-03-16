@@ -2,10 +2,7 @@ import math
 import re
 
 import jellyfish
-import nltk
 import strsimpy
-
-nltk.edit_distance("humpty", "dumpty")
 
 split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 

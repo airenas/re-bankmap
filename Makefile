@@ -17,6 +17,8 @@ test/lint:
 ############################################
 git/tag:
 	git tag "v$(version)"
-
 git/push-tag:
 	git push origin --tags
+############################################
+build/package:
+	python setup.py bdist_wheel
