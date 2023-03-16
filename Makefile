@@ -1,5 +1,6 @@
 ############################################
 -include Makefile.options
+-include .version
 ############################################
 install/req:
 	# conda create --name bankmap python=3.10
@@ -14,3 +15,8 @@ test/lint:
 	#exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 	flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
 ############################################
+git-tag:
+	git tag "v$(version)"
+
+git-push-tag:
+	git push origin --tags
