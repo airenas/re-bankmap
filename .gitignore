@@ -132,3 +132,7 @@ docubank-src/**
 egs/cmp_matrix/data/**
 egs/cmp_matrix/st/**
 egs/cmp_matrix/data*/**
+deploy/az_f/bankmap/Makefile.options
+deploy/az_f/bankmap/test.zip
+deploy/az_f/bankmap/.azure
+deploy/az_f/bankmap/.vscode
