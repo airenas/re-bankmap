@@ -5,6 +5,7 @@ import zipfile
 from http import HTTPStatus
 
 import azure.functions as func
+from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
 
 app = func.FunctionApp()
@@ -24,6 +25,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     company = req.form.get("company", None)
     if not company:
         return json_resp({"error": "no company"}, HTTPStatus.BAD_REQUEST)
+    extract_dir = req.form.get("extract_dir", "data")
     logger.info("company {}".format(company))
     logger.info("file {}".format(file.name))
     try:
@@ -38,10 +40,11 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         with zipfile.ZipFile(out_file) as z:
             z.extractall(temp_dir.name)
         logger.info("saved files {}".format(temp_dir.name))
+        data_dir = os.path.join(temp_dir.name, extract_dir)
         logger.info("start mapping")
-        logger.warn("nothing implemented")
+        mappings, info = do_mapping(data_dir, company)
         logger.info("done mapping")
-        res = {"company": company, "mapping": {}, "info": {}}
+        res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)
     except BaseException as err:
         logger.error(err)
