@@ -1,7 +1,7 @@
-from egs.cmp_matrix.local.data import Entry, LEntry, LType
+from bankmap.data import LEntry, Entry, LType
+from bankmap.logger import logger
+from bankmap.similarity.similarity import sf_sim_out
 from egs.cmp_matrix.local.similarities import payment_match
-from src.utils.logger import logger
-from src.utils.similarity import sf_sim_out
 
 
 def find_best_docs(arena, row: Entry, _id: str, _type: LType):

@@ -3,11 +3,11 @@ import sys
 
 import pandas as pd
 
-from egs.cmp_matrix.local.data import Entry, LEntry, App, LType
+from bankmap.data import Entry, LEntry, LType, App
+from bankmap.logger import logger
 from egs.cmp_matrix.local.predict_docs import find_best_docs
 from egs.cmp_matrix.local.predict_play import Arena
 from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val, param_names, sim_imp
-from src.utils.logger import logger
 
 
 def show_sim_importance(sim):

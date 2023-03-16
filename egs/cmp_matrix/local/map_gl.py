@@ -4,9 +4,9 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import MapType
+from bankmap.data import MapType
+from bankmap.logger import logger
 from egs.cmp_matrix.local.map_customers import ledger_cols
-from src.utils.logger import logger
 
 
 def is_recognized(param):

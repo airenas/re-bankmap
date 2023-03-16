@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import PaymentType, LType, DocType, Entry, LEntry
-from src.utils.logger import logger
-from src.utils.similarity import name_sim, date_sim, num_sim, sf_sim
+from bankmap.data import PaymentType, LEntry, Entry, LType, DocType
+from bankmap.logger import logger
+from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
 
 def e_key(e):

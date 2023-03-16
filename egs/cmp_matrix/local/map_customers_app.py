@@ -4,8 +4,8 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_currency, LEntry
-from src.utils.logger import logger
+from bankmap.data import e_currency, LEntry
+from bankmap.logger import logger
 
 app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_No', 'CV_No']
 

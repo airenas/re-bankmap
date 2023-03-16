@@ -4,9 +4,9 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import e_currency, LEntry
+from bankmap.data import e_currency, LEntry
+from bankmap.logger import logger
 from egs.cmp_matrix.local.map_customers_app import app_cols
-from src.utils.logger import logger
 
 
 def prepare_data(df, l_map):

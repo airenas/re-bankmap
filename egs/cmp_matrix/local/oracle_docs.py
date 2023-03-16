@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena, LType
-from egs.cmp_matrix.local.similarities import Entry, LEntry
-from src.utils.logger import logger
+from bankmap.data import Entry, LEntry, App, Arena, LType
+from bankmap.logger import logger
 
 
 def calc(arena, row: Entry):

@@ -7,10 +7,9 @@ from multiprocessing import Queue
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena, LType
-from egs.cmp_matrix.local.predict_docs import find_best_docs
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key
-from src.utils.logger import logger
+from bankmap.data import LEntry, App, Arena, Entry
+from bankmap.logger import logger
+from egs.cmp_matrix.local.similarities import similarity, sim_val, e_key
 
 
 def get_best_account(arena, row, entry_dict):
@@ -82,7 +81,7 @@ def main(argv):
         for i in range(len(entries)):
             best, sim = get_best_account(arena, entries[i], entry_dic)
             _res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
-            queue.put((i+start, _res))
+            queue.put((i + start, _res))
         logger.info("done thread {}:{}".format(start, start + len(entries)))
 
     workers = []
@@ -103,6 +102,7 @@ def main(argv):
         start = to
 
     res = [""] * len(entries)
+
     def process_res():
         while True:
             _res = queue.get()
