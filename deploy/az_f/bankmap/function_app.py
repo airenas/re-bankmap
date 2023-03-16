@@ -5,6 +5,7 @@ import zipfile
 from http import HTTPStatus
 
 import azure.functions as func
+from azure.functions import HttpMethod
 from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
 
@@ -16,7 +17,7 @@ def json_resp(value, code: int):
 
 
 @app.function_name(name="bankmap")
-@app.route(route="map")  # HTTP Trigger
+@app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("got request")
     file = req.files.get("file", None)
