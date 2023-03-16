@@ -15,7 +15,12 @@ def find_best_docs(arena, row: Entry, _id: str, _type: LType):
     msg = row.msg.casefold()
 
     def amount_ok(v):
-        return abs(v) <= (remaining_amount + 1)
+        if remaining_amount < 0.01:
+            return False
+        av = abs(v)
+        if av > 10 and remaining_amount > 10:  # allow some deficit
+            return av <= (remaining_amount + 1)
+        return av <= (remaining_amount + 0.01)
 
     def add(a: LEntry, why: str, sf_in_msg):
         nonlocal remaining_amount, msg
@@ -52,7 +57,7 @@ def find_best_docs(arena, row: Entry, _id: str, _type: LType):
     # by sf sim
     for a in list(available):  # sf number
         sim, sf_in_msg = sf_sim_out(a.ext_doc, msg)
-        if sim > 0 and remaining_amount > 0:
+        if sim > 0 and remaining_amount > 0.005:
             add(a, "sf sim", sf_in_msg)
             logger.debug("sim: %.2f - %s vs %s" % (sim, a.ext_doc, sf_in_msg))
 
