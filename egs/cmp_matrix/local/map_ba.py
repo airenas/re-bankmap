@@ -1,33 +1,8 @@
 import argparse
 import sys
 
-import pandas as pd
-from tqdm import tqdm
-
-from bankmap.data import e_currency, MapType
+from bankmap.loaders.ledgers import load_ba
 from bankmap.logger import logger
-from egs.cmp_matrix.local.map_customers import ledger_cols
-
-
-def is_recognized(param):
-    if param or param.strip() != "":
-        return True
-    return False
-
-
-# ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No_', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount']
-
-def prepare_data(df):
-    res = []
-    with tqdm("format cmp_matrix", total=len(df)) as pbar:
-        for i in range(len(df)):
-            pbar.update(1)
-            _id = df['No_'].iloc[i]
-            res.append(['BA', _id, df['Search_Name'].iloc[i], df['IBAN'].iloc[i], '',
-                        '',
-                        '', '', 0, e_currency(df['Currency_Code'].iloc[i]),
-                        'BA', '', MapType.UNUSED.to_s()])
-    return res, ledger_cols
 
 
 def main(argv):
@@ -38,12 +13,7 @@ def main(argv):
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
-    ledgers = pd.read_csv(args.input, sep=',')
-    logger.info("loaded {} gl rows".format(len(ledgers)))
-    logger.info("Headers: {}".format(list(ledgers)))
-
-    res, cols = prepare_data(ledgers)
-    df = pd.DataFrame(res, columns=cols)
+    df = load_ba(args.input)
     df.to_csv(sys.stdout, index=False)
     logger.info("Done")
 
