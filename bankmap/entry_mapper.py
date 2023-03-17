@@ -23,7 +23,7 @@ def to_dic_sf(e: LEntry):
 
 def to_dic_entry(e: Entry):
     return {"amount": e.amount, "date": e.date.isoformat(), "msg": e.msg,
-            "currency": e.currency, "desc": e.who, "id": e.ext_id, type: e.type.to_s()}
+            "currency": e.currency, "desc": e.who, "id": e.ext_id, "type": e.type.to_s()}
 
 
 def predict_entry(arena, entry, entry_dic, cfg):
@@ -164,4 +164,4 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 if __name__ == "__main__":
-    do_mapping(sys.argv[1], "test_company")
+    do_mapping(sys.argv[1], cfg=PredictionCfg())

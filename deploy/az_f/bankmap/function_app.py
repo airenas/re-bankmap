@@ -37,6 +37,8 @@ def get_version():
 @app.function_name(name="bankmap")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
+    app_ver = get_version()
+    logger.info("version {}".format(app_ver))
     start, metrics = time.time(), {}
     logger.info("got request")
     file = req.files.get("file", None)
@@ -49,8 +51,6 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("company {}".format(company))
     logger.info("file {}".format(file.name))
     try:
-        app_ver = get_version()
-
         temp_dir = tempfile.TemporaryDirectory()
         logger.info("tmp dir {}".format(temp_dir))
         out_file = os.path.join(temp_dir.name, "in.zip")
