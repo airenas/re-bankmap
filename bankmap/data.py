@@ -70,6 +70,13 @@ class PaymentType(Enum):
             return PaymentType.DBIT
         raise Exception("Unknown doc type '{}'".format(s))
 
+    def to_s(self):
+        if self == PaymentType.CRDT:
+            return "CRDT"
+        if self == PaymentType.DBIT:
+            return "DBIT"
+        raise Exception("Unknown payment type '{}'".format(self))
+
 
 class MapType(Enum):
     UNUSED = 0
