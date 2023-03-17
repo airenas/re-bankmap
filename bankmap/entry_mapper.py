@@ -12,12 +12,17 @@ from bankmap.similarity.similarities import e_key, similarity, sim_val
 
 
 def to_dic_item(e: LEntry):
-    return {"no": e.id, "type": e.type.to_s()}
+    return {"no": e.id, "type": e.type.to_s(), "name": e.name}
 
 
 def to_dic_sf(e: LEntry):
     return {"no": e.doc_no, "ext_no": e.ext_doc, "type": e.doc_type.to_s(),
-            "currency": e.currency, "amount": e.amount, "due": e.due_date}
+            "currency": e.currency, "amount": e.amount, "due": e.due_date.isoformat()}
+
+
+def to_dic_entry(e: Entry):
+    return {"amount": e.amount, "date": e.date.isoformat(), "msg": e.msg,
+            "currency": e.currency, "desc": e.who}
 
 
 def predict_entry(arena, entry, entry_dic, cfg):
@@ -35,12 +40,14 @@ def predict_entry(arena, entry, entry_dic, cfg):
         check(e)
 
     pred.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
-    res = {}
+    res = {"entry": to_dic_entry(entry)}
     recognized = None
+    was = set()
     if len(pred) > 0:
         e = pred[0]
         recognized = e["entry"]
-        res["main"] = {"item": to_dic_item(recognized), "val": e["i"], "recommended": bool(e["i"] > cfg.limit)}
+        res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": bool(e["i"] > cfg.limit)}
+        was.add(recognized.id)
     alt = []
     i, was = 1, set()
     for r in pred[1:]:
@@ -49,19 +56,23 @@ def predict_entry(arena, entry, entry_dic, cfg):
         rec = r["entry"]
         if rec.id in was:
             continue
+        was.add(rec.id)
         i += 1
-        alt.append({"item": to_dic_item(rec), "val": r["i"], "recommended": False})
+        alt.append({"item": to_dic_item(rec), "similarity": r["i"], "recommended": False})
     res["alternatives"] = alt
     if recognized and recognized.type in [LType.VEND, LType.CUST]:
         predicted_docs = find_best_docs(arena, entry, recognized.id, recognized.type)
         res_docs = []
+        total_applied = 0
         for d in predicted_docs:
             res_docs.append({"item": to_dic_sf(d["entry"]), "sum": d["sum"], "reason": d["reason"]})
+            total_applied += d["sum"]
         res["main"]["docs"] = res_docs
+        res["main"]["total_applied"] = total_applied
     return res
 
 
-def do_mapping(data_dir, company: str):
+def do_mapping(data_dir, cfg: PredictionCfg):
     logger.info("data dir {}".format(data_dir))
     c_docs_map = load_docs_map(os.path.join(data_dir, "Customer_Recognitions.csv"), "Cust")
     v_docs_map = load_docs_map(os.path.join(data_dir, "Vendor_Recognitions.csv"), "Vend")
@@ -119,8 +130,6 @@ def do_mapping(data_dir, company: str):
     logger.warning("predicting fake last 10 entries")
     test = entries[-10:]
     predict_res = []
-    cfg = PredictionCfg()
-    cfg.tops = 3
     for entry in test:
         dt = entry.date
         arena.move(dt)

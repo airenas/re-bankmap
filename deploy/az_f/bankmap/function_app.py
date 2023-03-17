@@ -6,6 +6,7 @@ from http import HTTPStatus
 
 import azure.functions as func
 from azure.functions import HttpMethod
+from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
 
@@ -43,7 +44,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("saved files {}".format(temp_dir.name))
         data_dir = os.path.join(temp_dir.name, extract_dir)
         logger.info("start mapping")
-        mappings, info = do_mapping(data_dir, company)
+        mappings, info = do_mapping(data_dir, PredictionCfg(company=company, top_best=3))
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)
