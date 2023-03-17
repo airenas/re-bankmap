@@ -7,9 +7,9 @@ from hyperopt import fmin, tpe, hp
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.data import App, Arena
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, e_key, sim_imp
-from src.utils.logger import logger
+from bankmap.data import Entry, LEntry, App, Arena
+from bankmap.logger import logger
+from bankmap.similarity.similarities import similarity, sim_imp, e_key
 
 
 def calc_sims(arena, row, entry_dict):

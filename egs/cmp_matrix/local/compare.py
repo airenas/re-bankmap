@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 
 from bankmap.data import e_str
 from bankmap.logger import logger
-from egs.cmp_matrix.local.similarities import sim_val
+from bankmap.similarity.similarities import sim_val
 
 
 def first_word(l1):
