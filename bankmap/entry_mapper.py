@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, App, Arena, LType
@@ -74,6 +75,15 @@ def predict_entry(arena, entry, entry_dic, cfg):
 
 
 def do_mapping(data_dir, cfg: PredictionCfg):
+    metrics = {}
+
+    def log_elapsed(_start, what):
+        end = time.time()
+        elapsed = (end - start)
+        metrics[what + "_sec"] = elapsed
+        return end
+
+    start = time.time()
     logger.info("data dir {}".format(data_dir))
     c_docs_map = load_docs_map(os.path.join(data_dir, "Customer_Recognitions.csv"), "Cust")
     v_docs_map = load_docs_map(os.path.join(data_dir, "Vendor_Recognitions.csv"), "Vend")
@@ -83,9 +93,11 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     ba_map = load_bank_recognitions_map(os.path.join(data_dir, "Bank_Account_Recognitions.csv"))
     res_info["Bank_Account_Recognitions"] = len(ba_map)
+    start_t = log_elapsed(start, "load_recognitions")
 
     entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, c_docs_map)
     res_info["Bank_Statement_Entries"] = len(entries_df)
+    start_t = log_elapsed(start_t, "load_entries")
 
     customer_sf_df = load_customer_sfs(os.path.join(data_dir, "Customer_Ledger_Entries.csv"),
                                        os.path.join(data_dir, "Customer_Bank_Accounts.csv"),
@@ -96,17 +108,20 @@ def do_mapping(data_dir, cfg: PredictionCfg):
                                    os.path.join(data_dir, "Vendor_Bank_Accounts.csv"),
                                    os.path.join(data_dir, "Vendors.csv"))
     res_info["Vendor_Ledger_Entries"] = len(vendor_sf_df)
+    start_t = log_elapsed(start_t, "load_ledgers")
 
     gl_df = load_gls(os.path.join(data_dir, "GL_Accounts.csv"))
     res_info["GL_Accounts"] = len(gl_df)
 
     ba_df = load_ba(os.path.join(data_dir, "Bank_Accounts.csv"))
     res_info["Bank_Accounts"] = len(ba_df)
+    start_t = log_elapsed(start_t, "load_gl_ba")
 
     l_entries = [LEntry(customer_sf_df.iloc[i]) for i in range(len(customer_sf_df))] + \
                 [LEntry(vendor_sf_df.iloc[i]) for i in range(len(vendor_sf_df))] + \
                 [LEntry(gl_df.iloc[i]) for i in range(len(gl_df))] + \
                 [LEntry(ba_df.iloc[i]) for i in range(len(ba_df))]
+    start_t = log_elapsed(start_t, "prepare_ledgers")
 
     customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
     res_info["Customer_Applications"] = len(customer_apps_df)
@@ -114,6 +129,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     vendor_apps_df = load_vendor_apps(os.path.join(data_dir, "Vendor_Applications.csv"), l_entries)
     res_info["Vendor_Applications"] = len(vendor_apps_df)
     res_info["l_entries"] = len(l_entries)
+    start_t = log_elapsed(start_t, "load_applications")
 
     entries = [Entry(entries_df.iloc[i]) for i in range(len(entries_df))]
     apps = [App(customer_apps_df.iloc[i]) for i in range(len(customer_apps_df))] + \
@@ -127,15 +143,25 @@ def do_mapping(data_dir, cfg: PredictionCfg):
         arr = entry_dic.get(k, [])
         arr.append(e)
         entry_dic[k] = arr
+    start_t = log_elapsed(start_t, "prepare_entries")
+    start_t = log_elapsed(start_t, "prepare_total")
 
     logger.warning("predicting fake last 10 entries")
     test = entries[-10:]
     predict_res = []
+    pi = 0
     for entry in test:
         dt = entry.date
         arena.move(dt)
         e_res = predict_entry(arena, entry, entry_dic, cfg)
         predict_res.append(e_res)
+        pi += 1
+    log_elapsed(start_t, "predicting")
+    log_elapsed(start, "total")
+    log_elapsed(start, "predicting_avg")
+    if pi > 0:
+        metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
+    res_info["metrics"] = metrics
     return predict_res, res_info
 
 
