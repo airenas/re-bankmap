@@ -114,6 +114,17 @@ class DocType(Enum):
             return DocType.BA
         raise Exception("Unknown doc type '{}'".format(s))
 
+    def to_s(self):
+        if self == DocType.SF:
+            return "SF"
+        if self == DocType.GRAZ_PAZ:
+            return "RETURN"
+        if self == DocType.GL:
+            return "GL"
+        if self == DocType.BA:
+            return "BA"
+        raise Exception("Unknown doc type '{}'".format(self))
+
 
 class LType(Enum):
     CUST = 1

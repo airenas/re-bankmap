@@ -1,20 +1,71 @@
 import os
+import sys
 
-from bankmap.data import LEntry
+from bankmap.cfg import PredictionCfg
+from bankmap.data import LEntry, Entry, App, Arena, LType
 from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
+from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
-from bankmap.transformers.entry import load_docs_map, load_bank_recognitions_map, load_entries
+from bankmap.predict.docs import find_best_docs
+from bankmap.similarity.similarities import e_key, similarity, sim_val
+
+
+def to_dic_item(e: LEntry):
+    return {"no": e.id, "type": e.type.to_s()}
+
+
+def to_dic_sf(e: LEntry):
+    return {"no": e.doc_no, "ext_no": e.ext_doc, "type": e.doc_type.to_s(),
+            "currency": e.currency, "amount": e.amount, "due": e.due_date}
+
+
+def predict_entry(arena, entry, entry_dic, cfg):
+    logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.doc_id))
+    pred = []
+
+    def check(_e):
+        v = similarity(_e, entry, entry_dic)
+        out = sim_val(v)
+        pred.append({"i": out, "sim": v, "entry": _e})
+
+    for e in arena.gl_entries:
+        check(e)
+    for e in arena.playground.values():
+        check(e)
+
+    pred.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
+    res = {}
+    recognized = None
+    if len(pred) > 0:
+        e = pred[0]
+        recognized = e["entry"]
+        res["main"] = {"item": to_dic_item(recognized), "val": e["i"], "recommended": bool(e["i"] > cfg.limit)}
+    alt = []
+    i, was = 1, set()
+    for r in pred[1:]:
+        if i >= cfg.tops:
+            break
+        rec = r["entry"]
+        if rec.id in was:
+            continue
+        i += 1
+        alt.append({"item": to_dic_item(rec), "val": r["i"], "recommended": False})
+    res["alternatives"] = alt
+    if recognized and recognized.type in [LType.VEND, LType.CUST]:
+        predicted_docs = find_best_docs(arena, entry, recognized.id, recognized.type)
+        res_docs = []
+        for d in predicted_docs:
+            res_docs.append({"item": to_dic_sf(d["entry"]), "sum": d["sum"], "reason": d["reason"]})
+        res["main"]["docs"] = res_docs
+    return res
 
 
 def do_mapping(data_dir, company: str):
     logger.info("data dir {}".format(data_dir))
     c_docs_map = load_docs_map(os.path.join(data_dir, "Customer_Recognitions.csv"), "Cust")
     v_docs_map = load_docs_map(os.path.join(data_dir, "Vendor_Recognitions.csv"), "Vend")
-    res_info = {}
-    res_info["Customer_Recognitions"] = len(c_docs_map)
-    res_info["Vendor_Recognitions"] = len(v_docs_map)
-
+    res_info = {"Customer_Recognitions": len(c_docs_map), "Vendor_Recognitions": len(v_docs_map)}
     cv_docs_map = c_docs_map
     cv_docs_map.update(v_docs_map)
 
@@ -52,4 +103,31 @@ def do_mapping(data_dir, company: str):
     res_info["Vendor_Applications"] = len(vendor_apps_df)
     res_info["l_entries"] = len(l_entries)
 
-    return {}, res_info
+    entries = [Entry(entries_df.iloc[i]) for i in range(len(entries_df))]
+    apps = [App(customer_apps_df.iloc[i]) for i in range(len(customer_apps_df))] + \
+           [App(vendor_apps_df.iloc[i]) for i in range(len(vendor_apps_df))]
+
+    arena = Arena(l_entries, apps)
+    entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
+    entry_dic = {}
+    for e in entries:
+        k = e_key(e)
+        arr = entry_dic.get(k, [])
+        arr.append(e)
+        entry_dic[k] = arr
+
+    logger.warning("predicting fake last 10 entries")
+    test = entries[-10:]
+    predict_res = []
+    cfg = PredictionCfg()
+    cfg.tops = 3
+    for entry in test:
+        dt = entry.date
+        arena.move(dt)
+        e_res = predict_entry(arena, entry, entry_dic, cfg)
+        predict_res.append(e_res)
+    return predict_res, res_info
+
+
+if __name__ == "__main__":
+    do_mapping(sys.argv[1], "test_company")
