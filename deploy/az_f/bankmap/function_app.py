@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import time
 import zipfile
 from http import HTTPStatus
 
@@ -17,9 +18,17 @@ def json_resp(value, code: int):
     return func.HttpResponse(body=json.dumps(value), status_code=int(code), mimetype="application/json")
 
 
+def log_elapsed(_start, what, metrics):
+    end = time.time()
+    elapsed = (end - _start)
+    metrics[what + "_sec"] = elapsed
+    return end
+
+
 @app.function_name(name="bankmap")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
+    start, metrics = time.time(), {}
     logger.info("got request")
     file = req.files.get("file", None)
     if not file:
@@ -31,6 +40,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("company {}".format(company))
     logger.info("file {}".format(file.name))
     try:
+
         temp_dir = tempfile.TemporaryDirectory()
         logger.info("tmp dir {}".format(temp_dir))
         out_file = os.path.join(temp_dir.name, "in.zip")
@@ -38,13 +48,21 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         with open(out_file, "wb") as f:
             file.save(f)
         logger.info("saved file {}".format(out_file))
+        next_t = log_elapsed(start, "save_zip", metrics)
 
         with zipfile.ZipFile(out_file) as z:
             z.extractall(temp_dir.name)
         logger.info("saved files {}".format(temp_dir.name))
+        next_t = log_elapsed(next_t, "extract_zip", metrics)
         data_dir = os.path.join(temp_dir.name, extract_dir)
         logger.info("start mapping")
+
         mappings, info = do_mapping(data_dir, PredictionCfg(company=company, top_best=3))
+
+        log_elapsed(next_t, "map", metrics)
+        log_elapsed(start, "total", metrics)
+        info["metrics"].update(metrics)
+
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)

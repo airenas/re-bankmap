@@ -157,11 +157,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
         predict_res.append(e_res)
         pi += 1
     log_elapsed(start_t, "predicting")
-    log_elapsed(start, "total")
+    log_elapsed(start, "total_mapping")
     if pi > 0:
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
-    res_info["metrics"] = metrics
-    return predict_res, res_info
+    return predict_res, {"metrics": metrics, "sizes": res_info}
 
 
 if __name__ == "__main__":
