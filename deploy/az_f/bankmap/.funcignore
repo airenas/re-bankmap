@@ -1,2 +1,8 @@
 test.zip
 test*.zip
+Makefile*
+.venv
+.vscode
+.python_packages
+.azure
+.idea

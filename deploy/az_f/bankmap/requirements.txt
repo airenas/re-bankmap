@@ -3,4 +3,4 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
-git+https://github.com/airenas/re-bankmap.git@v0.1.116-beta#egg=bankmap
+git+https://github.com/airenas/re-bankmap.git@v0.1.118-beta#egg=bankmap
