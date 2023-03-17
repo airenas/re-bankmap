@@ -69,6 +69,7 @@ def predict_entry(arena, entry, entry_dic, cfg):
             total_applied += d["sum"]
         res["main"]["docs"] = res_docs
         res["main"]["total_applied"] = total_applied
+        res["main"]["amount_remaining"] = entry.amount - total_applied
     return res
 
 
