@@ -23,7 +23,7 @@ def to_dic_sf(e: LEntry):
 
 def to_dic_entry(e: Entry):
     return {"amount": e.amount, "date": e.date.isoformat(), "msg": e.msg,
-            "currency": e.currency, "desc": e.who}
+            "currency": e.currency, "desc": e.who, "id": e.ext_id}
 
 
 def predict_entry(arena, entry, entry_dic, cfg):
