@@ -79,7 +79,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     def log_elapsed(_start, what):
         end = time.time()
-        elapsed = (end - start)
+        elapsed = (end - _start)
         metrics[what + "_sec"] = elapsed
         return end
 
@@ -143,8 +143,8 @@ def do_mapping(data_dir, cfg: PredictionCfg):
         arr = entry_dic.get(k, [])
         arr.append(e)
         entry_dic[k] = arr
-    start_t = log_elapsed(start_t, "prepare_entries")
-    start_t = log_elapsed(start_t, "prepare_total")
+    log_elapsed(start_t, "prepare_entries")
+    start_t = log_elapsed(start, "prepare_total")
 
     logger.warning("predicting fake last 10 entries")
     test = entries[-10:]
@@ -158,7 +158,6 @@ def do_mapping(data_dir, cfg: PredictionCfg):
         pi += 1
     log_elapsed(start_t, "predicting")
     log_elapsed(start, "total")
-    log_elapsed(start, "predicting_avg")
     if pi > 0:
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
     res_info["metrics"] = metrics
