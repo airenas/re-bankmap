@@ -41,9 +41,9 @@ def do_mapping(data_dir, company: str):
     res_info["Bank_Accounts"] = len(ba_df)
 
     l_entries = [LEntry(customer_sf_df.iloc[i]) for i in range(len(customer_sf_df))] + \
-                [LEntry(customer_sf_df.iloc[i]) for i in range(len(vendor_sf_df))] + \
-                [LEntry(customer_sf_df.iloc[i]) for i in range(len(gl_df))] + \
-                [LEntry(customer_sf_df.iloc[i]) for i in range(len(ba_df))]
+                [LEntry(vendor_sf_df.iloc[i]) for i in range(len(vendor_sf_df))] + \
+                [LEntry(gl_df.iloc[i]) for i in range(len(gl_df))] + \
+                [LEntry(ba_df.iloc[i]) for i in range(len(ba_df))]
 
     customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
     res_info["Customer_Applications"] = len(customer_apps_df)

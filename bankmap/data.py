@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 from enum import Enum
 from typing import List, Dict
@@ -47,7 +48,11 @@ class Entry:
 
 def to_date(p):
     try:
-        return None if p != p else time_parser.parse(p)
+        if p != p or not p:
+            return None
+        if isinstance(p, datetime.datetime):
+            return p
+        return time_parser.parse(p)
     except BaseException as err:
         logger.error("date:'{}'".format(p))
         raise err
