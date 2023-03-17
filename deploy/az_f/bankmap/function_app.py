@@ -25,6 +25,15 @@ def log_elapsed(_start, what, metrics):
     return end
 
 
+def get_version():
+    try:
+        with open(".version", "r") as f:
+            return f.read().strip()
+    except BaseException as err:
+        logger.error(err)
+        return "???"
+
+
 @app.function_name(name="bankmap")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
@@ -40,6 +49,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("company {}".format(company))
     logger.info("file {}".format(file.name))
     try:
+        app_ver = get_version()
 
         temp_dir = tempfile.TemporaryDirectory()
         logger.info("tmp dir {}".format(temp_dir))
@@ -62,6 +72,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         log_elapsed(next_t, "map", metrics)
         log_elapsed(start, "total", metrics)
         info["metrics"].update(metrics)
+        info["app_version"] = app_ver
 
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
