@@ -62,7 +62,7 @@ def test_sf_sim():
 def test_sf_sim_out():
     s, v = sf_sim_out("SF012345", "123 SF012345")
     assert s == 1
-    assert v == "SF012345"
+    assert v == "sf012345"
     s, v = sf_sim_out("SF012345", "tata f012345;aaa")
     assert s == .7
     assert v == "f012345"
