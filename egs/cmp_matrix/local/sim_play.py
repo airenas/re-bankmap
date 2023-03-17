@@ -3,11 +3,10 @@ import sys
 
 import pandas as pd
 
-from bankmap.data import Entry, LEntry, LType, App
+from bankmap.data import Entry, LEntry, LType, App, Arena
 from bankmap.logger import logger
-from egs.cmp_matrix.local.predict_docs import find_best_docs
-from egs.cmp_matrix.local.predict_play import Arena
-from egs.cmp_matrix.local.similarities import e_key, similarity, sim_val, param_names, sim_imp
+from bankmap.predict.docs import find_best_docs
+from bankmap.similarity.similarities import sim_val, similarity, e_key, param_names, sim_imp
 
 
 def show_sim_importance(sim):
@@ -107,7 +106,7 @@ def main(argv):
         logger.info("Docs selected {}:".format(len(res)))
         for r in res[:50]:
             logger.info(
-                "\t{} -> {}".format(r["s"], r["entry"].to_str()))
+                "\t{} -> {}".format(r["reason"], r["entry"].to_str()))
         sel = [r["entry"].doc_no for r in res]
         sel.sort()
         wanted = row.doc_ids.split(";")

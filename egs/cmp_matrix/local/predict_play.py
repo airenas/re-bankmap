@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from bankmap.data import LEntry, App, Arena, Entry
 from bankmap.logger import logger
-from egs.cmp_matrix.local.similarities import similarity, sim_val, e_key
+from bankmap.similarity.similarities import similarity, sim_val, e_key
 
 
 def get_best_account(arena, row, entry_dict):
