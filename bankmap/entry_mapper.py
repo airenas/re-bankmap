@@ -49,8 +49,8 @@ def predict_entry(arena, entry, entry_dic, cfg):
         res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": bool(e["i"] > cfg.limit)}
         was.add(recognized.id)
     alt = []
-    i, was = 1, set()
-    for r in pred[1:]:
+    i = 1
+    for r in pred:
         if i >= cfg.tops:
             break
         rec = r["entry"]
