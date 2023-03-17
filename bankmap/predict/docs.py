@@ -1,14 +1,15 @@
 from bankmap.data import LEntry, Entry, LType
 from bankmap.logger import logger
+from bankmap.similarity.similarities import payment_match
 from bankmap.similarity.similarity import sf_sim_out
-from egs.cmp_matrix.local.similarities import payment_match
 
 
 def find_best_docs(arena, row: Entry, _id: str, _type: LType):
     def amount(a: LEntry):
         return abs(a.amount)
 
-    available = [x for x in arena.playground.values() if x.id == _id and x.type == _type and payment_match(x, row) and amount(x) > 0.01]
+    available = [x for x in arena.playground.values() if
+                 x.id == _id and x.type == _type and payment_match(x, row) and amount(x) > 0.01]
     res = []
     remaining_amount = row.amount
 
@@ -24,7 +25,7 @@ def find_best_docs(arena, row: Entry, _id: str, _type: LType):
 
     def add(a: LEntry, why: str, sf_in_msg):
         nonlocal remaining_amount, msg
-        res.append({"s": why, "entry": a})
+        res.append({"reason": why, "entry": a, "sum": min(remaining_amount, amount(a))})
         remaining_amount -= amount(a)
         logger.debug("rem: %.2f - %s:%s" % (remaining_amount, a.doc_no, a.ext_doc))
         available.remove(a)
