@@ -4,11 +4,10 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from bankmap.data import App
+from bankmap.data import App, LEntry, Entry
 from bankmap.data import Arena, LType
 from bankmap.logger import logger
-from egs.cmp_matrix.local.predict_docs import find_best_docs
-from egs.cmp_matrix.local.similarities import Entry, LEntry
+from bankmap.predict.docs import find_best_docs
 
 
 def main(argv):
