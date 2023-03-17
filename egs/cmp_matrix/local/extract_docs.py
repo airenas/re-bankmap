@@ -3,9 +3,8 @@ import sys
 
 import pandas as pd
 
+from bankmap.loaders.entries import load_docs_map
 from bankmap.logger import logger
-from bankmap.transformers.entry import load_docs_map
-
 
 def main(argv):
     parser = argparse.ArgumentParser(description="Extracts external doc -> internal docs data",

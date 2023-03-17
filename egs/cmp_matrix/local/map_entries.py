@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 
 from bankmap.logger import logger
-from bankmap.transformers.entry import load_bank_recognitions_map, load_entries
+from bankmap.loaders.entries import load_bank_recognitions_map, load_entries
 
 
 def main(argv):
