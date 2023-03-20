@@ -1,3 +1,28 @@
+# Demo 4
+2023 03 20
+
+Rezultatai: H
+```txt
+Acc all        : 0.8862722573233773 (990/8705)
+Acc not empty     : 0.9992228985882657 (6/7721)	rejected: 973
+Acc not rec before: 1.0 (0/266)	rejected: 81
+Acc rec before    : 0.999195171026157 (6/7455)	rejected: 892
+Docs ...
+Acc all 0.8097964376590331 (598/3144) s:138, i:38, d:422	(rejected 340, no doc: 6943)
+
+Oracle acc 0.9491963260619977, (177/3484)
+```
+
+Rezultatai: U
+```txt
+Acc all        : 0.9894305612453912 (129/12205)
+Acc not empty     : 0.9976042957455596 (29/12105)	rejected: 100
+Acc rec before    : 0.9976042957455596 (29/12105)	rejected: 100
+Docs ...
+Acc all 0.7838273195876289 (1342/6208) s:438, i:143, d:761	(rejected 214, no doc: 9016)
+
+Oracle acc 0.985518530052943, (93/6422)
+```
 # Demo 3
 
 Rezultatai: H
