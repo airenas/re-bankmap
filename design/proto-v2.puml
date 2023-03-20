@@ -1,0 +1,68 @@
+@startuml Doc import
+skinparam sequence {
+    ParticipantBorderColor Black
+    ActorBorderColor Black
+
+    ParticipantBackgroundColor White
+    ActorBackgroundColor White
+
+    ArrowColor black
+    LifeLineBorderColor black
+    LifeLineBackgroundColor lightgray
+
+    BoxBorderColor black
+}
+skinparam databaseBackgroundColor White
+skinparam dataBaseBorderColor Blue
+
+hide footbox
+title Doc Import v2
+
+' skinparam handwritten true
+
+participant "DocuBank" as docu
+participant "External\nBank System" as bank
+participant "Azure Function" as predictor
+participant "Azure Storage" as storage
+participant "Azure Function ??? Train" as trainer
+
+== 1. Docubank uses function ==
+
+loop once/several times a day
+    docu -> bank: get new statements
+    activate docu
+    activate bank
+    bank --> docu:
+    deactivate bank
+
+    docu -> predictor: post data(zip file, companyID)
+    activate predictor
+    predictor -> predictor: unzip
+    predictor -> storage: get params(companyID)
+    activate storage
+    storage --> predictor
+    deactivate storage
+    alt no params in storage or company params older than 1 month
+        predictor -> trainer: notify retrain needed(zip, companyID)
+    end
+    predictor -> predictor: predict
+    predictor --> docu: result(recommended mappings)
+    deactivate predictor
+    deactivate docu
+end
+
+== 2. Learning company's paramns ==
+loop for each msg
+
+    predictor -> trainer: got notifyMsg
+    activate trainer
+    trainer -> trainer: train params
+    trainer -> trainer: validate new params
+    trainer -> storage: save new params(params, companyID)
+    activate storage
+    storage --> trainer
+    deactivate storage
+    deactivate trainer
+end
+
+@enduml
