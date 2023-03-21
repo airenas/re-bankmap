@@ -1,5 +1,6 @@
 import argparse
 import sys
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,13 @@ from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
 def e_key(e):
     return e.who.casefold() + e.iban.casefold()
+
+
+def prepare_history_map(entries: List[Entry]):
+    res = {}
+    for e in entries:
+        res.setdefault(e_key(e), {}).setdefault(e.rec_id, []).append(e)
+    return res
 
 
 def has_past_transaction(e_id, prev_entries, entry):

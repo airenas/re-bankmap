@@ -3,10 +3,10 @@ import sys
 
 import pandas as pd
 
-from bankmap.data import Entry, LEntry, LType, App, Arena
+from bankmap.data import Entry, LEntry, LType, App, Arena, Ctx
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
-from bankmap.similarity.similarities import sim_val, similarity, e_key, param_names, sim_imp
+from bankmap.similarity.similarities import sim_val, similarity, param_names, sim_imp, prepare_history_map
 
 
 def show_sim_importance(sim):
@@ -53,13 +53,8 @@ def main(argv):
     arena = Arena(l_entries, apps)
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
-
-    entry_dic = {}
-    for e in entries:
-        k = e_key(e)
-        arr = entry_dic.get(k, [])
-        arr.append(e)
-        entry_dic[k] = arr
+    entry_dic = prepare_history_map(entries)
+    ctx = Ctx()
 
     row = entries[int(args.i)]
     logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
@@ -76,7 +71,7 @@ def main(argv):
     res = []
 
     def check(_e):
-        v = similarity(_e, row, entry_dic)
+        v = similarity(ctx, _e, row, entry_dic)
         out = sim_val(v)
         res.append({"i": out, "sim": v, "entry": _e})
 

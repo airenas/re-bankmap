@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from bankmap.data import LEntry, App, Arena, Entry, Ctx
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_val, e_key
+from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
 
 
 def get_best_account(ctx, arena, row, entry_dict):
@@ -63,9 +63,7 @@ def main(argv):
 
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
-    entry_dic = {}
-    for e in entries:
-        entry_dic.setdefault(e_key(e), {}).setdefault(e.rec_id, []).append(e)
+    entry_dic = prepare_history_map(entries)
     logger.info("init history entries")
 
     pr_bar = tqdm(desc="predicting", total=len(entries))
