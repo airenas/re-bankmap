@@ -3,13 +3,13 @@ import sys
 import time
 
 from bankmap.cfg import PredictionCfg
-from bankmap.data import LEntry, Entry, App, Arena, LType
+from bankmap.data import LEntry, Entry, App, Arena, LType, Ctx
 from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
-from bankmap.similarity.similarities import e_key, similarity, sim_val
+from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
 
 
 def to_dic_item(e: LEntry):
@@ -26,12 +26,12 @@ def to_dic_entry(e: Entry):
             "currency": e.currency, "desc": e.who, "id": e.ext_id, "type": e.type.to_s()}
 
 
-def predict_entry(arena, entry, entry_dic, cfg):
+def predict_entry(ctx, arena, entry, entry_dic, cfg):
     logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.doc_id))
     pred = []
 
     def check(_e):
-        v = similarity(_e, entry, entry_dic)
+        v = similarity(ctx, _e, entry, entry_dic)
         out = sim_val(v)
         pred.append({"i": out, "sim": v, "entry": _e})
 
@@ -137,23 +137,19 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     arena = Arena(l_entries, apps)
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
-    entry_dic = {}
-    for e in entries:
-        k = e_key(e)
-        arr = entry_dic.get(k, [])
-        arr.append(e)
-        entry_dic[k] = arr
+    entry_dic = prepare_history_map(entries)
     log_elapsed(start_t, "prepare_entries")
     start_t = log_elapsed(start, "prepare_total")
 
     logger.warning("predicting fake last 10 entries")
     test = entries[-10:]
     predict_res = []
+    ctx = Ctx()
     pi = 0
     for entry in test:
         dt = entry.date
         arena.move(dt)
-        e_res = predict_entry(arena, entry, entry_dic, cfg)
+        e_res = predict_entry(ctx, arena, entry, entry_dic, cfg)
         predict_res.append(e_res)
         pi += 1
     log_elapsed(start_t, "predicting")
