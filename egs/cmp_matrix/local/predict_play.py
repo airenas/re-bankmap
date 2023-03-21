@@ -7,19 +7,19 @@ from multiprocessing import Queue
 import pandas as pd
 from tqdm import tqdm
 
-from bankmap.data import LEntry, App, Arena, Entry
+from bankmap.data import LEntry, App, Arena, Entry, Ctx
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_val, e_key
 
 
-def get_best_account(arena, row, entry_dict):
+def get_best_account(ctx, arena, row, entry_dict):
     bv, be, b = -1, None, []
     dt = row.date
     arena.move(dt)
 
     def check(e):
         nonlocal bv, be, b
-        v = similarity(e, row, entry_dict)
+        v = similarity(ctx, e, row, entry_dict)
         out = sim_val(v)
         if bv < out:
             # logger.info("Found better: {} - {}".format(v[1:], out))
@@ -65,10 +65,8 @@ def main(argv):
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     entry_dic = {}
     for e in entries:
-        k = e_key(e)
-        arr = entry_dic.get(k, [])
-        arr.append(e)
-        entry_dic[k] = arr
+        entry_dic.setdefault(e_key(e), {}).setdefault(e.rec_id, []).append(e)
+    logger.info("init history entries")
 
     pr_bar = tqdm(desc="predicting", total=len(entries))
 
@@ -78,8 +76,9 @@ def main(argv):
         apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
         arena = Arena(l_entries, apps)
         logger.info("run thread {}:{}".format(start, start + len(entries)))
+        ctx = Ctx()
         for i in range(len(entries)):
-            best, sim = get_best_account(arena, entries[i], entry_dic)
+            best, sim = get_best_account(ctx, arena, entries[i], entry_dic)
             _res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
             queue.put((i + start, _res))
         logger.info("done thread {}:{}".format(start, start + len(entries)))

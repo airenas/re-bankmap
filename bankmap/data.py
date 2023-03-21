@@ -11,6 +11,11 @@ from bankmap.similarity.similarity import num_close
 time_parser = parser()
 
 
+class Ctx:
+    def __init__(self):
+        self.name_sim_cache = {}
+
+
 class App:
     def __init__(self, row):
         self.type = LType.from_s(e_str(row['Type']))

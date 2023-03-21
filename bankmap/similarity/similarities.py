@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from bankmap.data import PaymentType, LEntry, Entry, LType, DocType
+from bankmap.data import PaymentType, LEntry, Entry, LType, DocType, Ctx
 from bankmap.logger import logger
 from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
@@ -15,12 +15,13 @@ def e_key(e):
 
 
 def has_past_transaction(e_id, prev_entries, entry):
-    for pe in prev_entries.get(e_key(entry), []):
+    if entry.rec_id != e_id:
+        return 0
+    for pe in prev_entries.get(e_key(entry), {}).get(e_id, []):
         if entry.date <= pe.date:
             return 0
-        if entry.rec_id == e_id:
-            # logger.info("Found prev {} {} < {}".format(e_key(entry), pe.date, entry.date))
-            return 1
+        # logger.info("Found prev {} {} < {}".format(e_key(entry), pe.date, entry.date))
+        return 1
     return 0
 
 
@@ -49,12 +50,23 @@ def amount_match(ledger, entry):
     return num_sim(diff)
 
 
-def similarity(ledger, entry, prev_entries):
+def cached_name_sim(ctx, nl, ne):
+    res_d = ctx.name_sim_cache.setdefault(nl, {})
+    res = res_d.setdefault(ne, None)
+    if not res:
+        res = name_sim(nl, ne)
+        res_d[ne] = res
+    # else:
+    #     logger.info("found {} {} {}".format(nl, ne, res))
+    return res
+
+
+def similarity(ctx: Ctx, ledger, entry, prev_entries):
     res = []
     nl = ledger.name
     ne = entry.who
     res.append(1 if nl.casefold() == ne.casefold() else 0)
-    res.append(name_sim(nl, ne))
+    res.append(cached_name_sim(ctx, nl, ne))
     res.append(1 if len(ledger.iban) > 5 and ledger.iban.casefold() == entry.iban.casefold() else 0)
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc.casefold() in entry.msg.casefold() else 0)
     res.append(sf_sim(ledger.ext_doc, entry.msg) if len(ledger.ext_doc) > 5 else 0)
@@ -98,7 +110,21 @@ sim_imp_H = np.array(
         0.49163849484216277
     ])
 
-sim_imp = sim_imp_H
+sim_imp_H3 = np.array(
+    [
+        6.333702007764452e-05, 0.5348162642591313, 0.518391870752106, 0.5102844535700198, 0.09351070868593661,
+        0.0006610908536512669, 0.12342285788350205, 0.10587377105491341, 0.9056746075173757, 0.2731950221020494,
+        0.578392083608941
+    ])
+
+sim_imp_U2 = np.array(
+    [
+        0.4374178397438139, 0.8320182667619358, 0.34839284318279357, 0.2853718866008894, 0.5975536488446007,
+        0.05046288909147558, 0.01777328430479688, 0.06727564053399462, 0.962981334837424, 0.10480472303982617,
+        0.9245665686233056
+    ])
+
+sim_imp = sim_imp_H3
 
 
 def sim_val(v):
