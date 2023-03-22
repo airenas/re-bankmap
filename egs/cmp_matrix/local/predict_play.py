@@ -42,9 +42,11 @@ def main(argv):
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
+    parser.add_argument("--history", nargs='?', type=int, required=True, help="History in days to look for")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
+    logger.info("history {} days".format(args.history))
 
     entries_t = pd.read_csv(args.input, sep=',')
     logger.info("loaded entries {} rows".format(len(entries_t)))
@@ -74,7 +76,7 @@ def main(argv):
         apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
         arena = Arena(l_entries, apps)
         logger.info("run thread {}:{}".format(start, start + len(entries)))
-        ctx = Ctx()
+        ctx = Ctx(history_days=args.history)
         for i in range(len(entries)):
             best, sim = get_best_account(ctx, arena, entries[i], entry_dic)
             _res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)

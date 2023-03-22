@@ -22,10 +22,14 @@ def prepare_history_map(entries: List[Entry]):
     return res
 
 
-def has_past_transaction(e_id, prev_entries, entry):
+def has_past_transaction(ctx: Ctx, e_id, prev_entries, entry):
     if entry.rec_id != e_id:
         return 0
+    max_hist_date = entry.date - ctx.history if ctx.history else None
+
     for pe in prev_entries.get(e_key(entry), {}).get(e_id, []):
+        if max_hist_date and max_hist_date < pe.date:
+            continue
         if entry.date <= pe.date:
             return 0
         # logger.info("Found prev {} {} < {}".format(e_key(entry), pe.date, entry.date))
@@ -81,7 +85,7 @@ def similarity(ctx: Ctx, ledger, entry, prev_entries):
     res.append(date_sim(ledger.due_date, entry.date))
     res.append(date_sim(entry.date, ledger.doc_date))
     res.append(amount_match(ledger, entry))
-    res.append(has_past_transaction(ledger.id, prev_entries, entry))
+    res.append(has_past_transaction(ctx, ledger.id, prev_entries, entry))
     res.append(1 if ledger.currency.casefold() == entry.currency.casefold() else 0)
     res.append(1 if payment_match(ledger, entry) else 0)
 

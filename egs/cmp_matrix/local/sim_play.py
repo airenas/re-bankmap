@@ -28,6 +28,7 @@ def main(argv):
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
     parser.add_argument("--i", nargs='?', required=True, help="Number of entries file to check")
     parser.add_argument("--top", nargs='?', default=20, type=int, help="Show the top most similar items")
+    parser.add_argument("--history", nargs='?', type=int, required=True, help="History in days to look for")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -54,7 +55,7 @@ def main(argv):
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     entry_dic = prepare_history_map(entries)
-    ctx = Ctx()
+    ctx = Ctx(history_days=args.history)
 
     row = entries[int(args.i)]
     logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t.iloc[int(args.i)]))

@@ -17,6 +17,8 @@ skip?=0
 split?=3000
 top?=20
 limit?=1.5
+# year
+hist=356
 ############################################
 ${out_dir}/extracted: 
 	mkdir -p $@
@@ -77,7 +79,7 @@ ${out_dir}/l_apps.txt: ${out_dir}/cust_l_apps.txt ${out_dir}/vend_l_apps.txt
 	tail -n +2 ${out_dir}/vend_l_apps.txt >> $@
 ${out_dir}/predicted_type.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/predict_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --apps ${out_dir}/l_apps.txt > $@_
+	    --apps ${out_dir}/l_apps.txt --history $(hist) > $@_
 # 	$(python_cmd) local/predict_simple.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 # 	    > $@_
 	mv $@_ $@
@@ -119,7 +121,7 @@ eval: ${out_dir}/cmp.txt
 .PHONY: eval
 sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 	$(python_cmd) local/sim_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
-		--top ${top} --apps ${out_dir}/l_apps.txt
+		--top ${top} --apps ${out_dir}/l_apps.txt --history $(hist)
 .PHONY: sim
 ############################################
 inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
