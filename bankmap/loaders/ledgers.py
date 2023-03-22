@@ -37,8 +37,8 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
     names = pd.read_csv(cust_file_name, sep=',')
     logger.info("loaded sfs {} rows".format(len(names)))
 
-    c_d = {r['No_']: (r['Name'], MapType.from_s(r['Application_Method'])) for _, r in names.iterrows()}
-    accounts_d = {r['Customer_No_']: r['Bank_Account_No_'] for _, r in accounts.iterrows()}
+    c_d = {r['No_']: (r['Name'], MapType.from_s(r['Application_Method'])) for r in names.to_dict('records')}
+    accounts_d = {r['Customer_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records')}
 
     return prepare_cust_sfs(ledgers, c_d, accounts_d)
 
@@ -73,8 +73,8 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     names = pd.read_csv(vend_file_name, sep=',')
     logger.info("loaded sfs {} rows".format(len(names)))
 
-    c_d = {r['No_']: (r['Name'], MapType.from_s(r['Application_Method'])) for _, r in names.iterrows()}
-    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for _, r in accounts.iterrows()}
+    c_d = {r['No_']: (r['Name'], MapType.from_s(r['Application_Method'])) for r in names.to_dict('records')}
+    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records')}
 
     return prepare_vend_sfs(ledgers, c_d, accounts_d)
 
