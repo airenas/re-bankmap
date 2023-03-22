@@ -1,5 +1,4 @@
 import pandas as pd
-from tqdm import tqdm
 
 from bankmap.data import e_str, e_date, to_date, e_currency, e_float
 from bankmap.logger import logger
@@ -16,20 +15,19 @@ def load_docs_map(file_name, _type: str):
     logger.debug("Headers: {}".format(list(df)))
     skip = 0
     res = {}
-    with tqdm("read entries", total=len(df)) as pbar:
-        for i in range(len(df)):
-            pbar.update(1)
-            id = e_str(df['Statement_External_Document_No_'].iloc[i])
-            st_date = e_date(df[_type + '_Posting_Date'].iloc[i])
-            doc_date = e_date(df['Applied_' + _type + '_Document_Date'].iloc[i])
-            cv = e_str(df['Vend_Vendor_No_' if _type == "Vend" else 'Cust_Customer_No_'].iloc[i])
-            if st_date < doc_date:
-                skip += 1
-                continue
-            iid = e_str(df['Applied_' + _type + '_Document_No_'].iloc[i])
-            ra = res.get(id, (set(), cv))
-            ra[0].add(iid)
-            res[id] = ra
+    data = df.to_dict('records')
+    for d in data:
+        id = e_str(d['Statement_External_Document_No_'])
+        st_date = e_date(d[_type + '_Posting_Date'])
+        doc_date = e_date(d['Applied_' + _type + '_Document_Date'])
+        cv = e_str(d['Vend_Vendor_No_' if _type == "Vend" else 'Cust_Customer_No_'])
+        if st_date < doc_date:
+            skip += 1
+            continue
+        iid = e_str(d['Applied_' + _type + '_Document_No_'])
+        ra = res.get(id, (set(), cv))
+        ra[0].add(iid)
+        res[id] = ra
     logger.debug("skipped future docs: {}".format(skip))
     return res
 
@@ -43,10 +41,9 @@ def load_bank_recognitions_map(file_name):
     logger.debug("{}".format(df.head(n=10)))
     logger.debug("Headers: {}".format(list(df)))
     res = {}
-    with tqdm("read mappings", total=len(df)) as pbar:
-        for i in range(len(df)):
-            pbar.update(1)
-            res[e_str(df['Statement_External_Document_No_'].iloc[i])] = e_str(df['Bal__Account_No_'].iloc[i])
+    data = df.to_dict('records')
+    for d in data:
+        res[e_str(d['Statement_External_Document_No_'])] = e_str(d['Bal__Account_No_'])
     return res
 
 

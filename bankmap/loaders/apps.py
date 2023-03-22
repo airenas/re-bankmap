@@ -1,5 +1,4 @@
 import pandas as pd
-from tqdm import tqdm
 
 from bankmap.data import e_currency
 from bankmap.logger import logger
@@ -9,20 +8,19 @@ app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_
 
 def prepare_cust_apps(df, l_map):
     res = []
-    with tqdm("format data", total=len(df)) as pbar:
-        for i in range(len(df)):
-            doc = df['Document_No_'].iloc[i]
-            cv_no = l_map.get(doc, "")
-            date = df['Application_Created_Date'].iloc[i]
-            if date == "0":  # close same day if not set
-                date = df['Posting_Date'].iloc[i]
-            pbar.update(1)
-            if cv_no:
-                res.append(['Customer', date,
-                            e_currency(df['Application_Amount'].iloc[i]),
-                            e_currency(df['Remaining_Amount'].iloc[i]),
-                            doc, cv_no
-                            ])
+    data = df.to_dict('records')
+    for d in data:
+        doc = d['Document_No_']
+        cv_no = l_map.get(doc, "")
+        date = d['Application_Created_Date']
+        if date == "0":  # close same day if not set
+            date = d['Posting_Date']
+        if cv_no:
+            res.append(['Customer', date,
+                        e_currency(d['Application_Amount']),
+                        e_currency(d['Remaining_Amount']),
+                        doc, cv_no
+                        ])
     return pd.DataFrame(res, columns=app_cols)
 
 
@@ -37,20 +35,19 @@ def load_customer_apps(apps_file_name, l_entries):
 
 def prepare_vend_apps(df, l_map):
     res = []
-    with tqdm("format data", total=len(df)) as pbar:
-        for i in range(len(df)):
-            doc = df['Document_No_'].iloc[i]
-            cv_no = l_map.get(doc, "")
-            date = df['Application_Created_Date'].iloc[i]
-            if date == "0":  # close same day if not set
-                date = df['Posting_Date'].iloc[i]
-            pbar.update(1)
-            if cv_no:
-                res.append(['Vendor', date,
-                            e_currency(df['Application_Amount'].iloc[i]),
-                            e_currency(df['Remaining_Amount'].iloc[i]),
-                            doc, cv_no
-                            ])
+    data = df.to_dict('records')
+    for d in data:
+        doc = d['Document_No_']
+        cv_no = l_map.get(doc, "")
+        date = d['Application_Created_Date']
+        if date == "0":  # close same day if not set
+            date = d['Posting_Date']
+        if cv_no:
+            res.append(['Vendor', date,
+                        e_currency(d['Application_Amount']),
+                        e_currency(d['Remaining_Amount']),
+                        doc, cv_no
+                        ])
     return pd.DataFrame(res, columns=app_cols)
 
 

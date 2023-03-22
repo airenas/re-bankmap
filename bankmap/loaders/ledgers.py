@@ -1,5 +1,4 @@
 import pandas as pd
-from tqdm import tqdm
 
 from bankmap.data import e_str, e_date, e_currency, e_float, MapType
 from bankmap.logger import logger
@@ -84,15 +83,14 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
 # returns dataframe
 def load_gls(ledgers_file_name):
     logger.info("loading gls {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',')
+    df = pd.read_csv(ledgers_file_name, sep=',')
     res = []
-    with tqdm("load gl", total=len(ledgers)) as pbar:
-        for i in range(len(ledgers)):
-            pbar.update(1)
-            _id = ledgers['No_'].iloc[i]
-            res.append(['GL', _id, ledgers['Search_Name'].iloc[i], '', '',
-                        '',
-                        '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s()])
+    data = df.to_dict('records')
+    for d in data:
+        _id = d['No_']
+        res.append(['GL', _id, d['Search_Name'], '', '',
+                    '',
+                    '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s()])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -100,14 +98,13 @@ def load_gls(ledgers_file_name):
 # returns dataframe
 def load_ba(ledgers_file_name):
     logger.info("loading ba {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',')
+    df = pd.read_csv(ledgers_file_name, sep=',')
     res = []
-    with tqdm("load gl", total=len(ledgers)) as pbar:
-        for i in range(len(ledgers)):
-            pbar.update(1)
-            _id = ledgers['No_'].iloc[i]
-            res.append(['BA', _id, ledgers['Search_Name'].iloc[i], ledgers['IBAN'].iloc[i], '',
-                        '',
-                        '', '', 0, e_currency(ledgers['Currency_Code'].iloc[i]),
-                        'BA', '', MapType.UNUSED.to_s()])
+    data = df.to_dict('records')
+    for d in data:
+        _id = d['No_']
+        res.append(['BA', _id, d['Search_Name'], d['IBAN'], '',
+                    '',
+                    '', '', 0, e_currency(d['Currency_Code']),
+                    'BA', '', MapType.UNUSED.to_s()])
     return pd.DataFrame(res, columns=ledger_cols)
