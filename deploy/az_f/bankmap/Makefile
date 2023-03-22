@@ -15,12 +15,23 @@ enable/indexing:
 	az functionapp config appsettings set --name $(func_name) --resource-group $(func_resource_group) --settings AzureWebJobsFeatureFlags=EnableWorkerIndexing		
 get/storage-account/cs:
 	func azure storage fetch-connection-string $(func_storage)
-deploy: _version
+############################################
+deploy: _version requirements.txt
 	func azure functionapp publish $(func_name)
+.PHONY: deploy	
+requirements.txt: requirements.txt.in
+	cat $< | envsubst > $@	
 _version:
 	echo $(version) > .version
-
+############################################
 test/remote:
 	curl -X POST https://bankmap.azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' -H 'content-type: multipart/form-data' -F company=hum -F file=@test.zip
 test/local:
 	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' -H 'content-type: multipart/form-data' -F company=hum -F file=@test.zip
+############################################
+clean/req:
+	rm -f requirements.txt
+.PHONY: clean/req
+############################################
+.EXPORT_ALL_VARIABLES:
+

@@ -6,3 +6,4 @@ Makefile*
 .python_packages
 .azure
 .idea
+requirements.txt.in
