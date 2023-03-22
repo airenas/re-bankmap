@@ -67,39 +67,38 @@ def iban(p):
 # returns panda table
 def load_entries(file_name, ba_map, cv_map):
     logger.info("loading entries {}".format(file_name))
-    data = pd.read_csv(file_name, sep=',')
-    logger.info("loaded entries {} rows".format(len(data)))
-    logger.debug("{}".format(data.head(n=10)))
-    hd = list(data)
+    df = pd.read_csv(file_name, sep=',')
+    logger.info("loaded entries {} rows".format(len(df)))
+    logger.debug("{}".format(df.head(n=10)))
+    hd = list(df)
     logger.debug("Headers: {}".format(hd))
 
     res = []
     cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
             'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo']
     found = set()
-    with tqdm("read entries", total=len(data)) as pbar:
-        for i in range(len(data)):
-            pbar.update(1)
-            ext_id = e_str(data['External_Document_No_'].iloc[i])
-            if ext_id in found:
-                continue
-            found.add(ext_id)
-            rec_no, rec = e_str(data['Recognized_Account_No_'].iloc[i]), True
-            if not is_recognized(rec_no):
-                rec_no, rec = ba_map.get(ext_id, ""), False
-            docs = cv_map.get(ext_id, ("", ""))
-            if docs[1] and docs[1] != rec_no:
-                logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
-                rec_no = docs[1]
+    data = df.to_dict('records')
+    for d in data:
+        ext_id = e_str(d['External_Document_No_'])
+        if ext_id in found:
+            continue
+        found.add(ext_id)
+        rec_no, rec = e_str(d['Recognized_Account_No_']), True
+        if not is_recognized(rec_no):
+            rec_no, rec = ba_map.get(ext_id, ""), False
+        docs = cv_map.get(ext_id, ("", ""))
+        if docs[1] and docs[1] != rec_no:
+            logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
+            rec_no = docs[1]
 
-            res.append([data['Description'].iloc[i], data['Message_to_Recipient'].iloc[i], data['N_CdtDbtInd'].iloc[i],
-                        e_float(data['N_Amt'].iloc[i]), data['N_BookDt_Dt'].iloc[i], iban(data.iloc[i]),
-                        data['N_ND_TD_Refs_EndToEndId'].iloc[i],
-                        rec_no,
-                        data['Recognized_Document_No_'].iloc[i], rec,
-                        e_currency(data['Acct_Ccy'].iloc[i]),
-                        docs[0],
-                        data['External_Document_No_'].iloc[i]])
+        res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
+                    e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
+                    d['N_ND_TD_Refs_EndToEndId'],
+                    rec_no,
+                    d['Recognized_Document_No_'], rec,
+                    e_currency(d['Acct_Ccy']),
+                    docs[0],
+                    d['External_Document_No_']])
     # stable sort by date
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))

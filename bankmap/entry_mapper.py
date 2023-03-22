@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -117,10 +118,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     res_info["Bank_Accounts"] = len(ba_df)
     start_t = log_elapsed(start_t, "load_gl_ba")
 
-    l_entries = [LEntry(customer_sf_df.iloc[i]) for i in range(len(customer_sf_df))] + \
-                [LEntry(vendor_sf_df.iloc[i]) for i in range(len(vendor_sf_df))] + \
-                [LEntry(gl_df.iloc[i]) for i in range(len(gl_df))] + \
-                [LEntry(ba_df.iloc[i]) for i in range(len(ba_df))]
+    l_entries = [LEntry(r) for r in customer_sf_df.to_dict('records')] + \
+                [LEntry(r) for r in vendor_sf_df.to_dict('records')] + \
+                [LEntry(r) for r in gl_df.to_dict('records')] + \
+                [LEntry(r) for r in ba_df.to_dict('records')]
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
     customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
@@ -131,12 +132,13 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     res_info["l_entries"] = len(l_entries)
     start_t = log_elapsed(start_t, "load_applications")
 
-    entries = [Entry(entries_df.iloc[i]) for i in range(len(entries_df))]
-    apps = [App(customer_apps_df.iloc[i]) for i in range(len(customer_apps_df))] + \
-           [App(vendor_apps_df.iloc[i]) for i in range(len(vendor_apps_df))]
-
+    entries_d = entries_df.to_dict('records')
+    entries = [Entry(e) for e in entries_d]
+    apps = [App(r) for r in customer_apps_df.to_dict('records')] + \
+           [App(r) for r in vendor_apps_df.to_dict('records')]
     arena = Arena(l_entries, apps)
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
+    log_elapsed(start_t, "prepare_entries")
     entry_dic = prepare_history_map(entries)
     log_elapsed(start_t, "prepare_entries")
     start_t = log_elapsed(start, "prepare_total")
@@ -160,4 +162,5 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 if __name__ == "__main__":
-    do_mapping(sys.argv[1], cfg=PredictionCfg())
+    res = do_mapping(sys.argv[1], cfg=PredictionCfg())
+    print(json.dumps(res[1].get("metrics", {}), indent=2))

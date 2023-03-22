@@ -10,21 +10,20 @@ ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Documen
 
 def prepare_cust_sfs(df, c_data, accounts):
     res = []
-    with tqdm("format cmp_matrix", total=len(df)) as pbar:
-        for i in range(len(df)):
-            pbar.update(1)
-            dt = e_str(df['Document_Type'].iloc[i])
-            if not dt or dt == "Mokėjimas":
-                continue
-            _id = df['Customer_No_'].iloc[i]
-            cd = c_data[_id]
-            res.append(['Customer', _id, cd[0], accounts.get(_id, ''), df['Document_No_'].iloc[i],
-                        df['Due_Date'].iloc[i], df['Document_Date'].iloc[i],
-                        df['External_Document_No_'].iloc[i],
-                        e_float(df['Amount'].iloc[i]),
-                        e_currency(df['Currency_Code'].iloc[i]),
-                        dt,
-                        e_date(df['ClosedAtDate'].iloc[i]), cd[1].to_s()])
+    data = df.to_dict('records')
+    for d in data:
+        dt = e_str(d['Document_Type'])
+        if not dt or dt == "Mokėjimas":
+            continue
+        _id = d['Customer_No_']
+        cd = c_data[_id]
+        res.append(['Customer', _id, cd[0], accounts.get(_id, ''), d['Document_No_'],
+                    d['Due_Date'], d['Document_Date'],
+                    d['External_Document_No_'],
+                    e_float(d['Amount']),
+                    e_currency(d['Currency_Code']),
+                    dt,
+                    e_date(d['ClosedAtDate']), cd[1].to_s()])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -47,21 +46,20 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
 
 def prepare_vend_sfs(df, v_data, accounts):
     res = []
-    with tqdm("format cmp_matrix", total=len(df)) as pbar:
-        for i in range(len(df)):
-            pbar.update(1)
-            dt = e_str(df['Document_Type'].iloc[i])
-            if not dt or dt == "Mokėjimas":
-                continue
-            _id = df['Vendor_No_'].iloc[i]
-            vd = v_data[_id]
-            res.append(['Vendor', _id, vd[0], accounts.get(_id, ''), df['Document_No_'].iloc[i],
-                        df['Due_Date'].iloc[i],
-                        df['Document_Date'].iloc[i], df['External_Document_No_'].iloc[i],
-                        df['Amount'].iloc[i],
-                        e_currency(df['Currency_Code'].iloc[i]),
-                        dt,
-                        e_date(df['ClosedAtDate'].iloc[i]), vd[1].to_s()])
+    data = df.to_dict('records')
+    for d in data:
+        dt = e_str(d['Document_Type'])
+        if not dt or dt == "Mokėjimas":
+            continue
+        _id = d['Vendor_No_']
+        vd = v_data[_id]
+        res.append(['Vendor', _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
+                    d['Due_Date'],
+                    d['Document_Date'], d['External_Document_No_'],
+                    d['Amount'],
+                    e_currency(d['Currency_Code']),
+                    dt,
+                    e_date(d['ClosedAtDate']), vd[1].to_s()])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
