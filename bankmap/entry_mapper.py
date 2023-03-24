@@ -6,7 +6,7 @@ import time
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, App, Arena, LType, Ctx
 from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
-from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
+from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
@@ -131,6 +131,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     res_info["Vendor_Applications"] = len(vendor_apps_df)
     res_info["l_entries"] = len(l_entries)
     start_t = log_elapsed(start_t, "load_applications")
+
+    new_entries = load_lines(os.path.join(data_dir, "Bank_Statement_Lines.csv"))
+    res_info["Bank_Statement_Lines"] = len(new_entries)
+    start_t = log_elapsed(start_t, "load_entry_lines")
 
     entries_d = entries_df.to_dict('records')
     entries = [Entry(e) for e in entries_d]

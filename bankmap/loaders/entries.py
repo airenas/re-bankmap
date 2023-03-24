@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bankmap.data import e_str, e_date, to_date, e_currency, e_float
+from bankmap.data import e_str, e_date, to_date, e_currency, e_float, Entry, PaymentType
 from bankmap.logger import logger
 
 
@@ -60,6 +60,9 @@ def iban(p):
     return p["N_ND_TD_RP_DbtrAcct_Id_IBAN"]
 
 
+entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
+            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo']
+
 # loads data from Bank_Statement_Entries
 # returns panda table
 def load_entries(file_name, ba_map, cv_map):
@@ -71,8 +74,7 @@ def load_entries(file_name, ba_map, cv_map):
     logger.debug("Headers: {}".format(hd))
 
     res = []
-    cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo']
+
     found = set()
     data = df.to_dict('records')
     for d in data:
@@ -100,5 +102,47 @@ def load_entries(file_name, ba_map, cv_map):
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
     res = [v[1] for v in sr]
-    df = pd.DataFrame(res, columns=cols)
+    df = pd.DataFrame(res, columns=entry_cols)
     return df
+
+
+def f_name(check, f1, f2):
+    if check:
+        return f1
+    return f2
+
+
+# loads data from Bank_Statement_Lines
+# returns Entries list
+def load_lines(file_name):
+    logger.info("loading entry lines {}".format(file_name))
+    df = pd.read_csv(file_name, sep=',')
+    logger.info("loaded entry lines {} rows".format(len(df)))
+    logger.debug("{}".format(df.head(n=10)))
+    hd = list(df)
+    logger.info("Headers: {}".format(hd))
+    res = []
+    found = set()
+    data = df.to_dict('records')
+
+    for d in data:
+        ext_id = e_str(d['External_Document_No_'])
+        if ext_id in found:
+            continue
+        found.add(ext_id)
+        credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
+        values = [d[f_name(credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
+                  d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
+                    e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
+                    d['N_ND_TD_Refs_EndToEndId'],
+                    "",
+                    "", "",
+                    e_currency(d['Acct_Ccy']),
+                    "",
+                  d['External_Document_No_']]
+        res.append(Entry({key:value for key, value in zip(entry_cols, values)}))
+    # stable sort by date
+    sr = [v for v in enumerate(res)]
+    sr.sort(key=lambda e: (e[1].date, e[0]))
+    res = [v[1] for v in sr]
+    return res
