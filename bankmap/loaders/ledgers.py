@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bankmap.data import e_str, e_date, e_currency, e_float, MapType
+from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType
 from bankmap.logger import logger
 
 ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
@@ -12,7 +12,7 @@ def prepare_cust_sfs(df, c_data, accounts):
     data = df.to_dict('records')
     for d in data:
         dt = e_str(d['Document_Type'])
-        if not dt or dt == "Mokėjimas":
+        if not dt or DocType.skip(dt):
             continue
         _id = d['Customer_No_']
         cd = c_data[_id]
@@ -48,7 +48,7 @@ def prepare_vend_sfs(df, v_data, accounts):
     data = df.to_dict('records')
     for d in data:
         dt = e_str(d['Document_Type'])
-        if not dt or dt == "Mokėjimas":
+        if not dt or DocType.skip(dt):
             continue
         _id = d['Vendor_No_']
         vd = v_data[_id]

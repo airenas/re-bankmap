@@ -91,7 +91,7 @@ class MapType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "Rankiniu būdu" or s == "ManualMap":
+        if s == "Rankiniu būdu" or s == "ManualMap" or s == "Manual":
             return MapType.MANUAL
         if s == "Sugretinti su seniausiu" or s == "OldestMap":
             return MapType.OLDEST
@@ -117,15 +117,19 @@ class DocType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "SF" or s == "Delspinigių pažyma":
+        if s == "SF" or s == "Delspinigių pažyma" or s == "Invoice":
             return DocType.SF
-        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas":
+        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo":
             return DocType.GRAZ_PAZ
         if s == "GL":
             return DocType.GL
         if s == "BA":
             return DocType.BA
         raise Exception("Unknown doc type '{}'".format(s))
+
+    @staticmethod
+    def skip(s):
+        return s == "Mokėjimas" or s == "Payment"
 
     def to_s(self):
         if self == DocType.SF:
