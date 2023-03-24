@@ -137,3 +137,14 @@ deploy/az_f/bankmap/test.zip
 deploy/az_f/bankmap/.azure
 deploy/az_f/bankmap/.vscode
 deploy/az_f/bankmap/test*.zip
+data
+egs/test_prod/data*
+deploy/az_f/bankmap/.version
+deploy/az_f/bankmap/requirements.txt
+.idea
+deploy/az_f/bankmap-fake/Makefile.options
+deploy/az_f/bankmap-fake/requirements.txt
+deploy/az_f/bankmap-fake/fake.json
+deploy/az_f/bankmap-fake/test_zip_archive.zip
+deploy/az_f/bankmap-fake/.azure
+egs/cmp_matrix/Makefile.options
