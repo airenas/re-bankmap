@@ -189,6 +189,8 @@ class LEntry:
             self.doc_type = DocType.from_s(e_str(row['Document_Type']))
             self.closed_date = to_date(row['Closed_Date'])
             self.map_type = MapType.from_s(row['Map_Type'])
+            self.open = e_str(row['Open']) == 'True'
+            self.remaining_amount = e_float(row['Remaining_Amount'])
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 

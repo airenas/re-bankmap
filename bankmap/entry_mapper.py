@@ -123,6 +123,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
           [LEntry(r) for r in vendor_sf_df.to_dict('records')]
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
+    sfs = [s for s in sfs if s.open]
+    res_info["Open_SFs"] = len(sfs)
+    for s in sfs:
+        s.amount = s.remaining_amount
     # customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
     # res_info["Customer_Applications"] = len(customer_apps_df)
 

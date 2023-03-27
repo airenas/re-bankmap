@@ -4,7 +4,7 @@ from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType
 from bankmap.logger import logger
 
 ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
-               'Currency', 'Document_Type', 'Closed_Date', 'Map_Type']
+               'Currency', 'Document_Type', 'Closed_Date', 'Map_Type', 'Open', 'Remaining_Amount']
 
 
 def prepare_cust_sfs(df, c_data, accounts):
@@ -22,7 +22,7 @@ def prepare_cust_sfs(df, c_data, accounts):
                     e_float(d['Amount']),
                     e_currency(d['Currency_Code']),
                     dt,
-                    e_date(d['ClosedAtDate']), cd[1].to_s()])
+                    e_date(d['ClosedAtDate']), cd[1].to_s(), d['Open'], d['Remaining_Amount']])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -58,7 +58,7 @@ def prepare_vend_sfs(df, v_data, accounts):
                     d['Amount'],
                     e_currency(d['Currency_Code']),
                     dt,
-                    e_date(d['ClosedAtDate']), vd[1].to_s()])
+                    e_date(d['ClosedAtDate']), vd[1].to_s(), d['Open'], d['Remaining_Amount']])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -90,7 +90,7 @@ def load_gls(ledgers_file_name):
         _id = d['No_']
         res.append(['GL', _id, d['Search_Name'], '', '',
                     '',
-                    '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s()])
+                    '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s(), '', 0])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -106,5 +106,5 @@ def load_ba(ledgers_file_name):
         res.append(['BA', _id, d['Search_Name'], d['IBAN'], '',
                     '',
                     '', '', 0, e_currency(d['Currency_Code']),
-                    'BA', '', MapType.UNUSED.to_s()])
+                    'BA', '', MapType.UNUSED.to_s(), '', 0])
     return pd.DataFrame(res, columns=ledger_cols)
