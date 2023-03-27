@@ -131,7 +131,7 @@ def load_lines(file_name):
             continue
         found.add(ext_id)
         credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
-        values = [d[f_name(credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
+        values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
                     e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
                     d['N_ND_TD_Refs_EndToEndId'],

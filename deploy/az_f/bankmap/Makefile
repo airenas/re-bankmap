@@ -25,9 +25,11 @@ _version:
 	echo $(version) > .version
 ############################################
 test/remote:
-	curl -X POST https://bankmap.azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' -H 'content-type: multipart/form-data' -F company=hum -F file=@test.zip
+	curl -X POST https://bankmap.azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' \
+	    -H 'content-type: application/octet-stream' -H company=hum --data-binary @test.zip
 test/local:
-	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' -H 'content-type: multipart/form-data' -F company=hum -F file=@test.zip
+	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' \
+	    -H 'content-type: application/octet-stream' -H company=hum --data-binary @test.zip
 ############################################
 clean/req:
 	rm -f requirements.txt
