@@ -150,7 +150,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     log_elapsed(start_t, "prepare_entries")
     start_t = log_elapsed(start, "prepare_total")
 
-    logger.warning("predicting fake last 10 entries")
+    logger.warning("predicting...")
     test = new_entries
     predict_res = []
     ctx = Ctx()
