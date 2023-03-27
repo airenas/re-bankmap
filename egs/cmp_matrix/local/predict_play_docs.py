@@ -43,7 +43,7 @@ def main(argv):
     def predict_docs(arena, entry, _id, _type: LType):
         if not _id:
             return ""
-        docs = find_best_docs(arena, entry, _id, _type)
+        docs = find_best_docs(arena.playground.values(), entry, _id, _type)
         return ";".join([d["entry"].doc_no for d in docs])
 
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
