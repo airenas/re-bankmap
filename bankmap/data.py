@@ -226,6 +226,13 @@ def e_currency(p):
     return e_str(p).upper()
 
 
+class PredictData:
+    def __init__(self, gl_ba, sfs, historical_entries):
+        self.gl_ba = gl_ba
+        self.sfs = sfs
+        self.historical_entries = historical_entries
+
+
 class Arena:
     def __init__(self, l_entries, apps):
         self.l_entries = l_entries

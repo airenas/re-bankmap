@@ -4,8 +4,7 @@ import sys
 import time
 
 from bankmap.cfg import PredictionCfg
-from bankmap.data import LEntry, Entry, App, Arena, LType, Ctx
-from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
+from bankmap.data import LEntry, Entry, LType, Ctx, PredictData
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
@@ -27,18 +26,18 @@ def to_dic_entry(e: Entry):
             "currency": e.currency, "desc": e.who, "id": e.ext_id, "type": e.type.to_s()}
 
 
-def predict_entry(ctx, arena, entry, entry_dic, cfg):
+def predict_entry(ctx, pd, entry, cfg):
     logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.doc_id))
     pred = []
 
     def check(_e):
-        v = similarity(ctx, _e, entry, entry_dic)
+        v = similarity(ctx, _e, entry, pd.historical_entries)
         out = sim_val(v)
         pred.append({"i": out, "sim": v, "entry": _e})
 
-    for e in arena.gl_entries:
+    for e in pd.gl_ba:
         check(e)
-    for e in arena.playground.values():
+    for e in pd.sfs:
         check(e)
 
     pred.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
@@ -63,7 +62,7 @@ def predict_entry(ctx, arena, entry, entry_dic, cfg):
         alt.append({"item": to_dic_item(rec), "similarity": r["i"], "recommended": False})
     res["alternatives"] = alt
     if recognized and recognized.type in [LType.VEND, LType.CUST]:
-        predicted_docs = find_best_docs(arena, entry, recognized.id, recognized.type)
+        predicted_docs = find_best_docs(pd.sfs, entry, recognized.id, recognized.type)
         res_docs = []
         total_applied = 0
         for d in predicted_docs:
@@ -118,19 +117,19 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     res_info["Bank_Accounts"] = len(ba_df)
     start_t = log_elapsed(start_t, "load_gl_ba")
 
-    l_entries = [LEntry(r) for r in customer_sf_df.to_dict('records')] + \
-                [LEntry(r) for r in vendor_sf_df.to_dict('records')] + \
-                [LEntry(r) for r in gl_df.to_dict('records')] + \
-                [LEntry(r) for r in ba_df.to_dict('records')]
+    gl_ba = [LEntry(r) for r in gl_df.to_dict('records')] + \
+            [LEntry(r) for r in ba_df.to_dict('records')]
+    sfs = [LEntry(r) for r in customer_sf_df.to_dict('records')] + \
+          [LEntry(r) for r in vendor_sf_df.to_dict('records')]
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
-    customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
-    res_info["Customer_Applications"] = len(customer_apps_df)
+    # customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
+    # res_info["Customer_Applications"] = len(customer_apps_df)
 
-    vendor_apps_df = load_vendor_apps(os.path.join(data_dir, "Vendor_Applications.csv"), l_entries)
-    res_info["Vendor_Applications"] = len(vendor_apps_df)
-    res_info["l_entries"] = len(l_entries)
-    start_t = log_elapsed(start_t, "load_applications")
+    # vendor_apps_df = load_vendor_apps(os.path.join(data_dir, "Vendor_Applications.csv"), l_entries)
+    # res_info["Vendor_Applications"] = len(vendor_apps_df)
+    # res_info["l_entries"] = len(l_entries)
+    # start_t = log_elapsed(start_t, "load_applications")
 
     new_entries = load_lines(os.path.join(data_dir, "Bank_Statement_Lines.csv"))
     res_info["Bank_Statement_Lines"] = len(new_entries)
@@ -138,24 +137,22 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     entries_d = entries_df.to_dict('records')
     entries = [Entry(e) for e in entries_d]
-    apps = [App(r) for r in customer_apps_df.to_dict('records')] + \
-           [App(r) for r in vendor_apps_df.to_dict('records')]
-    arena = Arena(l_entries, apps)
+    # apps = [App(r) for r in customer_apps_df.to_dict('records')] + \
+    #        [App(r) for r in vendor_apps_df.to_dict('records')]
+
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     log_elapsed(start_t, "prepare_entries")
-    entry_dic = prepare_history_map(entries)
+    pd = PredictData(gl_ba=gl_ba, sfs=sfs, historical_entries=prepare_history_map(entries))
     log_elapsed(start_t, "prepare_entries")
     start_t = log_elapsed(start, "prepare_total")
 
     logger.warning("predicting fake last 10 entries")
-    test = entries[-10:]
+    test = new_entries
     predict_res = []
     ctx = Ctx()
     pi = 0
     for entry in test:
-        dt = entry.date
-        arena.move(dt)
-        e_res = predict_entry(ctx, arena, entry, entry_dic, cfg)
+        e_res = predict_entry(ctx, pd, entry, cfg)
         predict_res.append(e_res)
         pi += 1
     log_elapsed(start_t, "predicting")
@@ -168,3 +165,4 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 if __name__ == "__main__":
     res = do_mapping(sys.argv[1], cfg=PredictionCfg())
     print(json.dumps(res[1].get("metrics", {}), indent=2))
+    print(json.dumps(res[1].get("sizes", {}), indent=2))
