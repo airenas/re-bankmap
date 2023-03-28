@@ -60,7 +60,10 @@ def main(argv):
     logger.info("loaded entries {} rows".format(len(entries)))
     logger.debug("Headers: {}".format(list(entries)))
     y_true = entries["RecAccount"].values.tolist()
+    y_rec_type = [e_str(v) for v in entries["RecType"].values.tolist()]
+
     y_recognized = entries["Recognized"].values.tolist()
+    y_true = ["%s:%s" % (y_rec_type[i], v) for i, v in enumerate(y_true)]
     y_true_docs = entries["Docs"].values.tolist()
     y_true_docs = [e_str(x) for x in y_true_docs]
 
@@ -68,7 +71,6 @@ def main(argv):
     y_true = y_true[skip:len(y_pred_l)]
     y_true_docs = y_true_docs[skip:len(y_pred_l)]
     y_pred = [y.split('\t')[0] for y in y_pred_l[skip:]]
-    y_pred = [y.split(':')[1] for y in y_pred]
     y_pred_docs = [y.split('\t')[1] for y in y_pred_l[skip:]]
     y_pred_v = [json.loads(y.split('\t')[2]) for y in y_pred_l[skip:]]
 
@@ -81,23 +83,17 @@ def main(argv):
             vec = y_pred_v[i]
             val = sim_val(vec)
             if v == y and val > args.limit:
-                print("{}\t{}\t{}".format(ir, y, 'r' if y_recognized[i] else 'n'), file=f)
+                print("{}\t{}\t{}".format(ir, y, '' if y_rec_type[i] else 'empty'), file=f)
             else:
-                print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, 'r' if y_recognized[i] else 'n',
+                print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, '' if y_rec_type[i] else 'empty',
                                                                  vec, val), file=f)
 
     logger.info("Acc all        : {} ({}/{})".format(accuracy_score(y_true, y_pred),
                                                      sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
                                                      len(y_true)))
-    y_true_n = [x for x in y_true if str(x) != 'nan']
-    y_pred_n = [x for i, x in enumerate(y_pred) if str(y_true[i]) != 'nan']
+    y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
+    y_pred_n = [x for i, x in enumerate(y_pred) if y_rec_type[i] != '']
     show_no_rejected(y_true_n, y_pred_n, 'Acc not empty     ')
-    y_true_n = [x for i, x in enumerate(y_true) if not y_recognized[i] and str(y_true[i]) != 'nan']
-    y_pred_n = [x for i, x in enumerate(y_pred) if not y_recognized[i] and str(y_true[i]) != 'nan']
-    show_no_rejected(y_true_n, y_pred_n, 'Acc not rec before')
-    y_true_n = [x for i, x in enumerate(y_true) if y_recognized[i] and str(y_true[i]) != 'nan']
-    y_pred_n = [x for i, x in enumerate(y_pred) if y_recognized[i] and str(y_true[i]) != 'nan']
-    show_no_rejected(y_true_n, y_pred_n, 'Acc rec before    ')
 
     logger.info("Docs ...")
     rda, rds, rdi, rdd, rs, ny = 0, 0, 0, 0, 0, 0

@@ -33,6 +33,32 @@ class App:
                                                  num_close(self.remaining, 0), "", "")
 
 
+class PaymentType(Enum):
+    DBIT = 1
+    CRDT = 2
+
+    @staticmethod
+    def from_s(s):
+        if s == "CRDT":
+            return PaymentType.CRDT
+        if s == "DBIT":
+            return PaymentType.DBIT
+        raise Exception("Unknown doc type '{}'".format(s))
+
+    def to_s(self):
+        if self == PaymentType.CRDT:
+            return "CRDT"
+        if self == PaymentType.DBIT:
+            return "DBIT"
+        raise Exception("Unknown payment type '{}'".format(self))
+
+
+class Recognition:
+    def __init__(self, _type, no):
+        self.no = no
+        self.type = LType.from_s(_type)
+
+
 class Entry:
     def __init__(self, row):
         self.who = e_str(row['Description'])
@@ -47,6 +73,7 @@ class Entry:
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
         self.doc_ids = e_str(row['Docs'])
         self.ext_id = row['DocNo']
+        self.rec_type = LType.from_s(e_str(row['RecType']))
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -148,17 +175,20 @@ class LType(Enum):
     VEND = 2
     GL = 3
     BA = 4
+    UNSET = 5
 
     @staticmethod
     def from_s(s):
-        if s == "Customer":
+        if s == "Customer" or s == "Pirkėjas":
             return LType.CUST
-        if s == "Vendor":
+        if s == "Vendor" or s == "Tiekėjas":
             return LType.VEND
-        if s == "GL":
+        if s == "GL" or s == "DK sąskaita":
             return LType.GL
-        if s == "BA":
+        if s == "BA" or s == "Banko sąskaita":
             return LType.BA
+        if s == "":
+            return LType.UNSET
         raise Exception("Unknown type {}".format(s))
 
     def to_s(self):
@@ -170,6 +200,8 @@ class LType(Enum):
             return "GL"
         if self == LType.BA:
             return "BA"
+        if self == LType.UNSET:
+            return ""
         raise Exception("Unknown l type '{}'".format(self))
 
 

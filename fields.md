@@ -17,6 +17,7 @@
 # Bank_Account_Recognitions
 1. Statement_External_Document_No_
 2. Bal__Account_No_
+3. Bal__Account_Type
 
 # Bank_Statement_Entries
 1. External_Document_No_
@@ -31,7 +32,7 @@
 10. N_ND_TD_Refs_EndToEndId
 11. Recognized_Document_No_
 12. Acct_Ccy
-13. External_Document_No_
+13. Recognized_Account_Type
 
 
 # Customer_Ledger_Entries
@@ -114,4 +115,3 @@
 1. N_BookDt_Dt
 1. N_ND_TD_Refs_EndToEndId
 1. Acct_Ccy
-1. External_Document_No_

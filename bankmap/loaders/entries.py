@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bankmap.data import e_str, e_date, to_date, e_currency, e_float, Entry, PaymentType
+from bankmap.data import e_str, e_date, to_date, e_currency, e_float, Entry, PaymentType, Recognition, LType
 from bankmap.logger import logger
 
 
@@ -33,7 +33,7 @@ def load_docs_map(file_name, _type: str):
 
 
 # loads data from Bank_Account_Recognitions
-# returns map [statement no][account_no]
+# returns map [statement no][Recognized]
 def load_bank_recognitions_map(file_name):
     logger.info("loading Bank_Account_Recognitions {}".format(file_name))
     df = pd.read_csv(file_name, sep=',')
@@ -43,7 +43,9 @@ def load_bank_recognitions_map(file_name):
     res = {}
     data = df.to_dict('records')
     for d in data:
-        res[e_str(d['Statement_External_Document_No_'])] = e_str(d['Bal__Account_No_'])
+        no = e_str(d['Statement_External_Document_No_'])
+        if not no in res:
+            res[no] = Recognition(_type=e_str(d['Bal__Account_Type']), no=e_str(d['Bal__Account_No_']))
     return res
 
 
@@ -61,7 +63,8 @@ def iban(p):
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-            'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo']
+              'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo', 'RecType']
+
 
 # loads data from Bank_Statement_Entries
 # returns panda table
@@ -82,9 +85,12 @@ def load_entries(file_name, ba_map, cv_map):
         if ext_id in found:
             continue
         found.add(ext_id)
-        rec_no, rec = e_str(d['Recognized_Account_No_']), True
+        rec_no, rec, tp = e_str(d['Recognized_Account_No_']), True, LType.from_s(e_str(d['Recognized_Account_Type']))
         if not is_recognized(rec_no):
             rec_no, rec = ba_map.get(ext_id, ""), False
+            t_rec = ba_map.get(ext_id, None)
+            if t_rec:
+                rec_no, tp = t_rec.no, t_rec.type
         docs = cv_map.get(ext_id, ("", ""))
         if docs[1] and docs[1] != rec_no:
             logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
@@ -97,7 +103,7 @@ def load_entries(file_name, ba_map, cv_map):
                     d['Recognized_Document_No_'], rec,
                     e_currency(d['Acct_Ccy']),
                     docs[0],
-                    d['External_Document_No_']])
+                    d['External_Document_No_'], tp.to_s()])
     # stable sort by date
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
@@ -133,14 +139,14 @@ def load_lines(file_name):
         credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
         values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
-                    e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
-                    d['N_ND_TD_Refs_EndToEndId'],
-                    "",
-                    "", "",
-                    e_currency(d['Acct_Ccy']),
-                    "",
+                  e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
+                  d['N_ND_TD_Refs_EndToEndId'],
+                  "",
+                  "", "",
+                  e_currency(d['Acct_Ccy']),
+                  "",
                   d['External_Document_No_']]
-        res.append(Entry({key:value for key, value in zip(entry_cols, values)}))
+        res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
     # stable sort by date
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (e[1].date, e[0]))
