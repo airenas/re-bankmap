@@ -14,7 +14,7 @@ time_parser = parser()
 class Ctx:
     def __init__(self, history_days: int = None):
         self.name_sim_cache = {}
-        self.history = timedelta(days=history_days) if history_days else None
+        self.history = timedelta(days=history_days) if history_days is not None else None
 
 
 class App:
