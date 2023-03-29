@@ -86,11 +86,9 @@ def load_entries(file_name, ba_map, cv_map):
             continue
         found.add(ext_id)
         rec_no, rec, tp = e_str(d['Recognized_Account_No_']), True, LType.from_s(e_str(d['Recognized_Account_Type']))
-        if not is_recognized(rec_no):
-            rec_no, rec = ba_map.get(ext_id, ""), False
-            t_rec = ba_map.get(ext_id, None)
-            if t_rec:
-                rec_no, tp = t_rec.no, t_rec.type
+        t_rec = ba_map.get(ext_id, None)
+        if t_rec:
+            rec_no, tp = t_rec.no, t_rec.type
         docs = cv_map.get(ext_id, ("", ""))
         if docs[1] and docs[1] != rec_no:
             logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
