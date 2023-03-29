@@ -15,16 +15,17 @@ def first_word(l1):
     return w1[0].strip()
 
 
-def show_no_rejected(y_true, y_pred, name):
-    y_true_nr = [x for i, x in enumerate(y_true) if y_pred[i] != 'rejected']
-    y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected']
+def show_no_rejected(y_true, y_pred, name, filter):
+    y_true_nr = [x for i, x in enumerate(y_true) if y_pred[i] != 'rejected' and filter(y_true[i])]
+    y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected' and filter(y_true[i])]
 
     if len(y_true_nr) > 0:
         logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
                                                           sum([1 for i, x in enumerate(y_true_nr) if
                                                                y_pred_nr[i] != x]),
                                                           len(y_true_nr),
-                                                          sum([1 for x in y_pred if x == 'rejected'])))
+                                                          sum([1 for i, x in enumerate(y_pred) if
+                                                               x == 'rejected' and filter(y_true[i])])))
 
 
 def cmp_arr(ya, pa):
@@ -88,12 +89,16 @@ def main(argv):
                 print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, '' if y_rec_type[i] else 'empty',
                                                                  vec, val), file=f)
 
-    logger.info("Acc all        : {} ({}/{})".format(accuracy_score(y_true, y_pred),
-                                                     sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
-                                                     len(y_true)))
+    logger.info("Acc all            : {} ({}/{})".format(accuracy_score(y_true, y_pred),
+                                                       sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
+                                                       len(y_true)))
     y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
     y_pred_n = [x for i, x in enumerate(y_pred) if y_rec_type[i] != '']
-    show_no_rejected(y_true_n, y_pred_n, 'Acc not empty     ')
+    show_no_rejected(y_true_n, y_pred_n, 'Acc not rejected   ', lambda p: True)
+    show_no_rejected(y_true_n, y_pred_n, 'Acc BA             ', lambda p: p.startswith("BA:"))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc GL             ', lambda p: p.startswith("GL:"))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc Customer       ', lambda p: p.startswith("Customer:"))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc Vendor         ', lambda p: p.startswith("Vendor:"))
 
     logger.info("Docs ...")
     rda, rds, rdi, rdd, rs, ny = 0, 0, 0, 0, 0, 0
