@@ -28,7 +28,7 @@ def has_past_transaction(ctx: Ctx, e_id, prev_entries, entry):
     max_hist_date = entry.date - ctx.history if ctx.history else None
 
     for pe in prev_entries.get(e_key(entry), {}).get(e_id, []):
-        if max_hist_date and max_hist_date < pe.date:
+        if max_hist_date and pe.date < max_hist_date:
             continue
         if entry.date <= pe.date:
             return 0
@@ -136,7 +136,7 @@ sim_imp_U2 = np.array(
         0.9245665686233056
     ])
 
-sim_imp = sim_imp_H3
+sim_imp = sim_imp_H
 
 
 def sim_val(v):
