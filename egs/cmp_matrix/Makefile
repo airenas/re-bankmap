@@ -131,7 +131,7 @@ inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 ############################################
 ${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 	$(python_cmd) local/tune_params.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --apps ${out_dir}/l_apps.txt --skip $(skip) --split_at $(split) --out $@_
+	    --apps ${out_dir}/l_apps.txt --skip $(skip) --split_at $(split) --history $(hist) --out $@_
 	mv $@_ $@
 tune: ${out_dir}/params.txt
 ############################################

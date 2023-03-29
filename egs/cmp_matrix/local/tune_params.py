@@ -7,12 +7,12 @@ from hyperopt import fmin, tpe, hp
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
-from bankmap.data import Entry, LEntry, App, Arena
+from bankmap.data import Entry, LEntry, App, Arena, Ctx
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_imp, e_key
+from bankmap.similarity.similarities import similarity, sim_imp, e_key, prepare_history_map
 
 
-def calc_sims(arena, row, entry_dict):
+def calc_sims(ctx, arena, row, entry_dict):
     dt = row.date
     arena.move(dt)
 
@@ -21,7 +21,7 @@ def calc_sims(arena, row, entry_dict):
 
     def check(e):
         nonlocal els, sims
-        v = similarity(e, row, entry_dict)
+        v = similarity(ctx, e, row, entry_dict)
         els.append(e)
         sims.append(v)
 
@@ -84,6 +84,7 @@ def main(argv):
     parser.add_argument("--skip", nargs='?', default=50, type=int, help="Skip initial items for evaluation")
     parser.add_argument("--split_at", nargs='?', default=3000, type=int, help="Skip train/val at pos")
     parser.add_argument("--out", nargs='?', required=True, help="Out file")
+    parser.add_argument("--history", nargs='?', type=int, required=True, help="History in days to look for")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
@@ -116,19 +117,14 @@ def main(argv):
     y = [e.rec_id for e in X]
     yv = [e.rec_id for e in Xv]
     logger.info("Train set {}, val set: {}".format(len(X), len(Xv)))
-
-    entry_dic = {}
-    for e in entries:
-        k = e_key(e)
-        arr = entry_dic.get(k, [])
-        arr.append(e)
-        entry_dic[k] = arr
+    entry_dic = prepare_history_map(entries)
 
     mtrx = []
+    ctx = Ctx(history_days=args.history)
     with tqdm(desc="preparing train", total=len(X)) as pbar:
         for i in range(len(X)):
             pbar.update(1)
-            mtrx.append(calc_sims(arena, X[i], entry_dic))
+            mtrx.append(calc_sims(ctx, arena, X[i], entry_dic))
 
     model = Selector(mtrx)
 
@@ -136,7 +132,7 @@ def main(argv):
     with tqdm(desc="preparing val", total=len(Xv)) as pbar:
         for i in range(len(Xv)):
             pbar.update(1)
-            mtrx_v.append(calc_sims(arena, Xv[i], entry_dic))
+            mtrx_v.append(calc_sims(ctx, arena, Xv[i], entry_dic))
 
     model_v = Selector(mtrx_v)
 
