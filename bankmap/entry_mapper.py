@@ -170,3 +170,4 @@ if __name__ == "__main__":
     res = do_mapping(sys.argv[1], cfg=PredictionCfg())
     print(json.dumps(res[1].get("metrics", {}), indent=2))
     print(json.dumps(res[1].get("sizes", {}), indent=2))
+    print(json.dumps(res[0], indent=2))

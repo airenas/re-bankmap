@@ -143,7 +143,7 @@ def load_lines(file_name):
                   "", "",
                   e_currency(d['Acct_Ccy']),
                   "",
-                  d['External_Document_No_']]
+                  d['External_Document_No_'], '']
         res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
     # stable sort by date
     sr = [v for v in enumerate(res)]

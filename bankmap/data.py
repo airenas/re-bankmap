@@ -144,13 +144,13 @@ class DocType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "SF" or s == "Delspinigių pažyma" or s == "Invoice":
+        if s == "Delspinigių pažyma" or s == "Invoice":
             return DocType.SF
-        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo":
+        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo" or s == "Refund":
             return DocType.GRAZ_PAZ
-        if s == "GL":
+        if s == "G/L Account":
             return DocType.GL
-        if s == "BA":
+        if s == "Bank Account":
             return DocType.BA
         raise Exception("Unknown doc type '{}'".format(s))
 
@@ -160,13 +160,13 @@ class DocType(Enum):
 
     def to_s(self):
         if self == DocType.SF:
-            return "SF"
+            return "Invoice"
         if self == DocType.GRAZ_PAZ:
-            return "RETURN"
+            return "Credit Memo"
         if self == DocType.GL:
-            return "GL"
+            return "G/L Account"
         if self == DocType.BA:
-            return "BA"
+            return "Bank Account"
         raise Exception("Unknown doc type '{}'".format(self))
 
 
@@ -183,9 +183,9 @@ class LType(Enum):
             return LType.CUST
         if s == "Vendor" or s == "Tiekėjas":
             return LType.VEND
-        if s == "GL" or s == "DK sąskaita":
+        if s == "G/L Account" or s == "DK sąskaita":
             return LType.GL
-        if s == "BA" or s == "Banko sąskaita":
+        if s == "Bank Account" or s == "Banko sąskaita":
             return LType.BA
         if s == "":
             return LType.UNSET
@@ -197,9 +197,9 @@ class LType(Enum):
         if self == LType.VEND:
             return "Vendor"
         if self == LType.GL:
-            return "GL"
+            return "G/L Account"
         if self == LType.BA:
-            return "BA"
+            return "Bank Account"
         if self == LType.UNSET:
             return ""
         raise Exception("Unknown l type '{}'".format(self))

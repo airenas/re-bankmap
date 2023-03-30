@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType
+from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType
 from bankmap.logger import logger
 
 ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
@@ -16,7 +16,7 @@ def prepare_cust_sfs(df, c_data, accounts):
             continue
         _id = d['Customer_No_']
         cd = c_data[_id]
-        res.append(['Customer', _id, cd[0], accounts.get(_id, ''), d['Document_No_'],
+        res.append([LType.CUST.to_s(), _id, cd[0], accounts.get(_id, ''), d['Document_No_'],
                     d['Due_Date'], d['Document_Date'],
                     d['External_Document_No_'],
                     e_float(d['Amount']),
@@ -52,7 +52,7 @@ def prepare_vend_sfs(df, v_data, accounts):
             continue
         _id = d['Vendor_No_']
         vd = v_data[_id]
-        res.append(['Vendor', _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
+        res.append([LType.VEND.to_s(), _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
                     d['Due_Date'],
                     d['Document_Date'], d['External_Document_No_'],
                     d['Amount'],
@@ -88,9 +88,9 @@ def load_gls(ledgers_file_name):
     data = df.to_dict('records')
     for d in data:
         _id = d['No_']
-        res.append(['GL', _id, d['Search_Name'], '', '',
+        res.append([LType.GL.to_s(), _id, d['Search_Name'], '', '',
                     '',
-                    '', '', 0, 'EUR', 'GL', '', MapType.UNUSED.to_s(), '', 0])
+                    '', '', 0, 'EUR', LType.GL.to_s(), '', MapType.UNUSED.to_s(), '', 0])
     return pd.DataFrame(res, columns=ledger_cols)
 
 
@@ -103,8 +103,8 @@ def load_ba(ledgers_file_name):
     data = df.to_dict('records')
     for d in data:
         _id = d['No_']
-        res.append(['BA', _id, d['Search_Name'], d['IBAN'], '',
+        res.append([LType.BA.to_s(), _id, d['Search_Name'], d['IBAN'], '',
                     '',
                     '', '', 0, e_currency(d['Currency_Code']),
-                    'BA', '', MapType.UNUSED.to_s(), '', 0])
+                    LType.BA.to_s(), '', MapType.UNUSED.to_s(), '', 0])
     return pd.DataFrame(res, columns=ledger_cols)
