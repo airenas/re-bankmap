@@ -61,6 +61,8 @@ class Recognition:
 
 class Entry:
     def __init__(self, row):
+        self.bank_account = e_str(row['BankAccount'])
+        self.ext_id = row['DocNo']
         self.who = e_str(row['Description'])
         self.iban = e_str(row['IBAN'])
         self.msg = e_str(row['Message'])
@@ -68,11 +70,9 @@ class Entry:
         self.amount = e_float(row['Amount'])
         self.rec_id = e_str(row['RecAccount'])
         self.doc_id = e_str(row['RecDoc'])
-        self.recognized = row['Recognized']
         self.currency = row['Currency']
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
         self.doc_ids = e_str(row['Docs'])
-        self.ext_id = row['DocNo']
         self.rec_type = LType.from_s(e_str(row['RecType']))
 
     def to_str(self):

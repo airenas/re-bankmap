@@ -63,7 +63,7 @@ def iban(p):
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-              'RecAccount', 'RecDoc', 'Recognized', 'Currency', 'Docs', 'DocNo', 'RecType']
+              'RecAccount', 'RecDoc', 'Currency', 'Docs', 'DocNo', 'RecType', 'BankAccount']
 
 
 # loads data from Bank_Statement_Entries
@@ -85,7 +85,7 @@ def load_entries(file_name, ba_map, cv_map):
         if ext_id in found:
             continue
         found.add(ext_id)
-        rec_no, rec, tp = e_str(d['Recognized_Account_No_']), True, LType.from_s(e_str(d['Recognized_Account_Type']))
+        rec_no, tp = '', LType.from_s('')
         t_rec = ba_map.get(ext_id, None)
         if t_rec:
             rec_no, tp = t_rec.no, t_rec.type
@@ -98,10 +98,10 @@ def load_entries(file_name, ba_map, cv_map):
                     e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
                     d['N_ND_TD_Refs_EndToEndId'],
                     rec_no,
-                    d['Recognized_Document_No_'], rec,
+                    d['Recognized_Document_No_'],
                     e_currency(d['Acct_Ccy']),
                     docs[0],
-                    d['External_Document_No_'], tp.to_s()])
+                    d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
     # stable sort by date
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
@@ -139,11 +139,10 @@ def load_lines(file_name):
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
                   e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
                   d['N_ND_TD_Refs_EndToEndId'],
-                  "",
                   "", "",
                   e_currency(d['Acct_Ccy']),
                   "",
-                  d['External_Document_No_'], '']
+                  d['External_Document_No_'], '', d['Bank_Account_No_']]
         res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
     # stable sort by date
     sr = [v for v in enumerate(res)]
