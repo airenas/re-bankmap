@@ -148,3 +148,4 @@ deploy/az_f/bankmap-fake/fake.json
 deploy/az_f/bankmap-fake/test_zip_archive.zip
 deploy/az_f/bankmap-fake/.azure
 egs/cmp_matrix/Makefile.options
+egs/test_prod/Makefile.options
