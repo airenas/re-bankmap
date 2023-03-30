@@ -21,7 +21,7 @@
 
 # Bank_Statement_Entries
 1. External_Document_No_
-2. Recognized_Account_No_
+2. Bank_Account_No_
 3. Description
 4. Message_to_Recipient
 5. N_CdtDbtInd
@@ -30,9 +30,8 @@
 8. N_ND_TD_RP_DbtrAcct_Id_IBAN
 9. N_ND_TD_RP_CdtrAcct_Id_IBAN
 10. N_ND_TD_Refs_EndToEndId
-11. Recognized_Document_No_
-12. Acct_Ccy
-13. Recognized_Account_Type
+11. Acct_Ccy
+12. Recognized_Account_Type
 
 
 # Customer_Ledger_Entries
@@ -115,3 +114,4 @@
 1. N_BookDt_Dt
 1. N_ND_TD_Refs_EndToEndId
 1. Acct_Ccy
+1. Bank_Account_No_
