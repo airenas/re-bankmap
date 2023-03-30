@@ -69,10 +69,9 @@ class Entry:
         self.date = to_date(row['Date'])
         self.amount = e_float(row['Amount'])
         self.rec_id = e_str(row['RecAccount'])
-        self.doc_id = e_str(row['RecDoc'])
         self.currency = row['Currency']
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
-        self.doc_ids = e_str(row['Docs'])
+        self.doc_ids = e_str(row['RecDocs'])
         self.rec_type = LType.from_s(e_str(row['RecType']))
 
     def to_str(self):

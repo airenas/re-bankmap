@@ -28,7 +28,7 @@ def to_dic_entry(e: Entry):
 
 
 def predict_entry(ctx, pd, entry, cfg):
-    logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.doc_id))
+    logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
     pred = []
 
     def check(_e):

@@ -63,7 +63,7 @@ def iban(p):
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
-              'RecAccount', 'RecDoc', 'Currency', 'Docs', 'DocNo', 'RecType', 'BankAccount']
+              'RecAccount', 'Currency', 'RecDocs', 'DocNo', 'RecType', 'BankAccount']
 
 
 # loads data from Bank_Statement_Entries
@@ -98,7 +98,6 @@ def load_entries(file_name, ba_map, cv_map):
                     e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
                     d['N_ND_TD_Refs_EndToEndId'],
                     rec_no,
-                    d['Recognized_Document_No_'],
                     e_currency(d['Acct_Ccy']),
                     docs[0],
                     d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
@@ -138,8 +137,7 @@ def load_lines(file_name):
         values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
                   e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
-                  d['N_ND_TD_Refs_EndToEndId'],
-                  "", "",
+                  d['N_ND_TD_Refs_EndToEndId'], "",
                   e_currency(d['Acct_Ccy']),
                   "",
                   d['External_Document_No_'], '', d['Bank_Account_No_']]
