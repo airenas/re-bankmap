@@ -1,0 +1,19 @@
+############################################
+hist=0 1 5 10 30 60 90 180 365
+dir?=data/hum
+out=$(patsubst %,$(dir)/hist-%.txt,$(hist)) 
+
+$(dir):
+	mkdir -p $@
+
+$(dir)/hist-%.txt: | $(dir)
+	echo "*****************************************" > $@
+	echo H=$* >> $@
+	$(MAKE) clean compare cfg=cfg/hum_v3 hist=$* force=1
+	$(MAKE) compare cfg=cfg/hum_v3 hist=$* 2>> $@
+
+build: $(out)
+	cat $(out) > res.txt
+
+info:
+	echo $(out)

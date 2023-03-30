@@ -136,7 +136,9 @@ ${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir
 tune: ${out_dir}/params.txt
 ############################################
 clean:
+ifneq ($(force),1)	
 	@echo -n "Drop $(out_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+endif	
 	rm -rf $(out_dir)
 .PHONY: clean
 clean/docs-predictions:
