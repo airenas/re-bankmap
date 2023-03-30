@@ -1,2 +1,0 @@
-zip?=test_zip_archive.zip
-out_dir?=data_prod_test
