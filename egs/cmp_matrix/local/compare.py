@@ -20,12 +20,15 @@ def show_no_rejected(y_true, y_pred, name, filter):
     y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected' and filter(y_true[i])]
 
     if len(y_true_nr) > 0:
-        logger.info("{}: {} ({}/{})\trejected: {}".format(name, accuracy_score(y_true_nr, y_pred_nr),
+        logger.info("{}: {:.3f} ({}/{})\trejected: {}/{}".format(name, accuracy_score(y_true_nr, y_pred_nr),
                                                           sum([1 for i, x in enumerate(y_true_nr) if
                                                                y_pred_nr[i] != x]),
                                                           len(y_true_nr),
                                                           sum([1 for i, x in enumerate(y_pred) if
-                                                               x == 'rejected' and filter(y_true[i])])))
+                                                               x == 'rejected' and filter(y_true[i])]),
+                                                          sum([1 for i, x in enumerate(y_pred) if
+                                                                  filter(y_true[i])])
+                                                             ))
 
 
 def cmp_arr(ya, pa):
@@ -63,9 +66,8 @@ def main(argv):
     y_true = entries["RecAccount"].values.tolist()
     y_rec_type = [e_str(v) for v in entries["RecType"].values.tolist()]
 
-    y_recognized = entries["Recognized"].values.tolist()
     y_true = ["%s:%s" % (y_rec_type[i], v) for i, v in enumerate(y_true)]
-    y_true_docs = entries["Docs"].values.tolist()
+    y_true_docs = entries["RecDocs"].values.tolist()
     y_true_docs = [e_str(x) for x in y_true_docs]
 
     skip = args.skip
@@ -89,7 +91,7 @@ def main(argv):
                 print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, '' if y_rec_type[i] else 'empty',
                                                                  vec, val), file=f)
 
-    logger.info("Acc all            : {} ({}/{})".format(accuracy_score(y_true, y_pred),
+    logger.info("Acc all            : {:.3f} ({}/{})".format(accuracy_score(y_true, y_pred),
                                                        sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
                                                        len(y_true)))
     y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
@@ -125,7 +127,7 @@ def main(argv):
                 print("{}\t{} {}<--diff-->\t{}".format(ir, y, r, y_pred_docs[i]), file=f)
 
     logger.info(
-        "Acc all {} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda),
+        "Acc all {:.3f} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda),
                                                                                 (rds + rdd + rdi), rda, rds,
                                                                                 rdi, rdd, rs, ny))
     logger.info("Done")
