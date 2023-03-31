@@ -1,0 +1,27 @@
+-include $(cfg)
+############################################
+hist=90
+limits=0 0.5 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 2 3 4
+o_dir?=data/hum-limit
+out=$(patsubst %,$(o_dir)/limit-%.txt,$(limits)) 
+
+$(o_dir):
+	mkdir -p $@
+
+$(o_dir)/limit-%.txt: | $(o_dir)
+	echo "*****************************************" > $@
+	echo Limit=$* >> $@
+	# cache first line
+	$(MAKE) compare cfg=$(cfg) hist=$(hist) limit=$* out_dir=$(o_dir)/tmp  
+	$(MAKE) compare cfg=$(cfg) hist=$(hist) limit=$* out_dir=$(o_dir)/tmp 2>> $@
+
+build: $(out)
+	cat $(out) > $(o_dir)/res.txt
+
+info:
+	echo $(out)
+
+clean:
+	@echo -n "Drop $(o_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	rm -rf $(o_dir)
+.PHONY: clean	
