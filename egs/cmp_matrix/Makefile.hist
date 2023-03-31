@@ -1,6 +1,6 @@
 ############################################
 hist=0 1 5 10 30 60 90 180 365
-dir?=data/hum
+dir?=data/hum-hist
 out=$(patsubst %,$(dir)/hist-%.txt,$(hist)) 
 
 $(dir):
@@ -9,11 +9,16 @@ $(dir):
 $(dir)/hist-%.txt: | $(dir)
 	echo "*****************************************" > $@
 	echo H=$* >> $@
-	$(MAKE) clean compare cfg=cfg/hum_v3 hist=$* force=1
-	$(MAKE) compare cfg=cfg/hum_v3 hist=$* 2>> $@
+	$(MAKE) clean compare cfg=cfg/hum_v3 hist=$* force=1 out_dir=$(dir)/tmp
+	$(MAKE) compare cfg=cfg/hum_v3 hist=$* out_dir=$(dir)/tmp 2>> $@
 
 build: $(out)
-	cat $(out) > res.txt
+	cat $(out) > $(dir)/res.txt
 
 info:
 	echo $(out)
+
+clean:
+	@echo -n "Drop $(dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	rm -rf $(dir)
+.PHONY: clean	

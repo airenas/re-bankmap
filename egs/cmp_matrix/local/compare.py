@@ -5,7 +5,7 @@ import sys
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
-from bankmap.data import e_str
+from bankmap.data import e_str, LType
 from bankmap.logger import logger
 from bankmap.similarity.similarities import sim_val
 
@@ -21,14 +21,24 @@ def show_no_rejected(y_true, y_pred, name, filter):
 
     if len(y_true_nr) > 0:
         logger.info("{}: {:.3f} ({}/{})\trejected: {}/{}".format(name, accuracy_score(y_true_nr, y_pred_nr),
-                                                          sum([1 for i, x in enumerate(y_true_nr) if
-                                                               y_pred_nr[i] != x]),
-                                                          len(y_true_nr),
-                                                          sum([1 for i, x in enumerate(y_pred) if
-                                                               x == 'rejected' and filter(y_true[i])]),
-                                                          sum([1 for i, x in enumerate(y_pred) if
-                                                                  filter(y_true[i])])
-                                                             ))
+                                                                 sum([1 for i, x in enumerate(y_true_nr) if
+                                                                      y_pred_nr[i] != x]),
+                                                                 len(y_true_nr),
+                                                                 sum([1 for i, x in enumerate(y_pred) if
+                                                                      x == 'rejected' and filter(y_true[i])]),
+                                                                 sum([1 for i, x in enumerate(y_pred) if
+                                                                      filter(y_true[i])])
+                                                                 ))
+    else:
+        logger.info("{}: {:.3f} ({}/{})\trejected: {}/{}".format(name, 0,
+                                                                 sum([1 for i, x in enumerate(y_true_nr) if
+                                                                      y_pred_nr[i] != x]),
+                                                                 len(y_true_nr),
+                                                                 sum([1 for i, x in enumerate(y_pred) if
+                                                                      x == 'rejected' and filter(y_true[i])]),
+                                                                 sum([1 for i, x in enumerate(y_pred) if
+                                                                      filter(y_true[i])])
+                                                                 ))
 
 
 def cmp_arr(ya, pa):
@@ -92,15 +102,15 @@ def main(argv):
                                                                  vec, val), file=f)
 
     logger.info("Acc all            : {:.3f} ({}/{})".format(accuracy_score(y_true, y_pred),
-                                                       sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
-                                                       len(y_true)))
+                                                             sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
+                                                             len(y_true)))
     y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
     y_pred_n = [x for i, x in enumerate(y_pred) if y_rec_type[i] != '']
     show_no_rejected(y_true_n, y_pred_n, 'Acc not rejected   ', lambda p: True)
-    show_no_rejected(y_true_n, y_pred_n, 'Acc BA             ', lambda p: p.startswith("BA:"))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc GL             ', lambda p: p.startswith("GL:"))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc Customer       ', lambda p: p.startswith("Customer:"))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc Vendor         ', lambda p: p.startswith("Vendor:"))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc BA             ', lambda p: p.startswith(LType.BA.to_s()))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc GL             ', lambda p: p.startswith(LType.GL.to_s()))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc Customer       ', lambda p: p.startswith(LType.CUST.to_s()))
+    show_no_rejected(y_true_n, y_pred_n, 'Acc Vendor         ', lambda p: p.startswith(LType.VEND.to_s()))
 
     logger.info("Docs ...")
     rda, rds, rdi, rdd, rs, ny = 0, 0, 0, 0, 0, 0
@@ -128,8 +138,8 @@ def main(argv):
 
     logger.info(
         "Acc all {:.3f} ({}/{}) s:{}, i:{}, d:{}\t(rejected {}, no doc: {})".format(1 - ((rds + rdd + rdi) / rda),
-                                                                                (rds + rdd + rdi), rda, rds,
-                                                                                rdi, rdd, rs, ny))
+                                                                                    (rds + rdd + rdi), rda, rds,
+                                                                                    rdi, rdd, rs, ny))
     logger.info("Done")
 
 
