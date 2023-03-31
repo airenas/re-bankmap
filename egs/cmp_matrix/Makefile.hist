@@ -1,24 +1,25 @@
+-include $(cfg)
 ############################################
 hist=0 1 5 10 30 60 90 180 365
-dir?=data/hum-hist
-out=$(patsubst %,$(dir)/hist-%.txt,$(hist)) 
+hist_dir?=data/hum-hist
+out=$(patsubst %,$(hist_dir)/hist-%.txt,$(hist)) 
 
-$(dir):
+$(hist_dir):
 	mkdir -p $@
 
-$(dir)/hist-%.txt: | $(dir)
+$(hist_dir)/hist-%.txt: | $(hist_dir)
 	echo "*****************************************" > $@
 	echo H=$* >> $@
-	$(MAKE) clean compare cfg=cfg/hum_v3 hist=$* force=1 out_dir=$(dir)/tmp
-	$(MAKE) compare cfg=cfg/hum_v3 hist=$* out_dir=$(dir)/tmp 2>> $@
+	$(MAKE) clean compare cfg=$(cfg) hist=$* force=1 out_dir=$(hist_dir)/tmp
+	$(MAKE) compare cfg=$(cfg)  hist=$* out_dir=$(hist_dir)/tmp 2>> $@
 
 build: $(out)
-	cat $(out) > $(dir)/res.txt
+	cat $(out) > $(hist_dir)/res.txt
 
 info:
 	echo $(out)
 
 clean:
-	@echo -n "Drop $(dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-	rm -rf $(dir)
+	@echo -n "Drop $(hist_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	rm -rf $(hist_dir)
 .PHONY: clean	
