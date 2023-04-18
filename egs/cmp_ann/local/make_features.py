@@ -1,13 +1,14 @@
 import argparse
 import multiprocessing
+import pickle
 import sys
 
 import pandas as pd
 from tqdm import tqdm
 
-from bankmap.data import LEntry, App, Arena, Entry, Ctx
+from bankmap.data import Entry, App, Arena, LEntry, Ctx
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
+from bankmap.similarity.similarities import prepare_history_map, similarity
 
 
 class CalcData:
@@ -18,44 +19,52 @@ class CalcData:
         self.entry_dic = None
 
 
-def get_best_account(ctx, arena, row, entry_dict):
-    bv, be, b = -1, None, []
-    dt = row.date
-    arena.move(dt)
+class Feature:
+    def __init__(self, entry: Entry, arr_v, arr_it):
+        self.rec_id = entry.rec_id
+        self.rec_type = entry.rec_type
+        self.arr_v = arr_v
+        self.arr_it = arr_it
 
-    def check(e):
-        nonlocal bv, be, b
-        v = similarity(ctx, e, row, entry_dict)
-        out = sim_val(v)
-        if bv < out:
-            # logger.info("Found better: {} - {}".format(v[1:], out))
-            bv = out
-            b = v
-            be = e
+
+def get_features(ctx, arena, entry: Entry, entry_dic):
+    dt = entry.date
+    arena.move(dt)
+    arr_v = []
+    arr_it = []
+
+    def add(_e):
+        v = similarity(ctx, _e, entry, entry_dic)
+        arr_v.append(v)
+        arr_it.append((e.type, e.id))
 
     for e in arena.gl_entries:
-        check(e)
+        add(e)
     for e in arena.playground.values():
-        check(e)
-
-    return be, b
+        add(e)
+    return Feature(entry, arr_v, arr_it)
 
 
 def run(i):
-    best, sim = get_best_account(data.ctx, data.arena, data.entries[i], data.entry_dic)
-    res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
-    return res
+    logger.info("got job {}".format(i))
+    feat = get_features(data.ctx, data.arena, data.entries[i], data.entry_dic)
+    logger.info("done job {}".format(i))
+    logger.info("info job {}".format(feat.rec_id))
+    return feat
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Predicts similarities for all item",
+    parser = argparse.ArgumentParser(description="Make similarity features",
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
+    parser.add_argument("--out", nargs='?', required=True, help="output features file")
     parser.add_argument("--history", nargs='?', type=int, required=True, help="History in days to look for")
     args = parser.parse_args(args=argv)
+
+    logger.info("Starting")
 
     logger.info("Starting")
     logger.info("history {} days".format(args.history))
@@ -76,12 +85,12 @@ def main(argv):
     logger.debug("\n{}".format(apps_t.head(n=10)))
 
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
+
     entry_dic = prepare_history_map(entries)
-    logger.info("init history entries")
 
     def init():
         global data
-        logger.debug("init")
+        logger.info("init")
         data = CalcData()
         data.entries = entries
         data.entry_dic = entry_dic
@@ -89,13 +98,16 @@ def main(argv):
         apps = [App(_i) for _i in apps_t.to_dict('records')]
         data.arena = Arena(l_entries, apps)
         data.ctx = Ctx(history_days=args.history)
-        logger.debug("init ended")
+        logger.info("init ended")
 
-    threads = 12
-    with tqdm("predicting", total=len(entries)) as pbar:
-        with multiprocessing.Pool(threads, initializer=init) as p:
-            for res in p.imap(run, [i for i in range(len(entries))]):
-                print(res)
+    threads = 4
+    with multiprocessing.Pool(threads, initializer=init) as p:
+        q = p.map(run, [i for i in range(len(entries))])
+
+    with open(args.out, 'wb') as f:
+        with tqdm("prepare features", total=len(q)) as pbar:
+            for feat in q:
+                pickle.dump(feat, f, pickle.HIGHEST_PROTOCOL)
                 pbar.update(1)
 
     logger.info("Done")
