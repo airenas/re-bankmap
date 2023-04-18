@@ -58,8 +58,8 @@ def main(argv):
                 cust = preds[0].split(":")
                 arena.move(entries[i].date)
                 pr_bar.update(1)
-                res = "{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], cust[1], LType.from_s(cust[0])),
-                                          preds[2])
+                res = "{}\t{}\t{}\t{}".format(preds[0], predict_docs(arena, entries[i], cust[1], LType.from_s(cust[0])),
+                                              preds[2], preds[3] if len(preds) > 3 else "")
                 print(res)
 
     logger.info("Done")

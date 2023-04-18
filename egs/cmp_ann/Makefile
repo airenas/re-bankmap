@@ -84,16 +84,15 @@ ${out_dir}/features.bin: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_d
 ${out_dir}/model: ${out_dir}/features.bin 
 	$(python_cmd) local/train_play.py --input ${out_dir}/features.bin --out $@_
 	mv $@_ $@
-${out_dir}/predicted_type.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/model ${out_dir}/features.bin 
-	$(python_cmd) local/train_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --apps ${out_dir}/l_apps.txt --history $(hist) --out ${out_dir}/model
+${out_dir}/predicted_type.txt: ${out_dir}/model ${out_dir}/features.bin
+	$(python_cmd) local/predict.py --input ${out_dir}/features.bin  --model ${out_dir}/model --out $@_
 	mv $@_ $@
 ${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/predicted_type.txt
 	$(python_cmd) ../cmp_matrix/local/predict_play_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt --pred ${out_dir}/predicted_type.txt > $@_
 	mv $@_ $@
 ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
-	$(python_cmd) ../cmp_matrix/local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
+	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
 		--out ${out_dir}/cmp.txt  --skip ${skip} --limit ${limit}
 .PHONY: compare
 show/sf: ${out_dir}/entries.txt ${out_dir}/l_entries.txt

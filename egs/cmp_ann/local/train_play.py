@@ -113,7 +113,7 @@ def main(argv):
         train_ds = map_and_batch(make_train_dataset(data_train), batch_size)
         val_ds = map_and_batch(make_train_dataset(data_val), batch_size)
 
-        model.fit(train_ds, validation_data=val_ds, epochs=200, verbose=1, callbacks=[checkpoint, es])
+        model.fit(train_ds, validation_data=val_ds, epochs=100, verbose=1, callbacks=[es])
         logger.info('Saving tf model ...')
         tf.keras.models.save_model(model, args.out)
 
