@@ -1,8 +1,6 @@
 import argparse
 import multiprocessing
 import sys
-import threading
-from multiprocessing import Queue
 
 import pandas as pd
 from tqdm import tqdm
@@ -10,6 +8,14 @@ from tqdm import tqdm
 from bankmap.data import LEntry, App, Arena, Entry, Ctx
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
+
+
+class CalcData:
+    def __init__(self):
+        self.ctx = None
+        self.arena = None
+        self.entries = None
+        self.entry_dic = None
 
 
 def get_best_account(ctx, arena, row, entry_dict):
@@ -33,6 +39,12 @@ def get_best_account(ctx, arena, row, entry_dict):
         check(e)
 
     return be, b
+
+
+def run(i):
+    best, sim = get_best_account(data.ctx, data.arena, data.entries[i], data.entry_dic)
+    res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
+    return res
 
 
 def main(argv):
@@ -64,65 +76,29 @@ def main(argv):
     logger.debug("\n{}".format(apps_t.head(n=10)))
 
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
-    entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     entry_dic = prepare_history_map(entries)
     logger.info("init history entries")
 
-    pr_bar = tqdm(desc="predicting", total=len(entries))
-
-    def run(entries, entry_dic, start, queue: Queue):
-        logger.info("start thread {}:{}".format(start, start + len(entries)))
-        l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
-        apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
-        arena = Arena(l_entries, apps)
-        logger.info("run thread {}:{}".format(start, start + len(entries)))
-        ctx = Ctx(history_days=args.history)
-        for i in range(len(entries)):
-            best, sim = get_best_account(ctx, arena, entries[i], entry_dic)
-            _res = "{}:{}\t{}\t{}".format(best.type.to_s(), best.id if best is not None else "", "", sim)
-            queue.put((i + start, _res))
-        logger.info("done thread {}:{}".format(start, start + len(entries)))
-
-    workers = []
-
-    def start_thread(method, args):
-        wrk = multiprocessing.Process(target=method, daemon=True, args=args)
-        wrk.start()
-        workers.append(wrk)
+    def init():
+        global data
+        logger.info("init")
+        data = CalcData()
+        data.entries = entries
+        data.entry_dic = entry_dic
+        l_entries = [LEntry(_l) for _l in ledgers.to_dict('records')]
+        apps = [App(_i) for _i in apps_t.to_dict('records')]
+        data.arena = Arena(l_entries, apps)
+        data.ctx = Ctx(history_days=args.history)
+        logger.info("init ended")
 
     threads = 12
-    start, step = 0, int(len(entries) / threads)
-    queue = Queue()
-    for i in range(threads):
-        to = start + step
-        if i == threads - 1:
-            to = len(entries)
-        start_thread(run, (entries[start:to], entry_dic, start, queue))
-        start = to
+    with multiprocessing.Pool(threads, initializer=init) as p:
+        q = p.map(run, [i for i in range(len(entries))])
 
-    res = [""] * len(entries)
-
-    def process_res():
-        while True:
-            _res = queue.get()
-            if _res is None:
-                return
-            logger.debug("got res")
-            pr_bar.update(1)
-            i, v = _res
-            res[i] = v
-
-    thread = threading.Thread(target=process_res, daemon=True)
-    thread.start()
-
-    for w in workers:
-        w.join()
-
-    queue.put(None)
-    thread.join()
-
-    for r in res:
-        print(r)
+    with tqdm("predicting", total=len(q)) as pbar:
+        for res in q:
+            print(res)
+            pbar.update(1)
 
     logger.info("Done")
 

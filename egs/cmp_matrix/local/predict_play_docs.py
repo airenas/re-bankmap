@@ -38,7 +38,6 @@ def main(argv):
     logger.debug("\n{}".format(apps_t.head(n=10)))
 
     entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
-    entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
 
     def predict_docs(arena, entry, _id, _type: LType):
         if not _id:
