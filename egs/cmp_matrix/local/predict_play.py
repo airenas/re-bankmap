@@ -75,7 +75,7 @@ def main(argv):
     logger.debug("Headers: {}".format(list(apps_t)))
     logger.debug("\n{}".format(apps_t.head(n=10)))
 
-    entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
+    entries = [Entry(e) for e in entries_t.to_dict('records')]
     entry_dic = prepare_history_map(entries)
     logger.info("init history entries")
 

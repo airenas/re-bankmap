@@ -46,10 +46,9 @@ def get_features(ctx, arena, entry: Entry, entry_dic):
 
 
 def run(i):
-    logger.info("got job {}".format(i))
+    logger.debug("got job {}".format(i))
     feat = get_features(data.ctx, data.arena, data.entries[i], data.entry_dic)
-    logger.info("done job {}".format(i))
-    logger.info("info job {}".format(feat.rec_id))
+    logger.debug("done job {}".format(i))
     return feat
 
 
@@ -90,7 +89,7 @@ def main(argv):
 
     def init():
         global data
-        logger.info("init")
+        logger.debug("init")
         data = CalcData()
         data.entries = entries
         data.entry_dic = entry_dic
@@ -98,17 +97,16 @@ def main(argv):
         apps = [App(_i) for _i in apps_t.to_dict('records')]
         data.arena = Arena(l_entries, apps)
         data.ctx = Ctx(history_days=args.history)
-        logger.info("init ended")
+        logger.debug("init ended")
 
-    threads = 4
-    with multiprocessing.Pool(threads, initializer=init) as p:
-        q = p.map(run, [i for i in range(len(entries))])
-
+    threads = 12
     with open(args.out, 'wb') as f:
-        with tqdm("prepare features", total=len(q)) as pbar:
-            for feat in q:
-                pickle.dump(feat, f, pickle.HIGHEST_PROTOCOL)
-                pbar.update(1)
+        pickle.dump(len(entries), f, pickle.HIGHEST_PROTOCOL)
+        with tqdm("prepare features", total=len(entries)) as pbar:
+            with multiprocessing.Pool(threads, initializer=init) as p:
+                for res in p.imap(run, [i for i in range(len(entries))]):
+                    pickle.dump(res, f, pickle.HIGHEST_PROTOCOL)
+                    pbar.update(1)
 
     logger.info("Done")
 

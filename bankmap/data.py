@@ -374,6 +374,6 @@ class Arena:
         else:
             res = amount + abs(value)
         if (amount >= 0 > res or amount <= 0 < res) and not num_close(res, 0):
-            logger.warn("Amount change from {} to {}".format(amount, res))
+            logger.debug("Amount change from {} to {}".format(amount, res))
             res = 0
         return res
