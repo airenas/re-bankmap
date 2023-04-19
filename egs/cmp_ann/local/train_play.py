@@ -6,7 +6,7 @@ from builtins import enumerate
 import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.python.keras.callbacks import EarlyStopping
 from tqdm import tqdm
 
 from bankmap.logger import logger
@@ -16,7 +16,7 @@ from egs.cmp_ann.local.model import create_model
 
 
 def get_one_train_data(feat: Feature, model):
-    res = model.predict(tf.constant(feat.arr_v), batch_size=1000, verbose = 0)
+    res = model.predict(tf.constant(feat.arr_v), batch_size=1000, verbose=0)
 
     bi, wi = -1, -1
     for i, e in enumerate(feat.arr_it):
@@ -26,6 +26,8 @@ def get_one_train_data(feat: Feature, model):
             wi = i
     if bi > -1 and wi > -1:
         return [feat.arr_v[bi] + [1], feat.arr_v[wi] + [0]], res[bi][0] > res[wi][0]
+    if wi > -1:
+        return [feat.arr_v[wi] + [0]], None
     return [], None
 
 
@@ -34,15 +36,17 @@ def create_train_data(file, model):
     size = pickle.load(file)
     res = []
     with tqdm(desc="predicting", total=size) as pbar:
-        c, err = 0, 0
+        c, err, skip = 0, 0, 0
         for feat in load_features(file):
             pbar.update(1)
             c += 1
             x, ok = get_one_train_data(feat, model)
             if ok is not None:
                 err += 1 if not ok else 0
+            else:
+                skip += 1
             res += x
-    return np.array(res), c, err
+    return np.array(res), c, err, skip
 
 
 def load_features(f):
@@ -65,16 +69,12 @@ def main(argv):
 
     params_count = len(param_names())
     model = create_model(params_count)
-    model.summary(150)
     f = open(args.input, "rb")
 
-    data, count, err = create_train_data(f, model)
-    logger.info("acc {:.3f}, {}/{}".format((count - err) / count, err, count))
-    data_train, data_val = train_test_split(data, test_size=0.05, shuffle=True, random_state=1)
-    logger.info("Data len train: {}".format(len(data_train)))
-    logger.info("Data len val  : {}".format(len(data_val)))
+    data, count, err, skip = create_train_data(f, model)
+    logger.info("acc {:.3f}, {}/{} (skip {})".format((count - err - skip) / count, err, count, skip))
 
-    batch_size = 100
+    batch_size = 32
 
     params = [i for i in range(params_count)]
 
@@ -86,9 +86,6 @@ def main(argv):
     def map_and_batch(ds, batch_size):
         return ds.batch(batch_size=batch_size).prefetch(tf.data.AUTOTUNE)
 
-    train_ds = map_and_batch(make_train_dataset(data_train), batch_size)
-    val_ds = map_and_batch(make_train_dataset(data_val), batch_size)
-
     # checkpoint = ModelCheckpoint(filepath=args.out + "-val",  # "ep-{epoch:02d}",
     #                              monitor='val_loss',
     #                              verbose=1,
@@ -96,31 +93,27 @@ def main(argv):
     #                              mode='min')
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
 
-    model.fit(train_ds, validation_data=val_ds, epochs=100, verbose=1, callbacks=[es])
-    logger.info('Saving tf model ...')
-    tf.keras.models.save_model(model, args.out)
-
-    errs = [err]
-    for i in range(5):
-        data, count, err = create_train_data(f, model)
-        errs.append(err)
-        logger.info("acc after train {:.3f}, {}/{}".format((count - err) / count, err, count))
-        logger.info("errs {}".format(errs))
+    be = 1000000
+    errs = []
+    for i in range(4):
         data_train, data_val = train_test_split(data, test_size=0.05, shuffle=True, random_state=1)
         logger.info("Data len train: {}".format(len(data_train)))
         logger.info("Data len val  : {}".format(len(data_val)))
 
         train_ds = map_and_batch(make_train_dataset(data_train), batch_size)
         val_ds = map_and_batch(make_train_dataset(data_val), batch_size)
-
         model.fit(train_ds, validation_data=val_ds, epochs=100, verbose=1, callbacks=[es])
-        logger.info('Saving tf model ...')
-        tf.keras.models.save_model(model, args.out)
+        data, count, err, skip = create_train_data(f, model)
+        errs.append(err)
+        logger.info("acc {:.3f}, {}/{} (skip {})".format((count - err - skip) / count, err, count, skip))
+        logger.info("errs {}".format(errs))
+        if err < be:
+            be = err
+            logger.info('Saving tf model ...')
+            tf.keras.models.save_model(model, args.out)
+        else:
+            logger.info('skip save')
 
-    data, count, err = create_train_data(f, model)
-    errs.append(err)
-    logger.info("acc after train {:.3f}, {}/{}".format((count - err) / count, err, count))
-    logger.info("errs {}".format(errs))
     f.close()
     logger.info("Done")
 

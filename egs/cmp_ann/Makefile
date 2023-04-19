@@ -115,9 +115,9 @@ inspect/entries: ${out_dir}/entries.txt
 .PHONY: inspect
 eval: ${out_dir}/cmp.txt
 .PHONY: eval
-sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
+sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/model
 	$(python_cmd) local/sim_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
-		--top ${top} --apps ${out_dir}/l_apps.txt --history $(hist)
+		--top ${top} --apps ${out_dir}/l_apps.txt --history $(hist) --model ${out_dir}/model
 .PHONY: sim
 ############################################
 inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
