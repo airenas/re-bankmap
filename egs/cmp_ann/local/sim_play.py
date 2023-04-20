@@ -39,19 +39,19 @@ def main(argv):
     logger.info("loaded entries {} rows".format(len(entries_t)))
     logger.debug("Headers: {}".format(list(entries_t)))
     logger.debug("\n{}".format(entries_t.head(n=10)))
-    entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
+    entries = [Entry(e) for e in entries_t.to_dict('records')]
 
     ledgers = pd.read_csv(args.ledgers, sep=',')
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
     logger.debug("Headers: {}".format(list(ledgers)))
     logger.debug("\n{}".format(ledgers.head(n=10)))
-    l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
+    l_entries = [LEntry(_l) for _l in ledgers.to_dict('records')]
 
     apps_t = pd.read_csv(args.apps, sep=',')
     logger.info("loaded apps {} rows".format(len(apps_t)))
     logger.debug("Headers: {}".format(list(apps_t)))
     logger.debug("\n{}".format(apps_t.head(n=10)))
-    apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
+    apps = [App(_a) for _a in apps_t.to_dict('records')]
 
     arena = Arena(l_entries, apps)
 
@@ -71,6 +71,10 @@ def main(argv):
     logger.info("loading model {}".format(args.model))
     model = tf.keras.models.load_model(args.model)
     model.summary(150)
+    m_weights = model.layers[1].get_weights()[0]
+    m_biases = model.layers[1].get_weights()[1]
+    logger.info("w: {}".format(m_weights))
+    logger.info("b: {}".format(m_biases))
 
     arena.add_cust(row.rec_id)
 

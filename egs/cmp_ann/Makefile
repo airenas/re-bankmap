@@ -137,6 +137,6 @@ ifneq ($(force),1)
 endif	
 	rm -rf $(out_dir)
 .PHONY: clean
-clean/docs-predictions:
-	rm -f ${out_dir}/predicted.txt
+clean/model:
+	rm -fr ${out_dir}/model
 .EXPORT_ALL_VARIABLES:
