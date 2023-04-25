@@ -46,6 +46,9 @@ ${out_dir}/entries.txt: ${out_dir}/entries.csv ${out_dir}/docs_map.txt
 	    --input_map ${out_dir}/extracted/$(extr_dir)/Bank_Account_Recognitions.csv \
 	    --docs_map ${out_dir}/docs_map.txt > $@_
 	mv $@_ $@
+${out_dir}/entries_test.txt ${out_dir}/entries_train.txt: ${out_dir}/entries.txt
+	$(python_cmd) ../cmp_matrix/local/split.py --input ${out_dir}/entries.txt \
+	    --split $(split) --out_test ${out_dir}/entries_test.txt --out_train ${out_dir}/entries_train.txt	
 ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
 	$(python_cmd) ../cmp_matrix/local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
 	mv $@_ $@
@@ -77,28 +80,28 @@ ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entrie
 ${out_dir}/l_apps.txt: ${out_dir}/cust_l_apps.txt ${out_dir}/vend_l_apps.txt 
 	cat ${out_dir}/cust_l_apps.txt > $@
 	tail -n +2 ${out_dir}/vend_l_apps.txt >> $@
-${out_dir}/features.bin: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
-	$(python_cmd) local/make_features.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+${out_dir}/features.train.bin: ${out_dir}/entries_train.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
+	$(python_cmd) local/make_features.py --input ${out_dir}/entries_train.txt --ledgers ${out_dir}/l_entries.txt \
+	    --apps ${out_dir}/l_apps.txt --history $(hist) --out $@_
+	mv $@_ $@
+${out_dir}/features.test.bin: ${out_dir}/entries_test.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
+	$(python_cmd) local/make_features.py --input ${out_dir}/entries_test.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt --history $(hist) --out $@_
 	mv $@_ $@	
-${out_dir}/model: ${out_dir}/features.bin 
-	$(python_cmd) local/train_play.py --input ${out_dir}/features.bin --out $@_
+${out_dir}/model: ${out_dir}/features.train.bin 
+	$(python_cmd) local/train_play.py --input ${out_dir}/features.train.bin --out $@_
 	mv $@_ $@
-${out_dir}/predicted_type.txt: ${out_dir}/model ${out_dir}/features.bin
-	$(python_cmd) local/predict.py --input ${out_dir}/features.bin  --model ${out_dir}/model --out $@_
+${out_dir}/predicted_type.txt: ${out_dir}/model ${out_dir}/features.test.bin
+	$(python_cmd) local/predict.py --input ${out_dir}/features.test.bin  --model ${out_dir}/model --out $@_
 	mv $@_ $@
-${out_dir}/predicted.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/predicted_type.txt
-	$(python_cmd) ../cmp_matrix/local/predict_play_docs.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
+${out_dir}/predicted.txt: ${out_dir}/entries_test.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/predicted_type.txt
+	$(python_cmd) ../cmp_matrix/local/predict_play_docs.py --input ${out_dir}/entries_test.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt --pred ${out_dir}/predicted_type.txt > $@_
 	mv $@_ $@
-${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries.txt
-	$(python_cmd) local/compare.py --f1 ${out_dir}/entries.txt --f2  ${out_dir}/predicted.txt \
+${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries_test.txt
+	$(python_cmd) local/compare.py --f1 ${out_dir}/entries_test.txt --f2  ${out_dir}/predicted.txt \
 		--out ${out_dir}/cmp.txt  --skip ${skip} --limit ${limit}
 .PHONY: compare
-show/sf: ${out_dir}/entries.txt ${out_dir}/l_entries.txt
-	$(python_cmd) local/show_sf.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt
-show/params:
-	$(python_cmd) local/show_params.py
 show/errs-docs: ${out_dir}/cmp.txt.docs
 	cat $^ | grep diff | grep -v rejected
 show/errs: ${out_dir}/cmp.txt
@@ -108,15 +111,10 @@ build: ${out_dir}/features.txt ${out_dir}/cmp.txt
 .PHONY: build
 train: ${model}
 .PHONY: train
-inspect: ${out_dir}/features.txt
-	$(python_cmd) local/inspect_data.py --i $^
-inspect/entries: ${out_dir}/entries.txt
-	$(python_cmd) local/inspect_entries.py --i $^	
-.PHONY: inspect
 eval: ${out_dir}/cmp.txt
 .PHONY: eval
-sim: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/model
-	$(python_cmd) local/sim_play.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
+sim: ${out_dir}/entries_test.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt ${out_dir}/model
+	$(python_cmd) local/sim_play.py --input ${out_dir}/entries_test.txt --ledgers ${out_dir}/l_entries.txt --i $(i) \
 		--top ${top} --apps ${out_dir}/l_apps.txt --history $(hist) --model ${out_dir}/model
 .PHONY: sim
 ############################################
@@ -124,12 +122,6 @@ inspect/play: ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
 	$(python_cmd) local/inspect_play.py --ledgers ${out_dir}/l_entries.txt --c $(ic) \
 		--doc ${idoc} --apps ${out_dir}/l_apps.txt --date "$(idate)"
 .PHONY: inspect/play
-############################################
-${out_dir}/params.txt: ${out_dir}/entries.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt
-	$(python_cmd) local/tune_params.py --input ${out_dir}/entries.txt --ledgers ${out_dir}/l_entries.txt \
-	    --apps ${out_dir}/l_apps.txt --skip $(skip) --split_at $(split) --history $(hist) --out $@_
-	mv $@_ $@
-tune: ${out_dir}/params.txt
 ############################################
 clean:
 ifneq ($(force),1)	
