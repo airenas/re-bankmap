@@ -102,10 +102,11 @@ def main(argv):
     for r in res:
         if i >= args.top:
             break
-        if r["entry"].id in was:
+        key = r["entry"].type.to_s() + ":" + r["entry"].id
+        if key in was:
             continue
         i += 1
-        was.add(r["entry"].id)
+        was.add(key)
         logger.info(
             "\t{} ({}): {}, {}".format(i, r["i"], r["entry"].to_str(), r["sim"]))
         show_sim_importance(r["sim"])
