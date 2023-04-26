@@ -10,9 +10,9 @@ from tensorflow.python.keras.callbacks import EarlyStopping
 from tqdm import tqdm
 
 from bankmap.logger import logger
-from bankmap.similarity.similarities import param_names
 from egs.cmp_ann.local.make_features import Feature
 from egs.cmp_ann.local.model import create_model
+from egs.cmp_ann.local.similarity import params_count
 
 
 def get_one_train_data(feat: Feature, model):
@@ -67,8 +67,8 @@ def main(argv):
 
     logger.info("Starting")
 
-    params_count = len(param_names())
-    model = create_model(params_count)
+    input_count = params_count()
+    model = create_model(input_count)
     f = open(args.input, "rb")
 
     data, count, err, skip = create_train_data(f, model)
@@ -76,7 +76,7 @@ def main(argv):
 
     batch_size = 32
 
-    params = [i for i in range(params_count)]
+    params = [i for i in range(input_count)]
 
     def make_train_dataset(_data):
         x = _data[:, params]
@@ -95,21 +95,23 @@ def main(argv):
 
     be = 1000000
     errs = []
-    for i in range(4):
+    for i in range(7):
         data_train, data_val = train_test_split(data, test_size=0.05, shuffle=True, random_state=1)
         logger.info("Data len train: {}".format(len(data_train)))
         logger.info("Data len val  : {}".format(len(data_val)))
 
         train_ds = map_and_batch(make_train_dataset(data_train), batch_size)
         val_ds = map_and_batch(make_train_dataset(data_val), batch_size)
-        model.fit(train_ds, validation_data=val_ds, epochs=200, verbose=1, callbacks=[es])
+        model.fit(train_ds, validation_data=val_ds, epochs=200, verbose=0, callbacks=[es])
         data, count, err, skip = create_train_data(f, model)
         errs.append(err)
         logger.info("acc {:.3f}, {}/{} (skip {})".format((count - err - skip) / count, err, count, skip))
         logger.info("errs {}".format(errs))
+        logger.info('Saving tf model to {}_{}'.format(args.out, i))
+        tf.keras.models.save_model(model, "{}_{}".format(args.out, i))
         if err < be:
             be = err
-            logger.info('Saving tf model ...')
+            logger.info('Saving best tf model ...')
             tf.keras.models.save_model(model, args.out)
         else:
             logger.info('skip save')

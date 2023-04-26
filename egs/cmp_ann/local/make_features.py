@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 from bankmap.data import Entry, App, Arena, LEntry, Ctx
 from bankmap.logger import logger
-from bankmap.similarity.similarities import prepare_history_map, similarity
+from bankmap.similarity.similarities import prepare_history_map
+from egs.cmp_ann.local.similarity import similarity
 
 
 class CalcData:
