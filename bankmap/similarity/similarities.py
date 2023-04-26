@@ -11,8 +11,8 @@ from bankmap.logger import logger
 from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
 
-def e_key(e):
-    return e.who.casefold() + e.iban.casefold()
+def e_key(e: Entry):
+    return e.who.casefold() + e.iban.casefold() + e.bank_account.casefold()
 
 
 def prepare_history_map(entries: List[Entry]):
