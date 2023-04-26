@@ -87,12 +87,12 @@ def main(argv):
     y_pred_docs = [y.split('\t')[1] for y in y_pred_l[skip:]]
     y_pred_v = [json.loads(y.split('\t')[2]) for y in y_pred_l[skip:]]
 
-    y_pred = [x if sim_val(y_pred_v[i]) > args.limit else 'rejected' for i, x in enumerate(y_pred)]
+    y_pred_reject = [x if sim_val(y_pred_v[i]) > args.limit else 'rejected' for i, x in enumerate(y_pred)]
 
     with open(args.out, 'w') as f:
         for i, y in enumerate(y_true):
             ir = i + skip
-            v = y_pred[i]
+            v = y_pred_reject[i]
             vec = y_pred_v[i]
             val = sim_val(vec)
             if v == y and val > args.limit:
@@ -101,16 +101,18 @@ def main(argv):
                 print("{}\t{}\t{}\t{} <--diff-->\t{}\t{}".format(ir, y, v, '' if y_rec_type[i] else 'empty',
                                                                  vec, val), file=f)
 
-    logger.info("Acc all            : {:.3f} ({}/{})".format(accuracy_score(y_true, y_pred),
-                                                             sum([1 for i, x in enumerate(y_true) if y_pred[i] != x]),
-                                                             len(y_true)))
     y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
     y_pred_n = [x for i, x in enumerate(y_pred) if y_rec_type[i] != '']
-    show_no_rejected(y_true_n, y_pred_n, 'Acc not rejected   ', lambda p: True)
-    show_no_rejected(y_true_n, y_pred_n, 'Acc BA             ', lambda p: p.startswith(LType.BA.to_s()))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc GL             ', lambda p: p.startswith(LType.GL.to_s()))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc Customer       ', lambda p: p.startswith(LType.CUST.to_s()))
-    show_no_rejected(y_true_n, y_pred_n, 'Acc Vendor         ', lambda p: p.startswith(LType.VEND.to_s()))
+
+    logger.info("Acc all            : {:.3f} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
+                                                             sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
+                                                             len(y_true_n)))
+    y_pred_nreject = [x for i, x in enumerate(y_pred_reject) if y_rec_type[i] != '']
+    show_no_rejected(y_true_n, y_pred_nreject, 'Acc not rejected   ', lambda p: True)
+    show_no_rejected(y_true_n, y_pred_nreject, 'Acc BA             ', lambda p: p.startswith(LType.BA.to_s()))
+    show_no_rejected(y_true_n, y_pred_nreject, 'Acc GL             ', lambda p: p.startswith(LType.GL.to_s()))
+    show_no_rejected(y_true_n, y_pred_nreject, 'Acc Customer       ', lambda p: p.startswith(LType.CUST.to_s()))
+    show_no_rejected(y_true_n, y_pred_nreject, 'Acc Vendor         ', lambda p: p.startswith(LType.VEND.to_s()))
 
     logger.info("Docs ...")
     rda, rds, rdi, rdd, rs, ny = 0, 0, 0, 0, 0, 0
