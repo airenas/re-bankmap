@@ -50,6 +50,8 @@ def predict_entry(ctx, pd, entry, cfg):
         recognized = e["entry"]
         res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": bool(e["i"] > cfg.limit)}
         was.add(recognized.id)
+        logger.info("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
+                                                                           recognized.type.to_s()))
     alt = []
     i = 1
     for r in pred:
