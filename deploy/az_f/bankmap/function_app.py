@@ -68,10 +68,10 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         log_elapsed(start, "total", metrics)
         info["metrics"].update(metrics)
         info["app_version"] = app_ver
-
+        logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)
     except BaseException as err:
-        logger.error(err)
+        logger.exception(err)
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
