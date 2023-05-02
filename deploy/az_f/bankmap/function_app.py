@@ -45,7 +45,7 @@ def copy_data_to_storage(company, out_file):
     if not connect_str:
         logger.warn("No DEBUG_STORAGE_CONNECTION_STRING set")
         return
-    logger.info("cs {}".format(connect_str))
+    logger.info("container {}".format(container_name))
     from azure.storage.blob import BlobServiceClient
 
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
