@@ -103,7 +103,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("IBANs={}".format(ibans))
         check_copy_data(ibans, out_file)
         next_t = log_elapsed(next_t, "copy_to_storage", metrics)
-        return json_resp([], HTTPStatus.OK)
+        # return json_resp([], HTTPStatus.OK)
         logger.info("start mapping")
         mappings, info = do_mapping(data_dir, PredictionCfg(company=company, top_best=3))
 
