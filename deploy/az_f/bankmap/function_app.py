@@ -7,6 +7,7 @@ from http import HTTPStatus
 
 import azure.functions as func
 from azure.functions import HttpMethod
+
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
@@ -32,6 +33,41 @@ def get_version():
     except BaseException as err:
         logger.error(err)
         return "???"
+
+
+def copy_data_to_storage(company, out_file):
+    container_name = os.getenv('DEBUG_STORAGE_CONTAINER')
+    if not container_name:
+        logger.warn("No DEBUG_STORAGE_CONTAINER set")
+        return
+    connect_str = os.getenv('DEBUG_STORAGE_CONNECTION_STRING')
+    if not connect_str:
+        logger.warn("No DEBUG_STORAGE_CONNECTION_STRING set")
+        return
+    logger.info("cs {}".format(connect_str))
+    from azure.storage.blob import BlobServiceClient
+
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    file_name = "{}.zip".format(company)
+    # Create a blob client using the local file name as the name for the blob
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=file_name)
+    with open(file=out_file, mode="rb") as data:
+        blob_client.upload_blob(data, overwrite=True)
+    logger.info("Uploaded {}/{}".format(container_name, file_name))
+
+
+def check_copy_data(company, out_file):
+    try:
+        value = os.getenv("DEBUG_COMPANY", "")
+        logger.info("DEBUG_COMPANY={}".format(value))
+        if ":" + company + ":" in value:
+            logger.warn("Try copy data to storage")
+            copy_data_to_storage(company, out_file)
+            logger.info("copied")
+        else:
+            logger.warn("Skip copy data to storage")
+    except BaseException as err:
+        logger.exception(err)
 
 
 @app.function_name(name="bankmap")
@@ -60,8 +96,10 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             z.extractall(data_dir)
         logger.info("saved files to {}".format(data_dir))
         next_t = log_elapsed(next_t, "extract_zip", metrics)
+        check_copy_data(company, out_file)
+        next_t = log_elapsed(next_t, "copy_to_storage", metrics)
+        return json_resp([], HTTPStatus.OK)
         logger.info("start mapping")
-
         mappings, info = do_mapping(data_dir, PredictionCfg(company=company, top_best=3))
 
         log_elapsed(next_t, "map", metrics)
