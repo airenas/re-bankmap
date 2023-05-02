@@ -90,26 +90,6 @@ def to_date(p):
         raise err
 
 
-class PaymentType(Enum):
-    DBIT = 1
-    CRDT = 2
-
-    @staticmethod
-    def from_s(s):
-        if s == "CRDT":
-            return PaymentType.CRDT
-        if s == "DBIT":
-            return PaymentType.DBIT
-        raise Exception("Unknown doc type '{}'".format(s))
-
-    def to_s(self):
-        if self == PaymentType.CRDT:
-            return "CRDT"
-        if self == PaymentType.DBIT:
-            return "DBIT"
-        raise Exception("Unknown payment type '{}'".format(self))
-
-
 class MapType(Enum):
     UNUSED = 0
     MANUAL = 1
@@ -119,7 +99,7 @@ class MapType(Enum):
     def from_s(s):
         if s == "Rankiniu būdu" or s == "ManualMap" or s == "Manual":
             return MapType.MANUAL
-        if s == "Sugretinti su seniausiu" or s == "OldestMap":
+        if s == "Sugretinti su seniausiu" or s == "OldestMap" or s == "Apply to Oldest":
             return MapType.OLDEST
         if s == "Unused" or s == '':
             return MapType.UNUSED
