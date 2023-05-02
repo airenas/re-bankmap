@@ -10,6 +10,7 @@ from azure.functions import HttpMethod
 
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping
+from bankmap.loaders.entries import get_ibans
 from bankmap.logger import logger
 
 app = func.FunctionApp()
@@ -56,16 +57,17 @@ def copy_data_to_storage(company, out_file):
     logger.info("Uploaded {}/{}".format(container_name, file_name))
 
 
-def check_copy_data(company, out_file):
+def check_copy_data(ibans, out_file):
     try:
         value = os.getenv("DEBUG_COMPANY", "")
         logger.info("DEBUG_COMPANY={}".format(value))
-        if ":" + company + ":" in value:
-            logger.warn("Try copy data to storage")
-            copy_data_to_storage(company, out_file)
-            logger.info("copied")
-        else:
-            logger.warn("Skip copy data to storage")
+        for iban in ibans:
+            if ":" + iban + ":" in value:
+                logger.warn("Try copy data to storage")
+                copy_data_to_storage(iban, out_file)
+                logger.info("copied")
+                return
+        logger.warn("Skip copy data to storage")
     except BaseException as err:
         logger.exception(err)
 
@@ -96,7 +98,10 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             z.extractall(data_dir)
         logger.info("saved files to {}".format(data_dir))
         next_t = log_elapsed(next_t, "extract_zip", metrics)
-        check_copy_data(company, out_file)
+
+        ibans = get_ibans(os.path.join(data_dir, "Bank_Statement_Lines.csv"))
+        logger.info("IBANs={}".format(ibans))
+        check_copy_data(ibans, out_file)
         next_t = log_elapsed(next_t, "copy_to_storage", metrics)
         return json_resp([], HTTPStatus.OK)
         logger.info("start mapping")

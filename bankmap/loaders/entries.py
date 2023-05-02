@@ -147,3 +147,11 @@ def load_lines(file_name):
     sr.sort(key=lambda e: (e[1].date, e[0]))
     res = [v[1] for v in sr]
     return res
+
+
+# return unique company ibans - used for detecting company
+def get_ibans(file_name):
+    logger.info("loading entries {}".format(file_name))
+    df = pd.read_csv(file_name, sep=',')
+    logger.info("loaded entries {} rows".format(len(df)))
+    return df["Acct_Id_IBAN"].unique()
