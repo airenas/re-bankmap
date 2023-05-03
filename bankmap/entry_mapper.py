@@ -157,15 +157,19 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     test = new_entries
     predict_res = []
     ctx = Ctx()
-    pi = 0
+    pi, pr = 0, 0
     for entry in test:
         e_res = predict_entry(ctx, pd, entry, cfg)
+        if e_res and e_res.get("main"):
+            pr += 1 if e_res.get("main").get("recommended") else 0
         predict_res.append(e_res)
         pi += 1
+    res_info["recommended"] = pr
     log_elapsed(start_t, "predicting")
     log_elapsed(start, "total_mapping")
     if pi > 0:
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
+        res_info["recommended_percent"] = pr/pi * 100
     return predict_res, {"metrics": metrics, "sizes": res_info}
 
 
