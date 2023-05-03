@@ -3,6 +3,8 @@ import os
 import sys
 import time
 
+import numpy
+
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, LType, Ctx, PredictData
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines, get_ibans
@@ -157,11 +159,13 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     test = new_entries
     predict_res = []
     ctx = Ctx()
-    pi, pr = 0, 0
+    pi, pr, sims = 0, 0, []
     for entry in test:
         e_res = predict_entry(ctx, pd, entry, cfg)
-        if e_res and e_res.get("main"):
-            pr += 1 if e_res.get("main").get("recommended") else 0
+        main_pred = e_res.get("main")
+        if e_res and main_pred:
+            pr += 1 if main_pred.get("recommended") else 0
+            sims.append(main_pred.get("similarity", 0))
         predict_res.append(e_res)
         pi += 1
     res_info["recommended"] = pr
@@ -170,6 +174,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     if pi > 0:
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
         res_info["recommended_percent"] = pr/pi * 100
+    if len(sims) > 0:
+        for i in [25, 50, 75, 90, 95, 99, 100]:
+            res_info["similarity_percentile_{}".format(i)] = numpy.percentile(sims, i)
+
     return predict_res, {"metrics": metrics, "sizes": res_info}
 
 
