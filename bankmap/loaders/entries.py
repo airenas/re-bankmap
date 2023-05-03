@@ -123,7 +123,7 @@ def load_lines(file_name):
     logger.info("loaded entry lines {} rows".format(len(df)))
     logger.debug("{}".format(df.head(n=10)))
     hd = list(df)
-    logger.info("Headers: {}".format(hd))
+    logger.debug("Headers: {}".format(hd))
     res = []
     found = set()
     data = df.to_dict('records')
