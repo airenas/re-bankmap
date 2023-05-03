@@ -17,7 +17,7 @@ app = func.FunctionApp()
 
 
 def json_resp(value, code: int):
-    return func.HttpResponse(body=json.dumps(value), status_code=int(code), mimetype="application/json")
+    return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code), mimetype="application/json")
 
 
 def log_elapsed(_start, what, metrics):
