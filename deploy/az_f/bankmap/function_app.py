@@ -61,6 +61,8 @@ def check_copy_data(ibans, out_file):
     try:
         value = os.getenv("DEBUG_COMPANY", "")
         logger.info("DEBUG_COMPANY={}".format(value))
+        if len(ibans) == 0:
+            ibans = ["no_iban"]
         for iban in ibans:
             if ":" + iban + ":" in value:
                 logger.warn("Try copy data to storage")
