@@ -64,7 +64,7 @@ def check_copy_data(ibans, out_file):
         if len(ibans) == 0:
             ibans = ["no_iban"]
         for iban in ibans:
-            if ":" + iban + ":" in value:
+            if ":" + str(iban) + ":" in value:
                 logger.warn("Try copy data to storage")
                 copy_data_to_storage(iban, out_file)
                 logger.info("copied")
