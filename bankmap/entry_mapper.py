@@ -5,7 +5,7 @@ import time
 
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, LType, Ctx, PredictData
-from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
+from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines, get_ibans
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
@@ -170,6 +170,8 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 if __name__ == "__main__":
+    ibans = get_ibans(os.path.join(sys.argv[1], "Bank_Statement_Lines.csv"))
+    print("IBANs={}".format(ibans))
     res = do_mapping(sys.argv[1], cfg=PredictionCfg())
     print(json.dumps(res[1].get("metrics", {}), indent=2))
     print(json.dumps(res[1].get("sizes", {}), indent=2))

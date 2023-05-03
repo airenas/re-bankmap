@@ -154,4 +154,4 @@ def get_ibans(file_name):
     logger.info("loading entries {}".format(file_name))
     df = pd.read_csv(file_name, sep=',')
     logger.info("loaded entries {} rows".format(len(df)))
-    return df["Acct_Id_IBAN"].notnull().unique()
+    return df[df["Acct_Id_IBAN"].notnull()]["Acct_Id_IBAN"].unique()
