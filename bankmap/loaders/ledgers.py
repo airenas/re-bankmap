@@ -51,6 +51,8 @@ def prepare_vend_sfs(df, v_data, accounts):
         if not dt or DocType.skip(dt):
             continue
         _id = d['Vendor_No_']
+        if e_str(_id) == '':
+            raise RuntimeError("no vendor_no {}".format(d))
         vd = v_data[_id]
         res.append([LType.VEND.to_s(), _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
                     d['Due_Date'],
@@ -74,7 +76,8 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     logger.info("loaded sfs {} rows".format(len(names)))
 
     c_d = {r['No_']: (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in names.to_dict('records')}
-    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records')}
+    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records') if
+                  e_str(r['Vendor_No_']) != ''}
 
     return prepare_vend_sfs(ledgers, c_d, accounts_d)
 
