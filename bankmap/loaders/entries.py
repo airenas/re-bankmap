@@ -95,7 +95,7 @@ def load_entries(file_name, ba_map, cv_map):
             rec_no = docs[1]
 
         res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
-                    e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
+                    e_float(d['N_Amt']), d['Operation_Date'], iban(d),
                     d['N_ND_TD_Refs_EndToEndId'],
                     rec_no,
                     e_currency(d['Acct_Ccy']),
@@ -154,4 +154,7 @@ def get_ibans(file_name):
     logger.info("loading entries {}".format(file_name))
     df = pd.read_csv(file_name, sep=',')
     logger.info("loaded entries {} rows".format(len(df)))
-    return df[df["Acct_Id_IBAN"].notnull()]["Acct_Id_IBAN"].unique()
+
+    res = [v for v in df[df["Acct_Id_IBAN"].notnull()]["Acct_Id_IBAN"].unique()]
+    res += [v for v in df[df["Acct_Id_Othr_Id"].notnull()]["Acct_Id_Othr_Id"].unique()]
+    return res
