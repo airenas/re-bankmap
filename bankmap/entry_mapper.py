@@ -187,4 +187,5 @@ if __name__ == "__main__":
     res = do_mapping(sys.argv[1], cfg=PredictionCfg())
     print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
     print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[0], ensure_ascii=False, indent=2))
+    if os.getenv("LOG_LEVEL") == "debug":
+        print(json.dumps(res[0], ensure_ascii=False, indent=2))

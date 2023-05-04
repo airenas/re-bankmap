@@ -14,8 +14,8 @@ ${out_dir}/extracted:
 ${out_dir}: 
 	mkdir -p $@	
 ############################################
-${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
-	unzip $(data_dir)/${zip} -d ${out_dir}/extracted
+${out_dir}/extracted/.done: ${zip} | ${out_dir}/extracted
+	unzip ${zip} -d ${out_dir}/extracted
 	touch $@
 run: ${out_dir}/extracted/.done
 	$(python_cmd) ../../bankmap/entry_mapper.py ${out_dir}/extracted
