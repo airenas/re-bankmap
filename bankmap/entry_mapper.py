@@ -30,7 +30,7 @@ def to_dic_entry(e: Entry):
 
 
 def predict_entry(ctx, pd, entry, cfg):
-    logger.info("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
+    logger.debug("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
     pred = []
 
     def check(_e):
@@ -52,7 +52,7 @@ def predict_entry(ctx, pd, entry, cfg):
         recognized = e["entry"]
         res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": bool(e["i"] > cfg.limit)}
         was.add(recognized.id)
-        logger.info("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
+        logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
                                                                            recognized.type.to_s()))
     alt = []
     i = 1
