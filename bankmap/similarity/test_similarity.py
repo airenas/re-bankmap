@@ -12,6 +12,7 @@ def test_str_sim():
     assert name_sim("uab olia", "mama, uab") < name_sim("uab olia", "oliaa, uab")
     assert name_sim("uab olia", "olia, uab") > name_sim("uab olia", "olia, UAB")
     assert name_sim("uab olia", "oliaa, uab") < name_sim("uab olia", "olia, ab")
+    # assert name_sim("LLP ZAPCHASTTREID", "ZAPCHAST TRADE LLP") > 0.7
 
 
 def test_date_sim():
