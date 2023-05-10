@@ -51,7 +51,7 @@ loop once/several times a day
     deactivate docu
 end
 
-== 2. Learning company's paramns ==
+== 2. Learning company's params ==
 loop for each msg
 
     predictor -> trainer: got notifyMsg
