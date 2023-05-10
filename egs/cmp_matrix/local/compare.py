@@ -19,26 +19,21 @@ def show_no_rejected(y_true, y_pred, name, filter):
     y_true_nr = [x for i, x in enumerate(y_true) if y_pred[i] != 'rejected' and filter(y_true[i])]
     y_pred_nr = [x for i, x in enumerate(y_pred) if y_pred[i] != 'rejected' and filter(y_true[i])]
 
+    rejected = sum([1 for i, x in enumerate(y_pred) if x == 'rejected' and filter(y_true[i])])
+    all = sum([1 for i, x in enumerate(y_pred) if filter(y_true[i])])
+
     if len(y_true_nr) > 0:
-        logger.info("{}: {:.3f} ({}/{})\trejected: {}/{}".format(name, accuracy_score(y_true_nr, y_pred_nr),
-                                                                 sum([1 for i, x in enumerate(y_true_nr) if
-                                                                      y_pred_nr[i] != x]),
-                                                                 len(y_true_nr),
-                                                                 sum([1 for i, x in enumerate(y_pred) if
-                                                                      x == 'rejected' and filter(y_true[i])]),
-                                                                 sum([1 for i, x in enumerate(y_pred) if
-                                                                      filter(y_true[i])])
-                                                                 ))
+        logger.info("{}: {:.3f} ({}/{})\trejected: {:.2f} {}/{}".format(name, accuracy_score(y_true_nr, y_pred_nr),
+                                                                        sum([1 for i, x in enumerate(y_true_nr) if
+                                                                             y_pred_nr[i] != x]),
+                                                                        len(y_true_nr),
+                                                                        rejected / all, rejected, all))
     else:
         logger.info("{}: {:.3f} ({}/{})\trejected: {}/{}".format(name, 0,
                                                                  sum([1 for i, x in enumerate(y_true_nr) if
                                                                       y_pred_nr[i] != x]),
                                                                  len(y_true_nr),
-                                                                 sum([1 for i, x in enumerate(y_pred) if
-                                                                      x == 'rejected' and filter(y_true[i])]),
-                                                                 sum([1 for i, x in enumerate(y_pred) if
-                                                                      filter(y_true[i])])
-                                                                 ))
+                                                                 rejected, all))
 
 
 def cmp_arr(ya, pa):
@@ -104,8 +99,11 @@ def main(argv):
     y_true_n = [x for i, x in enumerate(y_true) if y_rec_type[i] != '']
     y_pred_n = [x for i, x in enumerate(y_pred) if y_rec_type[i] != '']
 
+    logger.info("Empty              : {:.3f} ({}/{})".format((len(y_true) - len(y_true_n)) / len(y_true), len(y_true_n),
+                                                             len(y_true)))
     logger.info("Acc all            : {:.3f} ({}/{})".format(accuracy_score(y_true_n, y_pred_n),
-                                                             sum([1 for i, x in enumerate(y_true_n) if y_pred_n[i] != x]),
+                                                             sum([1 for i, x in enumerate(y_true_n) if
+                                                                  y_pred_n[i] != x]),
                                                              len(y_true_n)))
     y_pred_nreject = [x for i, x in enumerate(y_pred_reject) if y_rec_type[i] != '']
     show_no_rejected(y_true_n, y_pred_nreject, 'Acc not rejected   ', lambda p: True)
