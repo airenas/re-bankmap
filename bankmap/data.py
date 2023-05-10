@@ -123,7 +123,7 @@ class DocType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "Delspinigių pažyma" or s == "Invoice" or s == "SF":
+        if s == "Delspinigių pažyma" or s == "Invoice" or s == "SF" or s == "Finance Charge Memo":
             return DocType.SF
         if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo" or s == "Refund":
             return DocType.GRAZ_PAZ
