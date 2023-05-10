@@ -94,13 +94,16 @@ def load_entries(file_name, ba_map, cv_map):
             logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
             rec_no = docs[1]
 
-        res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
+        if e_str(d['Operation_Date']) != '0':
+            res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
                     e_float(d['N_Amt']), d['Operation_Date'], iban(d),
                     d['N_ND_TD_Refs_EndToEndId'],
                     rec_no,
                     e_currency(d['Acct_Ccy']),
                     docs[0],
                     d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
+        else:
+            logger.warn("no operation date: {}".format(d))
     # stable sort by date
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
