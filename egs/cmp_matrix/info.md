@@ -1,3 +1,33 @@
+# Demo 5
+2023 05 10
+
+Rezultatai: P
+```txt
+Empty              : 0.537 (1563/3379)
+Acc all            : 0.834 (260/1563)
+Acc not rejected   : 0.998 (2/978)	rejected: 0.37 585/1563
+Acc BA             : 1.000 (0/60)	rejected: 0.22 17/77
+Acc GL             : 0.996 (1/249)	rejected: 0.14 39/288
+Acc Customer       : 0.997 (1/381)	rejected: 0.39 245/626
+Acc Vendor         : 1.000 (0/288)	rejected: 0.50 284/572
+Docs ...
+Acc all 0.909 (69/762) s:13, i:4, d:52	(rejected 454, no doc: 2325)
+
+```
+
+su `limit = 1.0`
+```txt
+Empty              : 0.537 (1563/3379)
+Acc all            : 0.834 (260/1563)
+Acc not rejected   : 0.993 (9/1291)	rejected: 0.17 272/1563
+Acc BA             : 1.000 (0/76)	rejected: 0.01 1/77
+Acc GL             : 0.976 (6/254)	rejected: 0.12 34/288
+Acc Customer       : 0.997 (2/604)	rejected: 0.04 22/626
+Acc Vendor         : 0.997 (1/357)	rejected: 0.38 215/572
+Docs ...
+Acc all 0.922 (83/1060) s:23, i:6, d:54	(rejected 156, no doc: 2325)
+```
+
 # Demo 4
 2023 03 20
 
