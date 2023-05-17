@@ -62,7 +62,7 @@ def copy_data_to_storage(company, out_file):
 
 def check_copy_data(cfg: PredictionCfg, out_file):
     try:
-        if cfg.next_train or cfg.next_train < datetime.now():
+        if not cfg.next_train or cfg.next_train < datetime.now():
             copy_data_to_storage(cfg.company, out_file)
         else:
             logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
@@ -82,7 +82,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("RecognitionForId {}".format(company))
     try:
         if company:
-            company = base64.b64decode(company)
+            company = base64.b64decode(company.encode('ascii')).decode('utf-8')
         logger.info("company {}".format(company))
         cfg = load_config_or_default(company)
 

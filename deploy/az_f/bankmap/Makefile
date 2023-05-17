@@ -3,6 +3,8 @@
 ############################################
 run/local:
 	func start
+update/bankmap:
+	pip uninstall -y bankmap
 ############################################
 create/az-group:
 	az group create --name $(func_resource_group) --location $(func_location)
@@ -27,13 +29,13 @@ _version:
 ############################################
 test/remote:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'company: hum' --data-binary @test.zip
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @test.zip
 test/remote/pretty:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'company: hum' --data-binary @test.zip | jq .
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @test.zip | jq .
 test/local:
 	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'company: hum' --data-binary @test.zip
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @test.zip
 ############################################
 clean/req:
 	rm -f requirements.txt
