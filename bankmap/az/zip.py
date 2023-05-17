@@ -53,4 +53,4 @@ def save_extract_zip(data):
     data_dir = os.path.join(temp_dir.name, "data")
     with zipfile.ZipFile(out_file) as z:
         z.extractall(data_dir)
-    return data_dir, out_file
+    return data_dir, out_file, temp_dir

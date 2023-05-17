@@ -42,7 +42,7 @@ def test_function(zipfile: func.InputStream):
             logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
             return
         zip_bytes = load_data(company)
-        data_dir, out_file = save_extract_zip(zip_bytes)
+        data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
         logger.info("saved files to {}".format(data_dir))
 
         cfg.next_train = datetime.now() + timedelta(days=7)

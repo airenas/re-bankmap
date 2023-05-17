@@ -58,7 +58,7 @@ def check_copy_data(cfg: PredictionCfg, out_file):
 
 @app.function_name(name="bankmap")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
-def test_function(req: func.HttpRequest) -> func.HttpResponse:
+def map_function(req: func.HttpRequest) -> func.HttpResponse:
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     start, metrics = time.time(), {}
@@ -73,7 +73,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         cfg = load_config_or_default(company)
 
         zip_bytes = req.get_body()
-        data_dir, out_file = save_extract_zip(zip_bytes)
+        data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
         next_t = log_elapsed(start, "extract_zip", metrics)
 
         check_copy_data(cfg, out_file)
