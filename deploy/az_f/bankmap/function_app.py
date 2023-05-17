@@ -62,10 +62,13 @@ def copy_data_to_storage(company, out_file):
 
 def check_copy_data(cfg: PredictionCfg, out_file):
     try:
-        if not cfg.next_train or cfg.next_train < datetime.now():
-            copy_data_to_storage(cfg.company, out_file)
+        if cfg.company:
+            if not cfg.next_train or cfg.next_train < datetime.now():
+                copy_data_to_storage(cfg.company, out_file)
+            else:
+                logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
         else:
-            logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
+            logger.warn("Skip save to storage, no company")
     except BaseException as err:
         logger.exception(err)
 
