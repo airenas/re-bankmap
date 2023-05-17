@@ -1,9 +1,7 @@
 import base64
 import json
 import os
-import tempfile
 import time
-import zipfile
 from datetime import datetime
 from http import HTTPStatus
 
@@ -11,6 +9,7 @@ import azure.functions as func
 from azure.functions import HttpMethod
 
 from bankmap.az.config import load_config_or_default
+from bankmap.az.zip import copy_data, save_extract_zip
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
@@ -39,32 +38,16 @@ def get_version():
         return "???"
 
 
-def copy_data_to_storage(company, out_file):
-    container_name = os.getenv('DEBUG_STORAGE_CONTAINER')
-    if not container_name:
-        logger.warn("No DEBUG_STORAGE_CONTAINER set")
-        return
-    connect_str = os.getenv('DEBUG_STORAGE_CONNECTION_STRING')
-    if not connect_str:
-        logger.warn("No DEBUG_STORAGE_CONNECTION_STRING set")
-        return
-    logger.info("container {}".format(container_name))
-    from azure.storage.blob import BlobServiceClient
-
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-    file_name = "{}.zip".format(company)
-    # Create a blob client using the local file name as the name for the blob
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=file_name)
-    with open(file=out_file, mode="rb") as data:
-        blob_client.upload_blob(data, overwrite=True)
-    logger.info("Uploaded {}/{}".format(container_name, file_name))
+def force_save():
+    v = os.getenv('FORCE_SAVE', default="").lower()
+    return v == "1" or v == "true"
 
 
 def check_copy_data(cfg: PredictionCfg, out_file):
     try:
         if cfg.company:
-            if not cfg.next_train or cfg.next_train < datetime.now():
-                copy_data_to_storage(cfg.company, out_file)
+            if force_save() or not cfg.next_train or cfg.next_train < datetime.now():
+                copy_data(cfg.company, out_file)
             else:
                 logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
         else:
@@ -90,20 +73,8 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         cfg = load_config_or_default(company)
 
         zip_bytes = req.get_body()
-        temp_dir = tempfile.TemporaryDirectory()
-        logger.info("tmp dir {}".format(temp_dir.name))
-        out_file = os.path.join(temp_dir.name, "in.zip")
-        logger.info("out_file {}".format(out_file))
-        with open(out_file, "wb") as f:
-            f.write(zip_bytes)
-        logger.info("saved file {} ({}b)".format(out_file, len(zip_bytes)))
-        next_t = log_elapsed(start, "save_zip", metrics)
-
-        data_dir = os.path.join(temp_dir.name, "data")
-        with zipfile.ZipFile(out_file) as z:
-            z.extractall(data_dir)
-        logger.info("saved files to {}".format(data_dir))
-        next_t = log_elapsed(next_t, "extract_zip", metrics)
+        data_dir, out_file = save_extract_zip(zip_bytes)
+        next_t = log_elapsed(start, "extract_zip", metrics)
 
         check_copy_data(cfg, out_file)
         next_t = log_elapsed(next_t, "copy_to_storage", metrics)

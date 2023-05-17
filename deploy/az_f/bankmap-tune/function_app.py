@@ -1,12 +1,11 @@
 import json
 import os
 from datetime import datetime, timedelta
-from http import HTTPStatus
 
 import azure.functions as func
-from azure.functions import HttpMethod
 
 from bankmap.az.config import load_config_or_default, save_config
+from bankmap.az.zip import load_data, save_extract_zip
 from bankmap.logger import logger
 
 app = func.FunctionApp()
@@ -42,21 +41,11 @@ def test_function(zipfile: func.InputStream):
         if cfg.next_train and cfg.next_train > datetime.now():
             logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
             return
+        zip_bytes = load_data(company)
+        data_dir, out_file = save_extract_zip(zip_bytes)
+        logger.info("saved files to {}".format(data_dir))
+
         cfg.next_train = datetime.now() + timedelta(days=7)
         save_config(cfg, company)
     except BaseException as err:
         logger.exception(err)
-
-
-@app.function_name(name="bankmap-tune")
-@app.route(route="tune", methods=[HttpMethod.POST])  # HTTP Trigger
-def test_function(req: func.HttpRequest) -> func.HttpResponse:
-    app_ver = get_version()
-    logger.info("version {}".format(app_ver))
-    logger.info("got request")
-    try:
-        res = {"company": "company"}
-        return json_resp(res, HTTPStatus.OK)
-    except BaseException as err:
-        logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
