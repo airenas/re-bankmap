@@ -1,23 +1,26 @@
+import base64
 import json
 import os
 import tempfile
 import time
 import zipfile
+from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
 from azure.functions import HttpMethod
 
+from bankmap.az.config import load_config_or_default
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping
-from bankmap.loaders.entries import get_ibans
 from bankmap.logger import logger
 
 app = func.FunctionApp()
 
 
 def json_resp(value, code: int):
-    return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code), mimetype="application/json")
+    return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code),
+                             mimetype="application/json")
 
 
 def log_elapsed(_start, what, metrics):
@@ -57,19 +60,12 @@ def copy_data_to_storage(company, out_file):
     logger.info("Uploaded {}/{}".format(container_name, file_name))
 
 
-def check_copy_data(ibans, out_file):
+def check_copy_data(cfg: PredictionCfg, out_file):
     try:
-        value = os.getenv("DEBUG_COMPANY", "")
-        logger.info("DEBUG_COMPANY={}".format(value))
-        if len(ibans) == 0:
-            ibans = ["no_iban"]
-        for iban in ibans:
-            if ":" + str(iban) + ":" in value:
-                logger.warn("Try copy data to storage")
-                copy_data_to_storage(iban, out_file)
-                logger.info("copied")
-                return
-        logger.warn("Skip copy data to storage")
+        if cfg.next_train or cfg.next_train < datetime.now():
+            copy_data_to_storage(cfg.company, out_file)
+        else:
+            logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
     except BaseException as err:
         logger.exception(err)
 
@@ -82,9 +78,14 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     start, metrics = time.time(), {}
     logger.info("got request")
 
-    company = req.headers.get("company", None)
-    logger.info("company {}".format(company))
+    company = req.headers.get("RecognitionForId", None)
+    logger.info("RecognitionForId {}".format(company))
     try:
+        if company:
+            company = base64.b64decode(company)
+        logger.info("company {}".format(company))
+        cfg = load_config_or_default(company)
+
         zip_bytes = req.get_body()
         temp_dir = tempfile.TemporaryDirectory()
         logger.info("tmp dir {}".format(temp_dir.name))
@@ -101,13 +102,11 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("saved files to {}".format(data_dir))
         next_t = log_elapsed(next_t, "extract_zip", metrics)
 
-        ibans = get_ibans(os.path.join(data_dir, "Bank_Statement_Lines.csv"))
-        logger.info("IBANs={}".format(ibans))
-        check_copy_data(ibans, out_file)
+        check_copy_data(cfg, out_file)
         next_t = log_elapsed(next_t, "copy_to_storage", metrics)
-        # return json_resp([], HTTPStatus.OK)
+
         logger.info("start mapping")
-        mappings, info = do_mapping(data_dir, PredictionCfg(company=company, top_best=3))
+        mappings, info = do_mapping(data_dir, cfg)
 
         log_elapsed(next_t, "map", metrics)
         log_elapsed(start, "total", metrics)
