@@ -1,0 +1,7 @@
+# Do not include azure-functions-worker in this file
+# The Python Worker is managed by the Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+azure-functions==1.13.3
+azure-storage-blob==12.16.0
+git+https://github.com/airenas/re-bankmap.git@v0.1.212-beta#egg=bankmap
