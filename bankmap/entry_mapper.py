@@ -29,6 +29,33 @@ def to_dic_entry(e: Entry):
             "bank_account": e.bank_account}
 
 
+def get_limits(limits, _type):
+    if limits:
+        return limits.get(_type, None)
+    return None
+
+
+def calc_confidence(v, limits):
+    if limits and len(limits) > 0:
+        for cs, cv in limits.items():
+            if v > cv:
+                return float(cs)
+        return 0.5  # 0.5 if not found
+    return None
+
+
+def get_confidence(v, _type, cfg: PredictionCfg):
+    res = calc_confidence(v, get_limits(cfg.limits, _type))
+    if res:
+        return res
+    res = calc_confidence(v, get_limits(cfg.limits, "all"))
+    if res:
+        return res
+    if v >= cfg.limit:
+        return 0.99
+    return 0.5
+
+
 def predict_entry(ctx, pd, entry, cfg):
     logger.debug("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
     pred = []
@@ -50,10 +77,12 @@ def predict_entry(ctx, pd, entry, cfg):
     if len(pred) > 0:
         e = pred[0]
         recognized = e["entry"]
-        res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": bool(e["i"] > cfg.limit)}
+        cs = get_confidence(e["i"], recognized.type, cfg)
+        res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
+                       "confidence_score": cs}
         was.add(recognized.id)
         logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
-                                                                           recognized.type.to_s()))
+                                                                            recognized.type.to_s()))
     alt = []
     i = 1
     for r in pred:
@@ -173,7 +202,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     log_elapsed(start, "total_mapping")
     if pi > 0:
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
-        res_info["recommended_percent"] = pr/pi * 100
+        res_info["recommended_percent"] = pr / pi * 100
     if len(sims) > 0:
         for i in [25, 50, 75, 90, 95, 99, 100]:
             res_info["similarity_percentile_{}".format(i)] = numpy.percentile(sims, i)
