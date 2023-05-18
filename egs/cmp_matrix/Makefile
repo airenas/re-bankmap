@@ -97,6 +97,10 @@ ${out_dir}/cmp.txt compare: ${out_dir}/predicted.txt ${out_dir}/entries_test.txt
 	$(python_cmd) local/compare.py --f1 ${out_dir}/entries_test.txt --f2  ${out_dir}/predicted.txt \
 		--out ${out_dir}/cmp.txt  --skip ${skip} --limit ${limit}
 .PHONY: compare
+${out_dir}/limits.txt tune/limits: ${out_dir}/predicted.txt ${out_dir}/entries_test.txt
+	$(python_cmd) local/tune_limits.py --f1 ${out_dir}/entries_test.txt --f2  ${out_dir}/predicted.txt \
+		--out ${out_dir}/limits.txt  --skip ${skip} 
+.PHONY: tune/limits
 ${model}: ${out_dir}/features.txt
 	$(python_cmd) local/train_dt.py --input $^ --out $@
 show/oracle: ${out_dir}/entries_test.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
