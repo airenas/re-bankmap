@@ -7,13 +7,7 @@ import pandas as pd
 from bankmap.data import e_str, LType
 from bankmap.logger import logger
 from bankmap.similarity.similarities import sim_val
-
-
-class Cmp:
-    def __init__(self, _type, value, correct):
-        self.type = _type
-        self.value = value
-        self.correct = correct
+from bankmap.tune.tune import Cmp
 
 
 def calc_limits(cmps, params):

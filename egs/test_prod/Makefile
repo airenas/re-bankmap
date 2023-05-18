@@ -19,6 +19,8 @@ ${out_dir}/extracted/.done: ${zip} | ${out_dir}/extracted
 	touch $@
 run: ${out_dir}/extracted/.done
 	$(python_cmd) ../../bankmap/entry_mapper.py ${out_dir}/extracted
+tune: ${out_dir}/extracted/.done
+	$(python_cmd) ../../bankmap/tune_limits.py ${out_dir}/extracted
 ############################################
 clean:
 	# @echo -n "Drop $(out_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
