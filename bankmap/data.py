@@ -249,8 +249,8 @@ class PredictData:
 class Arena:
     def __init__(self, l_entries, apps):
         self.l_entries = l_entries
-        self.gl_entries: List[LEntry] = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
-        self.entries = [l for l in filter(lambda x: x.type in [LType.CUST, LType.VEND], l_entries)]
+        self.gl_entries: List[LEntry] = [e for e in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
+        self.entries = [e for e in filter(lambda x: x.type in [LType.CUST, LType.VEND], l_entries)]
         self.apps = apps
         self.date = None
         logger.info("GL, BA count: {}".format(len(self.gl_entries)))
