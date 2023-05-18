@@ -35,6 +35,8 @@ def get_best_account(ctx, arena, entry, entry_dict):
 
 
 def make_limits(cmps, bars):
+    cmps.sort(key=lambda item: (-item.value, item.correct))
+
     res = {}
 
     def calc(s):
@@ -131,7 +133,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
         cmp = Cmp(_type=be.type.to_s(), value=bv, correct=entry.rec_type == be.type and entry.rec_id == be.id)
         cmps.append(cmp)
         if (i + 1) % 200 == 0:
-            logger.info("done {}".format(i+1))
+            logger.info("done {}".format(i + 1))
     log_elapsed(start_t, "predicting")
     log_elapsed(start, "total_predicting")
     if pi > 0:

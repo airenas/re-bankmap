@@ -14,8 +14,9 @@ def get_date(date):
 
 
 class PredictionCfg:
-    def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000):
+    def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None):
         self.limit = limit
+        self.limits = limits
         self.tops = top_best
         self.company = company
         self.next_train: datetime.datetime = get_date(next_train)
@@ -32,6 +33,7 @@ class PredictionCfg:
     def to_dic(self):
         res = {
             "limit": self.limit,
+            "limits": self.limits,
             "top_best": self.tops,
             "company": self.company,
             "train_last": self.train_last,

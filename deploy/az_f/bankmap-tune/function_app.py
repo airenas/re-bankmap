@@ -7,6 +7,7 @@ import azure.functions as func
 from bankmap.az.config import load_config_or_default, save_config
 from bankmap.az.zip import load_data, save_extract_zip
 from bankmap.logger import logger
+from bankmap.tune_limits import tune_limits
 
 app = func.FunctionApp()
 
@@ -52,6 +53,14 @@ def test_function(zipfile: func.InputStream):
         data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
         logger.info("saved files to {}".format(data_dir))
 
+        logger.info("start tuning limits")
+        limits, info = tune_limits(data_dir, cfg)
+
+        info["app_version"] = app_ver
+        logger.info(json.dumps(info, indent=2))
+        logger.info("done tuning")
+
+        cfg.limits=limits
         cfg.next_train = datetime.now() + timedelta(days=7)
         save_config(cfg, company)
     except BaseException as err:
