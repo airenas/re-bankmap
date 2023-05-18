@@ -60,8 +60,12 @@ def test_function(zipfile: func.InputStream):
         logger.info(json.dumps(info, indent=2))
         logger.info("done tuning")
 
-        cfg.limits=limits
-        cfg.next_train = datetime.now() + timedelta(days=7)
+        cfg.limits = limits
+        next_days = 7
+        if info.get("sizes", {}).get("tuning_on", 0) < 500:
+            next_days = 1
+        logger.info("next check after {} days".format(next_days))
+        cfg.next_train = datetime.now() + timedelta(days=next_days)
         save_config(cfg, company)
     except BaseException as err:
         logger.exception(err)

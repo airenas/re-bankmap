@@ -125,6 +125,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     logger.warning("predicting...")
     test = entries[-min(len(entries), cfg.train_last):]
     logger.info("predicting last {} entries".format(len(test)))
+    res_info["tuning_on"] = len(test)
     cmps = []
     ctx = Ctx()
     pi, pr, sims = 0, 0, []
