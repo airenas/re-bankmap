@@ -25,11 +25,18 @@ def get_version():
         return "???"
 
 
+def force_tune():
+    v = os.getenv('FORCE_TUNE', default="").lower()
+    return v == "1" or v == "true"
+
+
 @app.function_name(name="BlobTrigger")
 @app.blob_trigger(arg_name="zipfile",
                   path="data-copy/{name}.zip",
                   connection="STORAGE_CONNECTION_STRING")
 def test_function(zipfile: func.InputStream):
+    app_ver = get_version()
+    logger.info("version {}".format(app_ver))
     logger.info(f"Python blob trigger function processed blob {zipfile.name}")
     try:
         (container, file) = zipfile.name.split("/", 1)
@@ -38,7 +45,7 @@ def test_function(zipfile: func.InputStream):
         company = os.path.splitext(file)[0]
         logger.info(f"Company: {company}")
         cfg = load_config_or_default(company)
-        if cfg.next_train and cfg.next_train > datetime.now():
+        if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
             logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
             return
         zip_bytes = load_data(company)
