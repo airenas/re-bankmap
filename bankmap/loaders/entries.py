@@ -17,17 +17,20 @@ def load_docs_map(file_name, _type: str):
     res = {}
     data = df.to_dict('records')
     for d in data:
-        id = e_str(d['Statement_External_Document_No_'])
-        st_date = e_date(d[_type + '_Posting_Date'])
-        doc_date = e_date(d['Applied_' + _type + '_Document_Date'])
-        cv = e_str(d['Vend_Vendor_No_' if _type == "Vend" else 'Cust_Customer_No_'])
-        if st_date < doc_date:
-            skip += 1
-            continue
-        iid = e_str(d['Applied_' + _type + '_Document_No_'])
-        ra = res.get(id, (set(), cv))
-        ra[0].add(iid)
-        res[id] = ra
+        try:
+            id = e_str(d['Statement_External_Document_No_'])
+            st_date = e_date(d[_type + '_Posting_Date'])
+            doc_date = e_date(d['Applied_' + _type + '_Document_Date'])
+            cv = e_str(d['Vend_Vendor_No_' if _type == "Vend" else 'Cust_Customer_No_'])
+            if st_date < doc_date:
+                skip += 1
+                continue
+            iid = e_str(d['Applied_' + _type + '_Document_No_'])
+            ra = res.get(id, (set(), cv))
+            ra[0].add(iid)
+            res[id] = ra
+        except BaseException as err:
+            raise RuntimeError("wrong data {}: {}".format(d, str(err)))
     logger.debug("skipped future docs: {}".format(skip))
     return res
 
