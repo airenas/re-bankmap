@@ -150,3 +150,6 @@ deploy/az_f/bankmap-fake/.azure
 egs/cmp_matrix/Makefile.options
 egs/test_prod/Makefile.options
 deploy/az_f/bankmap-tune/.vscode/extensions.json
+deploy/az_f/bankmap-tune/.version
+deploy/**/Makefile.options.**
+deploy/az_f/bankmap-tune/requirements.txt

@@ -24,7 +24,7 @@ participant "DocuBank" as docu
 participant "External\nBank System" as bank
 participant "Azure Function" as predictor
 participant "Azure Storage" as storage
-participant "Azure Function ??? Train" as trainer
+participant "Azure Tune Function" as trainer
 
 == 1. Docubank uses function ==
 
@@ -42,8 +42,11 @@ loop once/several times a day
     activate storage
     storage --> predictor
     deactivate storage
-    alt no params in storage or company params older than 1 month
-        predictor -> trainer: notify retrain needed(zip, companyID)
+    alt no params in storage or company params older than 7 days
+        predictor -> storage: save(zip)
+    end
+    alt no params in storage
+        predictor -> predictor: use default params
     end
     predictor -> predictor: predict
     predictor --> docu: result(recommended mappings)
@@ -51,13 +54,22 @@ loop once/several times a day
     deactivate docu
 end
 
-== 2. Learning company's params ==
+== 2. Tuning company's reject limit params ==
 loop for each msg
 
-    predictor -> trainer: got notifyMsg
+    storage -> trainer: listen blob storage update events
     activate trainer
-    trainer -> trainer: train params
-    trainer -> trainer: validate new params
+    trainer -> storage: get params(companyID)
+    activate storage
+    storage --> trainer
+    deactivate storage
+    
+    trainer -> storage: get zip(companyID)
+    activate storage
+    storage --> trainer
+    deactivate storage
+    trainer -> trainer: unzip
+    trainer -> trainer: tune limits
     trainer -> storage: save new params(params, companyID)
     activate storage
     storage --> trainer
