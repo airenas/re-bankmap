@@ -29,7 +29,7 @@ def prepare_cust_apps(df, l_map):
 def load_customer_apps(apps_file_name, l_entries):
     logger.info("loading apps {}".format(apps_file_name))
     ledgers = pd.read_csv(apps_file_name, sep=',')
-    l_map = {l.doc_no: l.id for l in l_entries}
+    l_map = {e.doc_no: e.id for e in l_entries}
     return prepare_cust_apps(ledgers, l_map)
 
 
@@ -56,5 +56,5 @@ def prepare_vend_apps(df, l_map):
 def load_vendor_apps(apps_file_name, l_entries):
     logger.info("loading apps {}".format(apps_file_name))
     ledgers = pd.read_csv(apps_file_name, sep=',')
-    l_map = {l.doc_no: l.id for l in l_entries}
+    l_map = {e.doc_no: e.id for e in l_entries}
     return prepare_vend_apps(ledgers, l_map)

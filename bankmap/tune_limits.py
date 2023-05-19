@@ -128,7 +128,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     res_info["tuning_on"] = len(test)
     cmps = []
     ctx = Ctx()
-    pi, pr, sims = 0, 0, []
+    pi, pr = 0, 0
     for i, entry in enumerate(test):
         be, bv = get_best_account(ctx, arena, entry, historical_entries)
         cmp = Cmp(_type=be.type.to_s(), value=bv, correct=entry.rec_type == be.type and entry.rec_id == be.id)

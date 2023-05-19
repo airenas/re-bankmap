@@ -8,6 +8,7 @@ split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 
 split_regex_no_dash = re.compile(" |,|;|:|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
 
+
 def freq(t):
     if t in ["uab", "ab"]:
         return 2
@@ -49,22 +50,24 @@ def num_sim(val):
     return 1 - math.tanh(abs(val / 10))
 
 
+def is_num(x):
+    return '0' <= x <= '9'
+
+
+def deletion_cost(char, pos, length):
+    if pos < 3 and not is_num(char):
+        return 0.3
+    if pos < 4 and char == '0':
+        return 0.3
+    if pos == (length - 1) and is_num(char):
+        return 0.3
+    if pos == (length - 2) and char == '-':
+        return 0.3
+    return 1.0
+
+
 def sf_dist(sf1, sf2):
-    def isnum(x):
-        return '0' <= x <= '9'
-
     a = strsimpy.WeightedLevenshtein()
-
-    def deletion_cost(char, pos, l):
-        if pos < 3 and not isnum(char):
-            return 0.3
-        if pos < 4 and char == '0':
-            return 0.3
-        if pos == (l - 1) and isnum(char):
-            return 0.3
-        if pos == (l - 2) and char == '-':
-            return 0.3
-        return 1.0
 
     a.deletion_cost_fn = deletion_cost
 
@@ -76,7 +79,7 @@ def sf_dist(sf1, sf2):
     a.insertion_cost_fn = insertion_cost
 
     def subs_cost(ch1, ch2, pos):
-        if pos > 3 and isnum(ch1) and isnum(ch2):
+        if pos > 3 and is_num(ch1) and is_num(ch2):
             return .4
         return 1.0
 

@@ -317,7 +317,6 @@ class Arena:
                         if self.doc_filter:
                             if self.doc_filter == app.doc_no:
                                 logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))
-                                changed = True
                         elif self.cust_filter:
                             if self.cust_filter == app.cv_no:
                                 logger.debug("Not found {}: {}".format(app.doc_no, app.to_str()))

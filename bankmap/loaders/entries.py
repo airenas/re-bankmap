@@ -47,7 +47,7 @@ def load_bank_recognitions_map(file_name):
     data = df.to_dict('records')
     for d in data:
         no = e_str(d['Statement_External_Document_No_'])
-        if not no in res:
+        if no not in res:
             res[no] = Recognition(_type=e_str(d['Bal__Account_Type']), no=e_str(d['Bal__Account_No_']))
     return res
 
@@ -99,12 +99,12 @@ def load_entries(file_name, ba_map, cv_map):
 
         if e_str(d['Operation_Date']) != '0':
             res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
-                    e_float(d['N_Amt']), d['Operation_Date'], iban(d),
-                    d['N_ND_TD_Refs_EndToEndId'],
-                    rec_no,
-                    e_currency(d['Acct_Ccy']),
-                    docs[0],
-                    d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
+                        e_float(d['N_Amt']), d['Operation_Date'], iban(d),
+                        d['N_ND_TD_Refs_EndToEndId'],
+                        rec_no,
+                        e_currency(d['Acct_Ccy']),
+                        docs[0],
+                        d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
         else:
             logger.warn("no operation date: {}".format(d))
     # stable sort by date
