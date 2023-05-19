@@ -7,14 +7,17 @@ from bankmap.logger import logger
 
 def load_config_or_default(company):
     try:
-        res = load_config(company)
+        res = None
+        if company:
+            res = load_config(company)
         if res:
             logger.info("config loaded {}".format(res))
             res.company = company  # make sure we have company
             return res
     except BaseException as err:
         logger.error("Can't load config for {}, {}".format(company, str(err)))
-        logger.warn("using default config")
+
+    logger.warn("using default config")
     return PredictionCfg.default(company)
 
 
