@@ -55,22 +55,22 @@ def main(argv):
     logger.debug("\n{}".format(apps_t.head(n=10)))
     apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
 
-    doc_nrs = set(l.doc_no for l in l_entries)
+    doc_nrs = set(e.doc_no for e in l_entries)
 
     arena = Arena(l_entries, apps)
 
     logger.info(
-        "GL, BA count: {}".format(len([l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)])))
+        "GL, BA count: {}".format(len([e for e in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)])))
     logger.info(
-        "Vend SF count: {}".format(len([l for l in filter(lambda x: x.type in [LType.VEND], l_entries)])))
+        "Vend SF count: {}".format(len([e for e in filter(lambda x: x.type in [LType.VEND], l_entries)])))
     logger.info(
         "Vend SF closed count: {}".format(
-            len([l for l in filter(lambda x: x.type in [LType.VEND] and x.closed_date, l_entries)])))
+            len([e for e in filter(lambda x: x.type in [LType.VEND] and x.closed_date, l_entries)])))
     logger.info(
-        "Cust SF count: {}".format(len([l for l in filter(lambda x: x.type in [LType.CUST], l_entries)])))
+        "Cust SF count: {}".format(len([e for e in filter(lambda x: x.type in [LType.CUST], l_entries)])))
     logger.info(
         "Cust SF closed count: {}".format(
-            len([l for l in filter(lambda x: x.type in [LType.CUST] and x.closed_date, l_entries)])))
+            len([e for e in filter(lambda x: x.type in [LType.CUST] and x.closed_date, l_entries)])))
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
 

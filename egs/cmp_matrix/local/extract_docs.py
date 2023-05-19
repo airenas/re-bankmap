@@ -6,6 +6,7 @@ import pandas as pd
 from bankmap.loaders.entries import load_docs_map
 from bankmap.logger import logger
 
+
 def main(argv):
     parser = argparse.ArgumentParser(description="Extracts external doc -> internal docs data",
                                      epilog="E.g. " + sys.argv[0] + "",

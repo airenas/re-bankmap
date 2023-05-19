@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from bankmap.data import Entry, LEntry, App, Arena, Ctx
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_imp, e_key, prepare_history_map
+from bankmap.similarity.similarities import similarity, sim_imp, prepare_history_map
 
 
 def calc_sims(ctx, arena, row, entry_dict):
@@ -167,13 +167,14 @@ def main(argv):
             yv_pred = model_v.predict(Xv, pa)
             vs = accuracy_score(yv, yv_pred)
             logger.info(
-                "found {} - ({} of {} bad), val({} - ({} of {}))".
-                    format(bv,
-                           len([i for i, x in enumerate(y[args.skip:]) if x != y_pred[args.skip:][i]]),
-                           len(y_pred[args.skip:]),
-                           vs,
-                           len([i for i, x in enumerate(yv) if x != yv_pred[i]]),
-                           len(yv)))
+                "found {} - ({} of {} bad), val({} - ({} of {}))".format(bv,
+                                                                         len([i for i, x in enumerate(y[args.skip:]) if
+                                                                              x != y_pred[args.skip:][i]]),
+                                                                         len(y_pred[args.skip:]),
+                                                                         vs,
+                                                                         len([i for i, x in enumerate(yv) if
+                                                                              x != yv_pred[i]]),
+                                                                         len(yv)))
         return 1 - score
 
     best = fmin(fn=estimate,

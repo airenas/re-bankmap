@@ -1,11 +1,10 @@
 import argparse
-import csv
 import sys
 
 import pandas as pd
 
-from src.utils.logger import logger
-from matplotlib import pyplot as plt
+from bankmap.logger import logger
+
 
 def load_data(f):
     logger.info("loading data {}".format(f))

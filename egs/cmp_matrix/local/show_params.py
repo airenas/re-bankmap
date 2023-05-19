@@ -1,8 +1,8 @@
 import argparse
 import sys
 
-from egs.cmp_matrix.local.similarities import param_names, sim_imp
-from src.utils.logger import logger
+from bankmap.logger import logger
+from bankmap.similarity.similarities import param_names, sim_imp
 
 
 def main(argv):
@@ -10,6 +10,7 @@ def main(argv):
                                      epilog="E.g. " + sys.argv[0] + "",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     args = parser.parse_args(args=argv)
+    _ = args
 
     logger.info("Starting")
 

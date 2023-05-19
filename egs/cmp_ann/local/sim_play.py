@@ -6,7 +6,7 @@ import pandas as pd
 from bankmap.data import Entry, LEntry, LType, App, Arena, Ctx
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
-from bankmap.similarity.similarities import sim_val, similarity, param_names, sim_imp, prepare_history_map
+from bankmap.similarity.similarities import similarity, param_names, sim_imp, prepare_history_map
 import tensorflow as tf
 
 

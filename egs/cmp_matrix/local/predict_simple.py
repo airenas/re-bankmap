@@ -5,8 +5,9 @@ from datetime import timedelta
 import pandas as pd
 from tqdm import tqdm
 
-from egs.cmp_matrix.local.similarities import similarity, Entry, LEntry, sim_val, e_key, LType
-from src.utils.logger import logger
+from bankmap.data import Entry, LEntry, LType
+from bankmap.logger import logger
+from bankmap.similarity.similarities import e_key, sim_val, similarity
 
 
 def get_best_account(gl_entries, ledgers, row, from_i, entry_dict):
@@ -60,8 +61,8 @@ def main(argv):
     logger.info("\n{}".format(ledgers.head(n=10)))
     l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
     l_entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
-    gl_entries = [l for l in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
-    doc_entries = [l for l in filter(lambda x: x.type in [LType.VEND, LType.CUST], l_entries)]
+    gl_entries = [e for e in filter(lambda x: x.type in [LType.GL, LType.BA], l_entries)]
+    doc_entries = [e for e in filter(lambda x: x.type in [LType.VEND, LType.CUST], l_entries)]
 
     entry_dic = {}
     for e in entries:

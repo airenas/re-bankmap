@@ -5,10 +5,10 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.python.keras.callbacks import ModelCheckpoint
 
+from bankmap.logger import logger
 from egs.cmp_matrix.local.inspect_data import load_data
-from src.utils.logger import logger
 
 
 def main(argv):
@@ -58,7 +58,7 @@ def main(argv):
 
     out = [p for p in params]
     out.append(yp - 1)
-    df_out = data_df.iloc[:,out]
+    df_out = data_df.iloc[:, out]
     df_out.to_csv('out_train.csv')
     inp_l = len(params)  # yp - 1
     input = tf.keras.layers.Input(shape=inp_l)
@@ -85,7 +85,7 @@ def main(argv):
                                  verbose=1,
                                  save_best_only=True,
                                  mode='min')
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
+    # es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
 
     model.fit(train_ds, validation_data=val_ds, epochs=150, verbose=1, callbacks=[checkpoint])
     model.summary(150)
