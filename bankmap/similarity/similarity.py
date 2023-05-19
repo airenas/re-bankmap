@@ -4,9 +4,9 @@ import re
 import jellyfish
 import strsimpy
 
-split_regex = re.compile(" |,|;|:|-|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
+split_regex = re.compile(" |,|;|:|-|\"|'|\\(|\\)|{|}|\\.|\\?|/|!|$|%|&|@|~|\\+")
 
-split_regex_no_dash = re.compile(" |,|;|:|\"|'|\(|\)|{|}|\.|\?|/|!|$|%|&|@|~|\+")
+split_regex_no_dash = re.compile(" |,|;|:|\"|'|\\(|\\)|{|}|\\.|\\?|/|!|$|%|&|@|~|\\+")
 
 
 def freq(t):
@@ -34,9 +34,10 @@ def name_sim(a, b):
     b_uniq = sequence_uniqueness(b_tokens)
     if a_uniq == 0 or b_uniq == 0:
         return 0
-    return 0.7 * sequence_uniqueness(set(a_tokens).intersection(b_tokens)) / (a_uniq * b_uniq) ** 0.5 \
-           + 0.2 * jellyfish.jaro_winkler_similarity(al, bl) \
-           + 0.1 * jellyfish.jaro_winkler_similarity(a, b)
+    return \
+        0.7 * sequence_uniqueness(set(a_tokens).intersection(b_tokens)) / (a_uniq * b_uniq) ** 0.5 + \
+        0.2 * jellyfish.jaro_winkler_similarity(al, bl) + \
+        0.1 * jellyfish.jaro_winkler_similarity(a, b)
 
 
 def date_sim(due_date, date):

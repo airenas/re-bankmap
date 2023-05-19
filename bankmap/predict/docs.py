@@ -5,10 +5,10 @@ from bankmap.logger import logger
 from bankmap.similarity.similarities import payment_match
 from bankmap.similarity.similarity import sf_sim_out
 
-
+# flake8: noqa: C901
 def find_best_docs(sfs: List[LEntry], row: Entry, _id: str, _type: LType):
-    def amount(a: LEntry):
-        return abs(a.amount)
+    def amount(_a: LEntry):
+        return abs(_a.amount)
 
     available = [x for x in sfs if
                  x.id == _id and x.type == _type and payment_match(x, row) and amount(x) > 0.01]
@@ -25,14 +25,14 @@ def find_best_docs(sfs: List[LEntry], row: Entry, _id: str, _type: LType):
             return av <= (remaining_amount + 1)
         return av <= (remaining_amount + 0.01)
 
-    def add(a: LEntry, why: str, sf_in_msg):
+    def add(_a: LEntry, why: str, _sf_in_msg):
         nonlocal remaining_amount, msg
-        res.append({"reason": why, "entry": a, "sum": min(remaining_amount, amount(a))})
-        remaining_amount -= amount(a)
-        logger.debug("rem: %.2f - %s:%s" % (remaining_amount, a.doc_no, a.ext_doc))
-        available.remove(a)
-        if sf_in_msg:
-            msg = msg.replace(sf_in_msg.casefold(), " ", 1)
+        res.append({"reason": why, "entry": _a, "sum": min(remaining_amount, amount(_a))})
+        remaining_amount -= amount(_a)
+        logger.debug("rem: %.2f - %s:%s" % (remaining_amount, _a.doc_no, _a.ext_doc))
+        available.remove(_a)
+        if _sf_in_msg:
+            msg = msg.replace(_sf_in_msg.casefold(), " ", 1)
 
     if len(available) == 1 and amount_ok(available[0].amount):
         add(available[0], "one && amount", None)

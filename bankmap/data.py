@@ -266,6 +266,7 @@ class Arena:
         self.doc_filter = ""
         self.drop_not_found = dict()
 
+    # flake8: noqa: C901
     def move(self, dt):
         if self.date < dt:
             while self.date < dt:
