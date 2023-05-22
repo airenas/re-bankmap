@@ -50,7 +50,27 @@ def make_limits(cmps, bars):
     return res
 
 
-def tune_limits(data_dir, cfg: PredictionCfg):
+def tune_limits(cmps, cfg: PredictionCfg):
+    limits = make_limits(cmps, [1, 0.995, 0.99, 0.95, 0.9, 0.5])
+    return limits
+
+
+def get_entries_count(data_dir):
+    logger.info("data dir {}".format(data_dir))
+    c_docs_map = load_docs_map(os.path.join(data_dir, "Customer_Recognitions.csv"), "Cust")
+    v_docs_map = load_docs_map(os.path.join(data_dir, "Vendor_Recognitions.csv"), "Vend")
+    cv_docs_map = c_docs_map
+    cv_docs_map.update(v_docs_map)
+
+    ba_map = load_bank_recognitions_map(os.path.join(data_dir, "Bank_Account_Recognitions.csv"))
+    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, cv_docs_map)
+    entries_d = entries_df.to_dict('records')
+    entries = [Entry(e) for e in entries_d]
+    entries = [e for e in entries if e.rec_type != LType.UNSET]
+    return len(entries)
+
+
+def predict_entries(data_dir, cfg: PredictionCfg, _from, _to):
     metrics = {}
 
     def log_elapsed(_start, what):
@@ -71,7 +91,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     res_info["Bank_Account_Recognitions"] = len(ba_map)
     start_t = log_elapsed(start, "load_recognitions")
 
-    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, c_docs_map)
+    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, cv_docs_map)
     res_info["Bank_Statement_Entries"] = len(entries_df)
     start_t = log_elapsed(start_t, "load_entries")
 
@@ -114,7 +134,11 @@ def tune_limits(data_dir, cfg: PredictionCfg):
            [App(r) for r in vendor_apps_df.to_dict('records')]
 
     entries = [e for e in entries if e.rec_type != LType.UNSET]
-    entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
+    # stable sort entries
+    se = [v for v in enumerate(entries)]
+    se.sort(key=lambda e: (e[1].date.timestamp() if e[1].date else 1, e[0]))
+    entries = [e[1] for e in se]
+
     log_elapsed(start_t, "prepare_entries")
     historical_entries = prepare_history_map(entries)
     log_elapsed(start_t, "prepare_entries")
@@ -123,9 +147,11 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     start_t = log_elapsed(start, "prepare_total")
 
     logger.warning("predicting...")
-    test = entries[-min(len(entries), cfg.train_last):]
+    if _to > len(entries):
+        raise RuntimeError("wanted to limit is to big: {}, max {}".format(_to, len(entries)))
+    test = entries[_from: _to]
     logger.info("predicting last {} entries".format(len(test)))
-    res_info["tuning_on"] = len(test)
+    res_info["predicting"] = len(test)
     cmps = []
     ctx = Ctx()
     pi, pr = 0, 0
@@ -141,9 +167,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
         metrics["predicting_avg_sec"] = (time.time() - start_t) / pi
         res_info["recommended_percent"] = pr / pi * 100
 
-    limits = make_limits(cmps, [1, 0.995, 0.99, 0.95, 0.9, 0.5])
-
-    return limits, {"metrics": metrics, "sizes": res_info}
+    return cmps, {"metrics": metrics, "sizes": res_info}
 
 
 if __name__ == "__main__":

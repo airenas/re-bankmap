@@ -4,4 +4,5 @@
 
 azure-functions==1.13.3
 azure-storage-blob==12.16.0
+azure-functions-durable==1.2.3
 git+https://github.com/airenas/re-bankmap.git@v${version}#egg=bankmap

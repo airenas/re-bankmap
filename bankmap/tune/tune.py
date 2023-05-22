@@ -4,6 +4,17 @@ class Cmp:
         self.value = value
         self.correct = correct
 
+    @classmethod
+    def from_dic(cls, param):
+        return Cmp(_type=param.get("type"), value=param.get("value"), correct=param.get("correct"))
+
+    def to_dic(self):
+        return {
+            "type": self.type,
+            "value": self.value,
+            "correct": self.correct
+        }
+
 
 def calc_limits(cmps, bars):
     res = {}
