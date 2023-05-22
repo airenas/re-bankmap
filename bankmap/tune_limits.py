@@ -148,7 +148,7 @@ def predict_entries(data_dir, cfg: PredictionCfg, _from, _to):
 
     logger.warning("predicting...")
     if _to > len(entries):
-        raise RuntimeError("wanted to limit is to big: {}, max {}".format(_to, len(entries)))
+        raise RuntimeError("wanted the last index is too large: {}, max {}".format(_to, len(entries)))
     test = entries[_from: _to]
     logger.info("predicting last {} entries".format(len(test)))
     res_info["predicting"] = len(test)

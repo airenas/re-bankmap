@@ -10,7 +10,7 @@ from bankmap.az.zip import load_data, save_extract_zip
 from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
 from bankmap.tune.tune import Cmp
-from bankmap.tune_limits import get_entries_count, predict_entries
+from bankmap.tune_limits import get_entries_count, predict_entries, tune_limits
 
 
 def get_version():
@@ -36,7 +36,7 @@ app = df.DFApp()
                   connection="STORAGE_CONNECTION_STRING")
 @app.durable_client_input(client_name="client")
 async def tune_function(zipfile: func.InputStream, client):
-    instance_id = await client.start_new("tune_limits", client_input={"blob": zipfile.name})
+    instance_id = await client.start_new("tune_limits_func", client_input={"blob": zipfile.name})
     logger.info("started {}".format(instance_id))
 
 
@@ -44,14 +44,14 @@ async def tune_function(zipfile: func.InputStream, client):
 @app.durable_client_input(client_name="client")
 async def http_start(req: func.HttpRequest, client):
     blob_name = req.route_params.get('blobName')
-    instance_id = await client.start_new("tune_limits", client_input={"blob": "data-copy/" + blob_name})
+    instance_id = await client.start_new("tune_limits_func", client_input={"blob": "data-copy/" + blob_name})
     response = client.create_check_status_response(req, instance_id)
     logger.info("started {}".format(instance_id))
     return response
 
 
 @app.orchestration_trigger(context_name="context")
-def tune_limits(context: df.DurableOrchestrationContext):
+def tune_limits_func(context: df.DurableOrchestrationContext):
     in_data = context.get_input()
     logger.info("tune_limits {}".format(in_data))
     zip_file = in_data.get("blob")
@@ -77,14 +77,14 @@ def tune_limits(context: df.DurableOrchestrationContext):
         logger.info("get statement count")
         count = get_entries_count(data_dir)
         logger.info(f"found {count} entries")
-        i, step, max_train = 0, 200, min(cfg.train_last, count)
+        i, step, max_train = count, 200, min(cfg.train_last, count)
         logger.info(f"will predict last {max_train} entries")
 
         tasks = []
-        while i < max_train:
-            train_to = min(i + step, max_train)
-            tasks.append(context.call_activity("tune", {"blob": zip_file, "from": i, "to": train_to}))
-            i = train_to
+        while i >= 0 and count - i >= max_train:
+            train_from = max(i - step, 0)
+            tasks.append(context.call_activity("tune", {"blob": zip_file, "from": train_from, "to": i}))
+            i = train_from
         results = yield context.task_all(tasks)
         res = [Cmp.from_dic(item) for one_res in results for item in one_res]
         logger.info("got {} predictions".format(len(res)))
@@ -127,7 +127,7 @@ def tune(params):
         data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
         logger.info("saved files to {}".format(data_dir))
 
-        logger.info("predicting")
+        logger.info(f"predicting [{predict_from}:{predict_to})")
         res, info = predict_entries(data_dir, cfg, predict_from, predict_to)
         logger.info(json.dumps(info, indent=2))
         logger.info("done predicting {}".format(len(res)))
