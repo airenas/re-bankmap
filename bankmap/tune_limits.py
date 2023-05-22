@@ -71,7 +71,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     res_info["Bank_Account_Recognitions"] = len(ba_map)
     start_t = log_elapsed(start, "load_recognitions")
 
-    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, c_docs_map)
+    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, cv_docs_map)
     res_info["Bank_Statement_Entries"] = len(entries_df)
     start_t = log_elapsed(start_t, "load_entries")
 
