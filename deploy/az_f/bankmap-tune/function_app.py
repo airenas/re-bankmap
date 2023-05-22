@@ -76,12 +76,15 @@ def tune_limits_func(context: df.DurableOrchestrationContext):
 
         logger.info("get statement count")
         count = get_entries_count(data_dir)
+        if count == 0:
+            logger.exception("no bank statement entries found")
+            return
         logger.info(f"found {count} entries")
         i, step, max_train = count, 200, min(cfg.train_last, count)
         logger.info(f"will predict last {max_train} entries")
 
         tasks = []
-        while i >= 0 and count - i >= max_train:
+        while i >= 0 and (count - i) < max_train:
             train_from = max(i - step, 0)
             tasks.append(context.call_activity("tune", {"blob": zip_file, "from": train_from, "to": i}))
             i = train_from

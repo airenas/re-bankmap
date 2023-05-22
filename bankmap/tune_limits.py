@@ -171,7 +171,9 @@ def predict_entries(data_dir, cfg: PredictionCfg, _from, _to):
 
 
 if __name__ == "__main__":
-    res = tune_limits(sys.argv[1], cfg=PredictionCfg(limit=1.0))
-    print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[0], ensure_ascii=False, indent=2))
+    count = get_entries_count(sys.argv[1])
+    cmps, metrics = predict_entries(sys.argv[1], cfg=PredictionCfg(limit=1.0), _from=max(0, count - 2000), _to=count)
+    res = tune_limits(cmps, cfg=PredictionCfg(limit=1.0))
+    print(json.dumps(metrics.get("metrics", {}), ensure_ascii=False, indent=2))
+    print(json.dumps(metrics.get("sizes", {}), ensure_ascii=False, indent=2))
+    print(json.dumps(res, ensure_ascii=False, indent=2))
