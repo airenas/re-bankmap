@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
+from http import HTTPStatus
 
 import azure.functions as func
 
@@ -10,6 +11,7 @@ from bankmap.logger import logger
 from bankmap.tune_limits import tune_limits
 
 app = func.FunctionApp()
+container = "data-copy"
 
 
 def json_resp(value, code: int):
@@ -31,41 +33,62 @@ def force_tune():
     return v == "1" or v == "true"
 
 
-@app.function_name(name="BlobTrigger")
-@app.blob_trigger(arg_name="zipfile",
-                  path="data-copy/{name}.zip",
-                  connection="STORAGE_CONNECTION_STRING")
-def test_function(zipfile: func.InputStream):
-    app_ver = get_version()
-    logger.info("version {}".format(app_ver))
-    logger.info(f"Python blob trigger function processed blob {zipfile.name}")
+@app.function_name(name="HTTPTrigger")
+@app.route(route="tune/{blobName}")
+def http_start(req: func.HttpRequest):
+    blob_name = req.route_params.get('blobName')
+    logger.info(f"Python blob trigger function processed blob {blob_name}")
     try:
-        (container, file) = zipfile.name.split("/", 1)
-        logger.info(f"Container: {container}")
-        logger.info(f"Name: {file}")
-        company = os.path.splitext(file)[0]
-        logger.info(f"Company: {company}")
-        cfg = load_config_or_default(company)
-        if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
-            logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
-            return
-        zip_bytes = load_data(company)
-        data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
-        logger.info("saved files to {}".format(data_dir))
-
-        logger.info("start tuning limits")
-        limits, info = tune_limits(data_dir, cfg)
-
-        info["app_version"] = app_ver
-        logger.info(json.dumps(info, indent=2))
-        logger.info("done tuning")
-
-        cfg.limits = limits
-        next_days = 7
-        if info.get("sizes", {}).get("tuning_on", 0) < 500:
-            next_days = 1
-        logger.info("next check after {} days".format(next_days))
-        cfg.next_train = datetime.now() + timedelta(days=next_days)
-        save_config(cfg, company)
+        process(container + "/" + blob_name)
+        return func.HttpResponse(body=json.dumps("done", ensure_ascii=False), status_code=int(HTTPStatus.OK),
+                                 mimetype="application/json")
     except BaseException as err:
         logger.exception(err)
+        return func.HttpResponse(body=json.dumps(str(err), ensure_ascii=False),
+                                 status_code=int(HTTPStatus.INTERNAL_SERVER_ERROROK),
+                                 mimetype="application/json")
+
+
+@app.function_name(name="BlobTrigger")
+@app.blob_trigger(arg_name="zipfile",
+                  path=container + "/{name}.zip",
+                  connection="STORAGE_CONNECTION_STRING")
+def test_function(zipfile: func.InputStream):
+    logger.info(f"Python blob trigger function processed blob {zipfile.name}")
+    try:
+        process(zipfile.name)
+    except BaseException as err:
+        logger.exception(err)
+
+
+def process(zipfile: str):
+    app_ver = get_version()
+    logger.info("version {}".format(app_ver))
+
+    (container, file) = zipfile.split("/", 1)
+    logger.info(f"Container: {container}")
+    logger.info(f"Name: {file}")
+    company = os.path.splitext(file)[0]
+    logger.info(f"Company: {company}")
+    cfg = load_config_or_default(company)
+    if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
+        logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
+        return
+    zip_bytes = load_data(company)
+    data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
+    logger.info("saved files to {}".format(data_dir))
+
+    logger.info("start tuning limits")
+    limits, info = tune_limits(data_dir, cfg)
+
+    info["app_version"] = app_ver
+    logger.info(json.dumps(info, indent=2))
+    logger.info("done tuning")
+
+    cfg.limits = limits
+    next_days = 7
+    if info.get("sizes", {}).get("tuning_on", 0) < 500:
+        next_days = 1
+    logger.info("next check after {} days".format(next_days))
+    cfg.next_train = datetime.now() + timedelta(days=next_days)
+    save_config(cfg, company)
