@@ -52,6 +52,8 @@ async def http_start(req: func.HttpRequest, client):
 
 @app.orchestration_trigger(context_name="context")
 def tune_limits_func(context: df.DurableOrchestrationContext):
+    app_ver = get_version()
+    logger.info("tune_limits version {}".format(app_ver))
     in_data = context.get_input()
     logger.info("tune_limits {}".format(in_data))
     zip_file = in_data.get("blob")
@@ -106,6 +108,8 @@ def tune_limits_func(context: df.DurableOrchestrationContext):
 
 @app.activity_trigger(input_name="params")
 def tune(params):
+    app_ver = get_version()
+    logger.info("tune version {}".format(app_ver))
     logger.info("tune {}".format(params))
     zip_file = params.get("blob")
     if not zip_file:
