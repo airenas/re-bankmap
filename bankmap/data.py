@@ -193,8 +193,12 @@ class LEntry:
             self.iban = e_str(row['IBAN'])
             self.ext_doc = e_str(row['ExtDoc'])
             self.doc_no = e_str(row['Document_No'])
-            self.due_date = to_date(row['Due_Date'])
             self.doc_date = to_date(row['Document_Date'])
+            try:
+                self.due_date = to_date(row['Due_Date'])
+            except BaseException as err:
+                logger.warn("no due date: err: {}".format(err))
+                self.due_date = self.doc_date
             self.amount = e_float(row['Amount'])
             self.currency = row['Currency']
             self.doc_type = DocType.from_s(e_str(row['Document_Type']))
