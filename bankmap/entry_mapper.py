@@ -211,9 +211,14 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 if __name__ == "__main__":
-    ibans = get_ibans(os.path.join(sys.argv[1], "Bank_Statement_Lines.csv"))
-    print("IBANs={}".format(ibans))
-    res = do_mapping(sys.argv[1], cfg=PredictionCfg(limit=1.0))
+    try:
+        with open(os.path.join(sys.argv[1], "cfg.json"), "r") as f:
+            dic = json.load(f)
+            cfg = PredictionCfg.from_dict(dic)
+    except BaseException as err:
+        _ = err
+        cfg = PredictionCfg()
+    res = do_mapping(sys.argv[1], cfg=cfg)
     print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
     print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
     if os.getenv("LOG_LEVEL") == "debug":

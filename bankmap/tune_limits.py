@@ -147,7 +147,12 @@ def tune_limits(data_dir, cfg: PredictionCfg):
 
 
 if __name__ == "__main__":
-    res = tune_limits(sys.argv[1], cfg=PredictionCfg(limit=1.0))
+    cfg=PredictionCfg()
+    res = tune_limits(sys.argv[1], cfg=cfg)
     print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
     print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
     print(json.dumps(res[0], ensure_ascii=False, indent=2))
+    cfg.limits = res[0]
+    with open(os.path.join(sys.argv[1], "cfg.json"), "w") as f:
+        f.write(json.dumps(cfg.to_dic(), ensure_ascii=False, indent=2))
+
