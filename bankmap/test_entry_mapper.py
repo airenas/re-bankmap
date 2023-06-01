@@ -23,4 +23,5 @@ def test_get_confidence():
 
 def test_calc_confidence():
     assert calc_confidence(1.2, {"1": 1.6, "0.995": 1.5, "0.95": 1.0}) == 0.95
-    assert calc_confidence(1.0, {"1": 1.6, "0.995": 1.5, "0.95": 1.0}) == 0.5
+    assert calc_confidence(1.0, {"1": 1.6, "0.995": 1.5, "0.95": 1.01}) == 0.5
+    assert calc_confidence(1.5, {"1": 1.6, "0.995": 1.5, "0.95": 1.01}) == 0.995

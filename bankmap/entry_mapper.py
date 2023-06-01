@@ -38,7 +38,7 @@ def get_limits(limits, _type):
 def calc_confidence(v, limits):
     if limits and len(limits) > 0:
         for cs, cv in limits.items():
-            if v > cv:
+            if v >= cv:
                 return float(cs)
         return 0.5  # 0.5 if not found
     return None
