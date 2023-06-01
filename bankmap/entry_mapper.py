@@ -210,6 +210,12 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     return predict_res, {"metrics": metrics, "sizes": res_info}
 
 
+def make_stats(company, param):
+    return "stats:{}:{}:{}:{}:{}".format(company, param.get("Bank_Statement_Entries"),
+                                         param.get("Bank_Statement_Lines"),
+                                         param.get("recommended"), int(param.get("recommended_percent", 0)))
+
+
 if __name__ == "__main__":
     try:
         with open(os.path.join(sys.argv[1], "cfg.json"), "r") as f:
@@ -221,5 +227,6 @@ if __name__ == "__main__":
     res = do_mapping(sys.argv[1], cfg=cfg)
     print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
     print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
+    print(make_stats(cfg.company, res[1].get("sizes", {})))
     if os.getenv("LOG_LEVEL") == "debug":
         print(json.dumps(res[0], ensure_ascii=False, indent=2))

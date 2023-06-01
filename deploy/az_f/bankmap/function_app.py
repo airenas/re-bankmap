@@ -11,7 +11,7 @@ from azure.functions import HttpMethod
 from bankmap.az.config import load_config_or_default
 from bankmap.az.zip import copy_data, save_extract_zip
 from bankmap.cfg import PredictionCfg
-from bankmap.entry_mapper import do_mapping
+from bankmap.entry_mapper import do_mapping, make_stats
 from bankmap.logger import logger
 
 app = func.FunctionApp()
@@ -88,6 +88,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         info["app_version"] = app_ver
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
+        logger.info(make_stats(company, info.get("sizes", {})))
         res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)
     except BaseException as err:
