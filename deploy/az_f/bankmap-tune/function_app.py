@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
@@ -8,7 +8,7 @@ import azure.functions as func
 from bankmap.az.config import load_config_or_default, save_config
 from bankmap.az.zip import load_data, save_extract_zip
 from bankmap.logger import logger
-from bankmap.tune_limits import tune_limits
+from bankmap.tune_limits import tune_limits, make_tune_stats, add_tune_into_cfg
 
 app = func.FunctionApp()
 container = "data-copy"
@@ -70,7 +70,7 @@ def process(zipfile: str):
     logger.info(f"Name: {file}")
     company = os.path.splitext(file)[0]
     logger.info(f"Company: {company}")
-    cfg = load_config_or_default(company)
+    cfg, cfg_loaded = load_config_or_default(company)
     if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
         logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
         return
@@ -85,10 +85,7 @@ def process(zipfile: str):
     logger.info(json.dumps(info, indent=2))
     logger.info("done tuning")
 
-    cfg.limits = limits
-    next_days = 7
-    if info.get("sizes", {}).get("tuning_on", 0) < 500:
-        next_days = 1
-    logger.info("next check after {} days".format(next_days))
-    cfg.next_train = datetime.now() + timedelta(days=next_days)
+    logger.info(make_tune_stats(cfg, info.get("sizes", {})))
+    cfg = add_tune_into_cfg(cfg, limits, info.get("sizes", {}))
+    logger.info("next tune on {}".format(cfg.next_train))
     save_config(cfg, company)

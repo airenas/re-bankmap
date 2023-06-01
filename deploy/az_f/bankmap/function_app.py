@@ -88,7 +88,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         info["app_version"] = app_ver
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
-        logger.info(make_stats(company, info.get("sizes", {})))
+        logger.info(make_stats(cfg, info.get("sizes", {})))
         res = {"company": company, "mappings": mappings, "info": info}
         return json_resp(res, HTTPStatus.OK)
     except BaseException as err:

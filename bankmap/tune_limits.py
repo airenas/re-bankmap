@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timedelta
 
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, Ctx, LType, Arena, App
@@ -125,7 +126,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     logger.warning("predicting...")
     test = entries[-min(len(entries), cfg.train_last):]
     logger.info("predicting last {} entries".format(len(test)))
-    res_info["tuning_on"] = len(test)
+    res_info["tune_count"] = len(test)
     cmps = []
     ctx = Ctx()
     pi, pr = 0, 0
@@ -146,12 +147,32 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     return limits, {"metrics": metrics, "sizes": res_info}
 
 
+def make_tune_stats(cfg: PredictionCfg, param):
+    def ein(v):
+        return "" if v is None else v
+
+    return "stats:{}:{}:{}   cfg:{}:{}".format(ein(cfg.company), param.get("Bank_Statement_Entries"),
+                                               param.get("tune_count"), ein(cfg.tune_count), ein(cfg.tune_date))
+
+
+def add_tune_into_cfg(cfg: PredictionCfg, limits, info):
+    cfg.limits = limits
+    cfg.tune_count = info.get("tune_count", 0)
+    next_days = 7
+    if cfg.tune_count < 500:
+        next_days = 1
+    cfg.next_train = datetime.now() + timedelta(days=next_days)
+    cfg.tune_date = datetime.now()
+    return cfg
+
+
 if __name__ == "__main__":
     cfg = PredictionCfg()
-    res = tune_limits(sys.argv[1], cfg=cfg)
-    print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[0], ensure_ascii=False, indent=2))
-    cfg.limits = res[0]
+    limits, info = tune_limits(sys.argv[1], cfg=cfg)
+    print(json.dumps(info.get("metrics", {}), ensure_ascii=False, indent=2))
+    print(json.dumps(info.get("sizes", {}), ensure_ascii=False, indent=2))
+    print(json.dumps(limits, ensure_ascii=False, indent=2))
+    print(make_tune_stats(cfg, info.get("sizes", {})))
+    cfg = add_tune_into_cfg(cfg, limits, info.get("sizes", {}))
     with open(os.path.join(sys.argv[1], "cfg.json"), "w") as f:
         f.write(json.dumps(cfg.to_dic(), ensure_ascii=False, indent=2))

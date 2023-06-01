@@ -210,23 +210,30 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     return predict_res, {"metrics": metrics, "sizes": res_info}
 
 
-def make_stats(company, param):
-    return "stats:{}:{}:{}:{}:{}".format(company, param.get("Bank_Statement_Entries"),
-                                         param.get("Bank_Statement_Lines"),
-                                         param.get("recommended"), int(param.get("recommended_percent", 0)))
+def make_stats(cfg: PredictionCfg, param):
+    def ein(v):
+        return "" if v is None else v
+
+    return "stats:{}:{}:{}:{}:{}   cfg:{}:{}".format(ein(cfg.company),
+                                                     param.get("Bank_Statement_Entries"),
+                                                     param.get("Bank_Statement_Lines"),
+                                                     param.get("recommended"), int(param.get("recommended_percent", 0)),
+                                                     ein(cfg.tune_count), ein(cfg.tune_date))
 
 
 if __name__ == "__main__":
+    cfg_loaded = False
     try:
         with open(os.path.join(sys.argv[1], "cfg.json"), "r") as f:
             dic = json.load(f)
             cfg = PredictionCfg.from_dict(dic)
+        cfg_loaded = True
     except BaseException as err:
         _ = err
         cfg = PredictionCfg()
-    res = do_mapping(sys.argv[1], cfg=cfg)
-    print(json.dumps(res[1].get("metrics", {}), ensure_ascii=False, indent=2))
-    print(json.dumps(res[1].get("sizes", {}), ensure_ascii=False, indent=2))
-    print(make_stats(cfg.company, res[1].get("sizes", {})))
+    mappings, info = do_mapping(sys.argv[1], cfg=cfg)
+    print(json.dumps(info.get("metrics", {}), ensure_ascii=False, indent=2))
+    print(json.dumps(info.get("sizes", {}), ensure_ascii=False, indent=2))
+    print(make_stats(cfg, info.get("sizes", {})))
     if os.getenv("LOG_LEVEL") == "debug":
-        print(json.dumps(res[0], ensure_ascii=False, indent=2))
+        print(json.dumps(mappings, ensure_ascii=False, indent=2))

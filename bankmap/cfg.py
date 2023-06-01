@@ -14,13 +14,17 @@ def get_date(date):
 
 
 class PredictionCfg:
-    def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None):
+    def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None,
+                 tune_count=None,
+                 tune_date=None):
         self.limit = limit
         self.limits = limits
         self.tops = top_best
         self.company = company
         self.next_train: datetime.datetime = get_date(next_train)
         self.train_last = train_last
+        self.tune_count = tune_count
+        self.tune_date: datetime.datetime = get_date(tune_date)
 
     @classmethod
     def default(cls, company):
@@ -37,7 +41,10 @@ class PredictionCfg:
             "top_best": self.tops,
             "company": self.company,
             "train_last": self.train_last,
+            "tune_count": self.tune_count,
         }
         if self.next_train:
             res["next_train"] = self.next_train.isoformat()
+        if self.tune_date:
+            res["tune_date"] = self.tune_date.isoformat()
         return res
