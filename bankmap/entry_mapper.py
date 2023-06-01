@@ -12,6 +12,7 @@ from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_cus
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
+from bankmap.utils.utils import empty_if_n, str_date
 
 
 def to_dic_item(e: LEntry):
@@ -211,14 +212,11 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 def make_stats(cfg: PredictionCfg, param):
-    def ein(v):
-        return "" if v is None else v
-
-    return "stats:{}:{}:{}:{}:{}   cfg:{}:{}".format(ein(cfg.company),
+    return "stats:{}:{}:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company),
                                                      param.get("Bank_Statement_Entries"),
                                                      param.get("Bank_Statement_Lines"),
                                                      param.get("recommended"), int(param.get("recommended_percent", 0)),
-                                                     ein(cfg.tune_count), ein(cfg.tune_date))
+                                                     empty_if_n(cfg.tune_count), str_date(cfg.tune_date))
 
 
 if __name__ == "__main__":

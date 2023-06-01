@@ -12,6 +12,7 @@ from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_cus
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
 from bankmap.tune.tune import Cmp, calc_limits
+from bankmap.utils.utils import empty_if_n, str_date
 
 
 def get_best_account(ctx, arena, entry, entry_dict):
@@ -148,11 +149,9 @@ def tune_limits(data_dir, cfg: PredictionCfg):
 
 
 def make_tune_stats(cfg: PredictionCfg, param):
-    def ein(v):
-        return "" if v is None else v
-
-    return "stats:{}:{}:{}   cfg:{}:{}".format(ein(cfg.company), param.get("Bank_Statement_Entries"),
-                                               param.get("tune_count"), ein(cfg.tune_count), ein(cfg.tune_date))
+    return "stats:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company), param.get("Bank_Statement_Entries"),
+                                               param.get("tune_count"), empty_if_n(cfg.tune_count),
+                                               str_date(cfg.tune_date))
 
 
 def add_tune_into_cfg(cfg: PredictionCfg, limits, info):
