@@ -70,7 +70,7 @@ def process(zipfile: str):
     logger.info(f"Name: {file}")
     company = os.path.splitext(file)[0]
     logger.info(f"Company: {company}")
-    cfg, cfg_loaded = load_config_or_default(company)
+    cfg = load_config_or_default(company)
     if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
         logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
         return
