@@ -153,3 +153,4 @@ deploy/az_f/bankmap-tune/.vscode/extensions.json
 deploy/az_f/bankmap-tune/.version
 deploy/**/Makefile.options.**
 deploy/az_f/bankmap-tune/requirements.txt
+egs/logs/query_data.csv
