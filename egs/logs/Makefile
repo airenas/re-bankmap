@@ -4,6 +4,8 @@
 out_dir?=data
 log?=INFO
 python_cmd=PYTHONPATH=../../ LOG_LEVEL=$(log) python
+filter?=1=1
+hfilter?=1=1
 ############################################
 ${out_dir}:
 	mkdir -p $@	
@@ -13,25 +15,37 @@ ${out_dir}/log.parquet: $(logs) | ${out_dir}
 ############################################
 build: ${out_dir}/log.parquet
 ############################################
-explore/by-date: 
+explore/by-date: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
-	"SELECT max(date), company, count(*) as requests, max(entries) as entries, \
+	"SELECT company, count(*) as requests, max(entries) as entries, \
 		sum(lines), sum(recommended), \
-		TRUNC((100.0 * sum(recommended))/sum(lines))/100.0 as rec_percent, \
+		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
+		max(trained) as trained_on \
+		FROM {} \
+		WHERE $(filter) \
+		GROUP BY company HAVING entries > 0 and trained >= 0 ORDER BY rec_percent desc, entries desc, date asc, requests desc, entries desc"
+
+############################################
+explore/by-company: ${out_dir}/log.parquet
+	dsq ${out_dir}/log.parquet --pretty \
+	"SELECT max(date), \
+	    company, count(*) as requests, max(entries) as entries, \
+		sum(lines), trunc(avg(lines)), sum(recommended), \
+		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
 		max(trained) as trained \
 		FROM {} \
 		WHERE $(filter) \
-		GROUP BY company HAVING entries > 0 and trained >= 0 ORDER BY rec_percent desc, date asc, requests desc, entries desc"
+		GROUP BY company HAVING $(hfilter) ORDER BY rec_percent desc, date asc, requests desc, entries desc"
 
 ############################################
-explore/by-company: 
+explore/by-company/short: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
-	"SELECT max(date), company, count(*) as requests, max(entries) as entries, \
-		sum(lines), trunc(avg(lines)), sum(recommended), \
-		TRUNC((100.0 * sum(recommended))/sum(lines))/100.0 as rec_percent, \
-		max(trained) as trained \
+	"SELECT company, \
+		sum(lines), sum(recommended), \
+		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, max(entries) as entries \
 		FROM {} \
-		GROUP BY company HAVING trained >= 0 ORDER BY rec_percent desc, date asc, requests desc, entries desc"
+		WHERE $(filter) \
+		GROUP BY company HAVING $(hfilter) ORDER BY rec_percent desc"
 
 clean:
 	# @echo -n "Drop $(out_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
