@@ -5,11 +5,23 @@ class Cmp:
         self.correct = correct
 
 
+def fix_probabilities(res, bars):
+    pv = 0
+    for p in reversed(bars):
+        if p in res:
+            v = res[p]
+            if v < pv:
+                del res[p]
+            else:
+                pv = v
+    return res
+
+
 def calc_limits(cmps, bars):
     res = {}
     if len(cmps) == 0:
         res = {v: 2.5 for v in bars}
-    err, count = 0, 0
+    err, count, cop_bars = 0, 0, bars
     for c in cmps:
         count += 1
         if not c.correct:
@@ -26,4 +38,4 @@ def calc_limits(cmps, bars):
                 if p == 1:
                     res[p] = c.value
                     break
-    return res
+    return fix_probabilities(res, bars)
