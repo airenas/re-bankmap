@@ -20,7 +20,7 @@ explore/by-date: ${out_dir}/log.parquet
 	"SELECT company, count(*) as requests, max(entries) as entries, \
 		sum(lines), sum(recommended), \
 		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
-		max(trained) as trained_on \
+		max(trained) as trained_on, max(trained_date) as trained_date \
 		FROM {} \
 		WHERE $(filter) \
 		GROUP BY company HAVING entries > 0 and trained >= 0 ORDER BY rec_percent desc, entries desc, date asc, requests desc, entries desc"
@@ -32,11 +32,20 @@ explore/by-company: ${out_dir}/log.parquet
 	    company, count(*) as requests, max(entries) as entries, \
 		sum(lines), trunc(avg(lines)), sum(recommended), \
 		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
-		max(trained) as trained \
+		max(trained) as trained, max(trained_date) as trained_date \
 		FROM {} \
 		WHERE $(filter) \
-		GROUP BY company HAVING $(hfilter) ORDER BY rec_percent desc, date asc, requests desc, entries desc"
+		GROUP BY company, date HAVING $(hfilter) ORDER BY date asc, rec_percent desc, requests desc, entries desc"
 
+############################################
+explore/company: ${out_dir}/log.parquet
+	dsq ${out_dir}/log.parquet --pretty \
+	"SELECT date, time, company, entries, lines, recommended, \
+		TRUNC((100.0 * recommended)/lines) as rec_percent, \
+		trained, trained_date \
+		FROM {} \
+		WHERE $(filter) \
+		ORDER BY date asc, time asc, rec_percent desc, entries desc"
 ############################################
 explore/by-company/short: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
