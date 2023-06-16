@@ -16,7 +16,8 @@ def get_date(date):
 class PredictionCfg:
     def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None,
                  tune_count=None,
-                 tune_date=None):
+                 tune_date=None,
+                 version=0):
         self.limit = limit
         self.limits = limits
         self.tops = top_best
@@ -25,10 +26,15 @@ class PredictionCfg:
         self.train_last = train_last
         self.tune_count = tune_count
         self.tune_date: datetime.datetime = get_date(tune_date)
+        self.version = version
 
     @classmethod
     def default(cls, company):
         return PredictionCfg(company=company)
+
+    @classmethod
+    def version(cls):
+        return 1
 
     @classmethod
     def from_dict(cls, param):
@@ -42,6 +48,7 @@ class PredictionCfg:
             "company": self.company,
             "train_last": self.train_last,
             "tune_count": self.tune_count,
+            "version": self.version,
         }
         if self.next_train:
             res["next_train"] = self.next_train.isoformat()

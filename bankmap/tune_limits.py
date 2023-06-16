@@ -162,6 +162,7 @@ def add_tune_into_cfg(cfg: PredictionCfg, limits, info):
         next_days = 1
     cfg.next_train = datetime.now() + timedelta(days=next_days)
     cfg.tune_date = datetime.now()
+    cfg.version = PredictionCfg.version()
     return cfg
 
 

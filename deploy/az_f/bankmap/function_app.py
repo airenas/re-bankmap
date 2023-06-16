@@ -46,7 +46,8 @@ def force_save():
 def check_copy_data(cfg: PredictionCfg, out_file):
     try:
         if cfg.company:
-            if force_save() or not cfg.next_train or cfg.next_train < datetime.now():
+            if force_save() or not cfg.next_train or cfg.next_train < datetime.now() \
+                    or PredictionCfg.version() > cfg.version:
                 copy_data(cfg.company, out_file)
             else:
                 logger.warn("Skip save to storage, next save after {}".format(cfg.next_train))
