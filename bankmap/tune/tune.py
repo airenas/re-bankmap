@@ -21,7 +21,7 @@ def calc_limits(cmps, bars):
     res = {}
     if len(cmps) == 0:
         res = {v: 2.5 for v in bars}
-    err, count, cop_bars = 0, 0, bars
+    err, count = 0, 0
     for c in cmps:
         count += 1
         if not c.correct:
