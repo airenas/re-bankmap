@@ -17,7 +17,7 @@ build: ${out_dir}/log.parquet
 ############################################
 explore/by-date: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
-	"SELECT company, count(*) as requests, max(entries) as entries, \
+	"SELECT max(date), company, count(*) as requests, max(entries) as entries, \
 		sum(lines), sum(recommended), \
 		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
 		max(trained) as trained_on, max(trained_date) as trained_date \
