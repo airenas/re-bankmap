@@ -23,8 +23,6 @@ def prepare_history_map(entries: List[Entry]):
 
 
 def has_past_transaction(ctx: Ctx, e_id, prev_entries, entry):
-    if entry.rec_id != e_id:
-        return 0
     max_hist_date = entry.date - ctx.history if ctx.history is not None else None
 
     for pe in prev_entries.get(e_key(entry), {}).get(e_id, []):
