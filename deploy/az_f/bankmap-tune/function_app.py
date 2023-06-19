@@ -7,6 +7,7 @@ import azure.functions as func
 
 from bankmap.az.config import load_config_or_default, save_config
 from bankmap.az.zip import load_data, save_extract_zip
+from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
 from bankmap.tune_limits import tune_limits, make_tune_stats, add_tune_into_cfg
 
@@ -71,7 +72,8 @@ def process(zipfile: str):
     company = os.path.splitext(file)[0]
     logger.info(f"Company: {company}")
     cfg = load_config_or_default(company)
-    if not force_tune() and cfg.next_train and cfg.next_train > datetime.now():
+    if not force_tune() and cfg.next_train and cfg.next_train > datetime.now() \
+            and PredictionCfg.version() <= cfg.version:
         logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
         return
     zip_bytes = load_data(company)
