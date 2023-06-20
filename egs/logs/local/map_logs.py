@@ -14,8 +14,14 @@ class logData:
         self.entries = strs[2]
         self.lines = strs[3]
         self.recommended = strs[4]
-        self.trained = int(strs[6]) if len(strs) > 6 and strs[6] != "" else 0
-        self.trained_date = to_date(strs[7]).strftime("%Y%m%d") if len(strs) > 7 and strs[7] != "" else ""
+        shift, self.recommended_tta = 0, 0
+        if len(strs) > 10:
+            shift = 1
+            self.recommended_tta = int(strs[5])
+
+        self.trained = int(strs[6 + shift]) if len(strs) > (6 + shift) and strs[6 + shift] != "" else 0
+        self.trained_date = to_date(strs[7 + shift]).strftime("%Y%m%d") if len(strs) > (7 + shift) and strs[
+            7 + shift] != "" else ""
         self.date = to_date(data.get("timestamp [UTC]", "no date")).strftime("%Y%m%d")
         self.time = to_date(data.get("timestamp [UTC]", "no date")).strftime("%H:%M:%S")
 
@@ -38,10 +44,13 @@ def main(argv):
     logger.info("Read {}".format(len(data)))
     for d in data:
         ld = logData(d)
-        res.append([ld.date, ld.company, ld.entries, ld.lines, ld.recommended, ld.trained, ld.trained_date, ld.time])
+        res.append(
+            [ld.date, ld.company, ld.entries, ld.lines, ld.recommended, ld.recommended_tta, ld.trained, ld.trained_date,
+             ld.time])
 
     df = pd.DataFrame(res,
-                      columns=["date", "company", "entries", "lines", "recommended", "trained", "trained_date", "time"])
+                      columns=["date", "company", "entries", "lines", "recommended", "recommended_tta",
+                               "trained", "trained_date", "time"])
 
     df.to_parquet(args.output, engine="fastparquet")
     logger.info("Done")

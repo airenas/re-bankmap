@@ -18,7 +18,7 @@ build: ${out_dir}/log.parquet
 explore/by-date: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
 	"SELECT max(date), company, count(*) as requests, max(entries) as entries, \
-		sum(lines), sum(recommended), \
+		sum(lines), sum(recommended), sum(recommended_tta), \
 		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
 		max(trained) as trained_on, max(trained_date) as trained_date \
 		FROM {} \
@@ -30,7 +30,7 @@ explore/by-company: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
 	"SELECT max(date), \
 	    company, count(*) as requests, max(entries) as entries, \
-		sum(lines), trunc(avg(lines)), sum(recommended), \
+		sum(lines), trunc(avg(lines)), sum(recommended), sum(recommended_tta), \
 		TRUNC((100.0 * sum(recommended))/sum(lines)) as rec_percent, \
 		max(trained) as trained, max(trained_date) as trained_date \
 		FROM {} \
@@ -40,7 +40,7 @@ explore/by-company: ${out_dir}/log.parquet
 ############################################
 explore/company: ${out_dir}/log.parquet
 	dsq ${out_dir}/log.parquet --pretty \
-	"SELECT date, time, company, entries, lines, recommended, \
+	"SELECT date, time, company, entries, lines, recommended, recommended_tta, \
 		TRUNC((100.0 * recommended)/lines) as rec_percent, \
 		trained, trained_date \
 		FROM {} \
