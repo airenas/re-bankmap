@@ -65,6 +65,21 @@ def get_confidence(v, _type, cfg: PredictionCfg):
     return 0.5
 
 
+def add_alternatives(cfg, pred, was):
+    alt = []
+    i = 1
+    for r in pred:
+        if i >= cfg.tops:
+            break
+        rec = r["entry"]
+        if rec.id in was:
+            continue
+        was.add(rec.id)
+        i += 1
+        alt.append({"item": to_dic_item(rec), "similarity": r["i"], "recommended": False})
+    return alt
+
+
 def predict_entry(ctx, pd, entry, cfg):
     logger.debug("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
     pred = []
@@ -101,18 +116,7 @@ def predict_entry(ctx, pd, entry, cfg):
 
         logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
                                                                             recognized.type.to_s()))
-    alt = []
-    i = 1
-    for r in pred:
-        if i >= cfg.tops:
-            break
-        rec = r["entry"]
-        if rec.id in was:
-            continue
-        was.add(rec.id)
-        i += 1
-        alt.append({"item": to_dic_item(rec), "similarity": r["i"], "recommended": False})
-    res["alternatives"] = alt
+    res["alternatives"] = add_alternatives(cfg, pred, was)
     if recognized and recognized.type in [LType.VEND, LType.CUST]:
         predicted_docs = find_best_docs(pd.sfs, entry, recognized.id, recognized.type)
         res_docs = []
