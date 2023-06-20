@@ -9,12 +9,15 @@ text_to_account_map_cols = ['Text', 'Type', 'Account', 'Credit_Account', 'Debit_
 def load_text_to_accounts(file_name):
     logger.info("loading text_to_accounts {}".format(file_name))
     df = pd.read_csv(file_name, sep=',')
+    return load_text_to_accounts_df(df)
+
+
+def load_text_to_accounts_df(df):
     res_data = []
     data = df.to_dict('records')
     for d in data:
         res_data.append([d['Mapping_Text'], d['Bal__Source_Type'], d['Bal__Source_No_'], d['Credit_Acc__No_'],
                          d['Debit_Acc__No_']])
-    df = pd.DataFrame(res_data, columns=text_to_account_map_cols)
-    res = [TextToAccountMap(d) for d in df.to_dict('records')]
+    res = [TextToAccountMap(d) for d in pd.DataFrame(res_data, columns=text_to_account_map_cols).to_dict('records')]
     res.sort(key=lambda e: -len(e.text))
     return res

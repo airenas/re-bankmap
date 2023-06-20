@@ -226,7 +226,7 @@ class TextToAccountMap:
     def __init__(self, row):
         try:
             self.type = LType.from_s(e_str(row['Type']))
-            self.text = e_str(row['Text'])
+            self.text = e_str(row['Text']).strip()
             self.account = e_str(row['Account'])
             self.credit_account = e_str(row['Credit_Account'])
             self.debit_account = e_str(row['Debit_Account'])
