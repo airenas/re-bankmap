@@ -7,7 +7,7 @@ def map_account(m: TextToAccountMap, _type):
     res = None
     if m.type == LType.GL:
         res = m.credit_account if _type == PaymentType.CRDT else m.debit_account
-    if res in None:
+    if not res:
         res = m.account
     return res
 
