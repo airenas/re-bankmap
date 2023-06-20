@@ -17,7 +17,8 @@ class PredictionCfg:
     def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None,
                  tune_count=None,
                  tune_date=None,
-                 version=0):
+                 version=0,
+                 text_map_limit=2.0):
         self.limit = limit
         self.limits = limits
         self.tops = top_best
@@ -27,6 +28,7 @@ class PredictionCfg:
         self.tune_count = tune_count
         self.tune_date: datetime.datetime = get_date(tune_date)
         self.version = version
+        self.text_map_limit = text_map_limit
 
     @classmethod
     def default(cls, company):
@@ -49,6 +51,7 @@ class PredictionCfg:
             "train_last": self.train_last,
             "tune_count": self.tune_count,
             "version": self.version,
+            "text_map_limit": self.text_map_limit,
         }
         if self.next_train:
             res["next_train"] = self.next_train.isoformat()

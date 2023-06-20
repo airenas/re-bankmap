@@ -216,6 +216,24 @@ class LEntry:
                                                                     self.doc_type, self.amount, self.map_type.to_s())
 
 
+class TextToAccount:
+    def __init__(self, _type, account):
+        self.type = _type
+        self.account = account
+
+
+class TextToAccountMap:
+    def __init__(self, row):
+        try:
+            self.type = LType.from_s(e_str(row['Type']))
+            self.text = e_str(row['Text'])
+            self.account = e_str(row['Account'])
+            self.credit_account = e_str(row['Credit_Account'])
+            self.debit_account = e_str(row['Debit_Account'])
+        except BaseException as err:
+            raise Exception("Err: {}: for {}".format(err, row))
+
+
 def e_str(p):
     if p != p:
         return ''
@@ -244,10 +262,11 @@ def e_currency(p):
 
 
 class PredictData:
-    def __init__(self, gl_ba, sfs, historical_entries):
+    def __init__(self, gl_ba, sfs, historical_entries, text_to_account_map=None):
         self.gl_ba = gl_ba
         self.sfs = sfs
         self.historical_entries = historical_entries
+        self.text_to_account_map = text_to_account_map
 
 
 class Arena:

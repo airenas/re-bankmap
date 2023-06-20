@@ -6,17 +6,25 @@ import time
 import numpy
 
 from bankmap.cfg import PredictionCfg
-from bankmap.data import LEntry, Entry, LType, Ctx, PredictData
+from bankmap.data import LEntry, Entry, LType, Ctx, PredictData, TextToAccount
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
+from bankmap.loaders.text_to_account import load_text_to_accounts
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
+from bankmap.predict.text_to_account import map_text_to_account
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
 from bankmap.utils.utils import empty_if_n, str_date
+
+text_to_account_type_str = "Text to Account"
 
 
 def to_dic_item(e: LEntry):
     return {"no": e.id, "type": e.type.to_s(), "name": e.name}
+
+
+def tta_to_dic_item(e: TextToAccount):
+    return {"no": e.account, "type": e.type.to_s(), "name": ""}
 
 
 def to_dic_sf(e: LEntry):
@@ -79,9 +87,18 @@ def predict_entry(ctx, pd, entry, cfg):
         e = pred[0]
         recognized = e["entry"]
         cs = get_confidence(e["i"], recognized.type, cfg)
-        res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
-                       "confidence_score": cs}
-        was.add(recognized.id)
+        if not (cs >= 0.995 and e["i"] > cfg.text_map_limit):
+            logger.debug("try text to account")
+            tta = map_text_to_account(entry, pd.text_to_account_map)
+            if tta is not None:
+                res["main"] = {"item": tta_to_dic_item(tta), "similarity": cfg.text_map_limit, "recommended": True,
+                               "confidence_score": 0.995, "type": text_to_account_type_str}
+                was.add(tta.account)
+        if "main" not in res:
+            res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
+                           "confidence_score": cs, "type": "Similarity"}
+            was.add(recognized.id)
+
         logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
                                                                             recognized.type.to_s()))
     alt = []
@@ -179,9 +196,17 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     # apps = [App(r) for r in customer_apps_df.to_dict('records')] + \
     #        [App(r) for r in vendor_apps_df.to_dict('records')]
 
+    try:
+        text_to_account_map = load_text_to_accounts(os.path.join(data_dir, "Text_to_Account_Mappings.csv"))
+    except BaseException as _err:
+        logger.error(_err)
+        text_to_account_map = []
+    res_info["Text_to_Account_Mappings"] = len(text_to_account_map)
+
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     log_elapsed(start_t, "prepare_entries")
-    pd = PredictData(gl_ba=gl_ba, sfs=sfs, historical_entries=prepare_history_map(entries))
+    pd = PredictData(gl_ba=gl_ba, sfs=sfs, historical_entries=prepare_history_map(entries),
+                     text_to_account_map=text_to_account_map)
     log_elapsed(start_t, "prepare_entries")
     start_t = log_elapsed(start, "prepare_total")
 
@@ -189,16 +214,18 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     test = new_entries
     predict_res = []
     ctx = Ctx()
-    pi, pr, sims = 0, 0, []
+    pi, pr, pr_tta, sims = 0, 0, 0, []
     for entry in test:
         e_res = predict_entry(ctx, pd, entry, cfg)
         main_pred = e_res.get("main")
         if e_res and main_pred:
             pr += 1 if main_pred.get("recommended") else 0
+            pr_tta += 1 if main_pred.get("type") == text_to_account_type_str else 0
             sims.append(main_pred.get("similarity", 0))
         predict_res.append(e_res)
         pi += 1
     res_info["recommended"] = pr
+    res_info["recommended_tta"] = pr_tta
     log_elapsed(start_t, "predicting")
     log_elapsed(start, "total_mapping")
     if pi > 0:
@@ -212,11 +239,12 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
 
 def make_stats(cfg: PredictionCfg, param):
-    return "stats:{}:{}:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company),
-                                                     param.get("Bank_Statement_Entries"),
-                                                     param.get("Bank_Statement_Lines"),
-                                                     param.get("recommended"), int(param.get("recommended_percent", 0)),
-                                                     empty_if_n(cfg.tune_count), str_date(cfg.tune_date))
+    return "stats:{}:{}:{}:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company),
+                                                        param.get("Bank_Statement_Entries"),
+                                                        param.get("Bank_Statement_Lines"),
+                                                        param.get("recommended"), param.get("recommended_tta"),
+                                                        int(param.get("recommended_percent", 0)),
+                                                        empty_if_n(cfg.tune_count), str_date(cfg.tune_date))
 
 
 if __name__ == "__main__":
