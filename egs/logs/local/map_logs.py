@@ -15,7 +15,7 @@ class logData:
         self.lines = strs[3]
         self.recommended = strs[4]
         shift, self.recommended_tta = 0, 0
-        if len(strs) > 10:
+        if len(strs) > 6 and strs[6].endswith("cfg"):
             shift = 1
             self.recommended_tta = int(strs[5])
 
