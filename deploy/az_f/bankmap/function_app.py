@@ -9,7 +9,7 @@ import azure.functions as func
 from azure.functions import HttpMethod
 
 from bankmap.az.config import load_config_or_default
-from bankmap.az.zip import copy_data, save_extract_zip
+from bankmap.az.zip import copy_data, save_extract_zip, upload_file, get_container_name
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping, make_stats
 from bankmap.logger import logger
@@ -57,6 +57,19 @@ def check_copy_data(cfg: PredictionCfg, out_file):
         logger.exception(err)
 
 
+def name_with_timestamp(company, now):
+    return "{}_{}.zip".format(company, now.replace(microsecond=0).isoformat())
+
+
+def check_copy_debug_data(cfg: PredictionCfg, out_file):
+    try:
+        if cfg.company:
+            file_name = name_with_timestamp(cfg.company, datetime.now())
+            upload_file(file_name, get_container_name("STORAGE_DEBUG_CONTAINER"), out_file)
+    except BaseException as err:
+        logger.exception(err)
+
+
 @app.function_name(name="bankmap")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def map_function(req: func.HttpRequest) -> func.HttpResponse:
@@ -78,6 +91,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         next_t = log_elapsed(start, "extract_zip", metrics)
 
         check_copy_data(cfg, out_file)
+        check_copy_debug_data(cfg, out_file)
         next_t = log_elapsed(next_t, "copy_to_storage", metrics)
 
         logger.info("start mapping")
