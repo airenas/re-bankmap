@@ -8,7 +8,9 @@ text_to_account_map_cols = ['Text', 'Type', 'Account', 'Credit_Account', 'Debit_
 
 def load_text_to_accounts(file_name):
     logger.info("loading text_to_accounts {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
+    df = pd.read_csv(file_name, sep=',', dtype={x: 'str' for x in
+                                                ['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
+                                                 'Credit_Acc__No_', 'Debit_Acc__No_']})
     return load_text_to_accounts_df(df)
 
 
