@@ -121,6 +121,13 @@ def f_name(check, f1, f2):
     return f2
 
 
+def non_empty_str(s1, s2):
+    tmp = e_str(s1)
+    if not tmp or tmp == '0':
+        return s2
+    return s1
+
+
 # loads data from Bank_Statement_Lines
 # returns Entries list
 def load_lines(file_name):
@@ -142,7 +149,7 @@ def load_lines(file_name):
         credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
         values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
-                  e_float(d['N_Amt']), d['N_BookDt_Dt'], iban(d),
+                  e_float(d['N_Amt']), non_empty_str(d['N_BookDt_Dt'], d['N_BookDt_DtTm']), iban(d),
                   d['N_ND_TD_Refs_EndToEndId'], "",
                   e_currency(d['Acct_Ccy']),
                   "",
