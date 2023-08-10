@@ -281,7 +281,8 @@ class Arena:
         logger.info("Apps count  : {}".format(len(self.apps)))
         self.entries.sort(key=lambda e: e.doc_date.timestamp() if e.doc_date else 1)
         self.apps.sort(key=lambda e: e.apply_date.timestamp() if e.apply_date else 1)
-        self.date = self.entries[0].doc_date - timedelta(days=1)
+        if len(self.entries) > 0:
+            self.date = self.entries[0].doc_date - timedelta(days=1)
         self.playground: Dict[str, LEntry] = {}
         self.from_entry, self.from_apps = 0, 0
         logger.debug("Start date  : {}".format(self.date))
