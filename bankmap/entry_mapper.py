@@ -109,13 +109,14 @@ def predict_entry(ctx, pd, entry, cfg):
                 res["main"] = {"item": tta_to_dic_item(tta), "similarity": cfg.text_map_limit, "recommended": True,
                                "confidence_score": 0.995, "type": text_to_account_type_str}
                 was.add(tta.account)
+                recognized = None
         if "main" not in res:
             res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
                            "confidence_score": cs, "type": "Similarity"}
             was.add(recognized.id)
+            logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
+                                                                                recognized.type.to_s()))
 
-        logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
-                                                                            recognized.type.to_s()))
     res["alternatives"] = add_alternatives(cfg, pred, was)
     if recognized and recognized.type in [LType.VEND, LType.CUST]:
         predicted_docs = find_best_docs(pd.sfs, entry, recognized.id, recognized.type)
