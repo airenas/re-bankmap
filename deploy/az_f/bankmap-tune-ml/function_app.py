@@ -10,7 +10,7 @@ from azure.identity import DefaultAzureCredential
 from bankmap.logger import logger
 
 
-class FynctionCfg:
+class FunctionCfg:
     def __init__(self):
         self.compute_cluster = os.getenv('COMPUTE_CLUSTER', 'cpu-cluster-lp')
         self.output_path = os.getenv('OUTPUT_DATA_PATH',
@@ -78,7 +78,7 @@ def process(zipfile: str):
     name = os.path.basename(zipfile)
     company = os.path.splitext(name)[0]
     logger.info(f"Company: {company}")
-    cfg = FynctionCfg()
+    cfg = FunctionCfg()
     logger.info(f"Cluster: {cfg.compute_cluster}")
     input_file = cfg.input_path_template.format(company)
     logger.info(f"Input file: {input_file}")

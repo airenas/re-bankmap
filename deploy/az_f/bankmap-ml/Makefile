@@ -1,6 +1,6 @@
 -include $(cfg)
 -include ../../../.version
-zip?=test.zip
+file?=./../bankmap/test.zip
 ############################################
 run/local:
 	func start
@@ -30,13 +30,13 @@ _version:
 ############################################
 test/remote:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${zip}
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
 test/remote/pretty:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${zip} | jq .
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file} | jq .
 test/local:
 	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${zip}
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
 ############################################
 clean/req:
 	rm -f requirements.txt
