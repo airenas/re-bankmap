@@ -158,3 +158,4 @@ egs/err_logs/Makefile.options
 **/.vscode/**
 deploy/az_f/bankmap-tune-ml/requirements.txt
 deploy/az_f/bankmap-tune-ml/.version
+deploy/az_ml/tune_pipeline/env
