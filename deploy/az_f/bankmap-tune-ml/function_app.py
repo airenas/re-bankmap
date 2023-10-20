@@ -94,7 +94,7 @@ def process(zipfile: str):
     tune_component = ml_client.components.get(cfg.ml_component)
     logger.info(f'output: {tune_component.outputs}')
 
-    @dsl.pipeline(compute=cfg.compute_cluster, description="Tune pipeline for {company}")
+    @dsl.pipeline(compute=cfg.compute_cluster, description=f"Tune pipeline for {company}")
     def pipeline(company, data):
         output_path = cfg.output_path
         tune_job = tune_component(company=company, data=data)
