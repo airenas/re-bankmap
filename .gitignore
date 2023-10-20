@@ -155,3 +155,6 @@ deploy/**/Makefile.options.**
 deploy/az_f/bankmap-tune/requirements.txt
 egs/logs/query_data.csv
 egs/err_logs/Makefile.options
+**/.vscode/**
+deploy/az_f/bankmap-tune-ml/requirements.txt
+deploy/az_f/bankmap-tune-ml/.version
