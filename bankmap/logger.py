@@ -14,7 +14,7 @@ def prepare_logger(_logger, _ll, _use_in_az):
 
 
 ll = os.environ.get('LOG_LEVEL', 'INFO').upper()
-use_in_az = bool(os.environ.get('LOG_AZ', 'FALSE').upper())
+use_in_az = os.environ.get('LOG_AZ', 'FALSE').upper() in ["TRUE", "1"]
 
 logger = logging.getLogger(__name__)
 
