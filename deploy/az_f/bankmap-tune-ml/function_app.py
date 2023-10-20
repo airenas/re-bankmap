@@ -9,18 +9,24 @@ from azure.identity import DefaultAzureCredential
 
 from bankmap.logger import logger
 
+
 class FynctionCfg:
-     def __init__(self):
+    def __init__(self):
         self.compute_cluster = os.getenv('COMPUTE_CLUSTER', 'cpu-cluster-lp')
-        self.output_path = os.getenv('OUTPUT_DATA_PATH', 'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')
-        self.input_path_template = os.getenv('INPUT_DATA_PATH_TEMPLATE', 'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/resourcegroups/DocuBank/workspaces/test/datastores/devcopy/paths/{}.zip')
+        self.output_path = os.getenv('OUTPUT_DATA_PATH',
+                                     'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
+                                     'resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')
+        self.input_path_template = os.getenv('INPUT_DATA_PATH_TEMPLATE',
+                                             'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
+                                             'resourcegroups/DocuBank/workspaces/test/datastores/devcopy/paths/{}.zip')
         self.subscription_id = os.getenv('SUBSCRIPTION_ID')
         self.workspace = os.getenv('ML_WORKSPACE', "test")
-        self.ml_component = os.getenv('ML_COMPONENT',"bankmap_tune")
-        
+        self.ml_component = os.getenv('ML_COMPONENT', "bankmap_tune")
+
 
 app = func.FunctionApp()
 container = "data-copy"
+
 
 def json_resp(value, code: int):
     return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code),
@@ -63,6 +69,7 @@ def test_function(zipfile: func.InputStream):
         process(zipfile.name)
     except BaseException as err:
         logger.exception(err)
+
 
 def process(zipfile: str):
     app_ver = get_version()

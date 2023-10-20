@@ -20,17 +20,19 @@ def load_config(company, path):
     logger.debug("data {}".format(str(data, "utf-8")))
     return PredictionCfg.from_dict(json.loads(str(data, "utf-8")))
 
+
 def load_data(in_file):
     logger.info("load {}".format(in_file))
     with open(in_file, 'rb') as f:
         data = f.read()
     return data
 
+
 def load_config_or_default(company, path):
     try:
         res = None
         if company:
-            res = load_config(company)
+            res = load_config(company, path)
         if res:
             logger.info("config loaded {}".format(res))
             res.company = company  # make sure we have company
@@ -41,6 +43,7 @@ def load_config_or_default(company, path):
     logger.warning("using default config")
     return PredictionCfg.default(company)
 
+
 def save_config(cfg: PredictionCfg, company, path):
     file_name = "{}.json".format(company)
     fp = os.path.join(path, file_name)
@@ -48,6 +51,7 @@ def save_config(cfg: PredictionCfg, company, path):
     with open(fp, 'w') as fw:
         fw.write(json.dumps(cfg.to_dic(), ensure_ascii=False, indent=2))
     logger.info("Uploaded {}".format(fp))
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -103,7 +107,6 @@ def process(company: str, in_file: str, out_container: str):
     cfg = add_tune_into_cfg(cfg, limits, info.get("sizes", {}))
     logger.info("next tune on {}".format(cfg.next_train))
     save_config(cfg, company, out_container)
-
 
 
 if __name__ == "__main__":
