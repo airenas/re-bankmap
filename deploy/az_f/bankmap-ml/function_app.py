@@ -12,12 +12,9 @@ from azure.functions import HttpMethod
 from bankmap.az.config import load_config_or_default
 from bankmap.az.zip import copy_data, save_extract_zip, upload_file, get_container_name
 from bankmap.cfg import PredictionCfg
-from bankmap.entry_mapper import do_mapping, make_stats
 from bankmap.logger import logger
 
-from azure.ai.ml import MLClient
-from azure.ai.ml import dsl, Input, Output
-from azure.identity import DefaultAzureCredential
+# from azure.ai.ml import dsl, Input, Output
 
 
 class FunctionCfg:
@@ -120,11 +117,11 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         
         log_elapsed(next_t, "map", metrics)
         log_elapsed(start, "total", metrics)
+        info = {}
         info["app_version"] = app_ver
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
-        logger.info(make_stats(cfg, info.get("sizes", {})))
-        res = {"company": company, "id": ulid, "job_id": job_id, "metrics": metrics}
+        res = {"company": company, "id": id, "job_id": job_id, "metrics": metrics, "info": info}
         return json_resp(res, HTTPStatus.OK)
     except BaseException as err:
         logger.exception(err)
@@ -132,7 +129,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def pass_to_ml(id: str, company: str):
-    cfg = FynctionCfg()
+    cfg = FunctionCfg()
     ml_client = get_client(cfg)
 
     logger.info(f"Cluster: {cfg.compute_cluster}")
@@ -144,9 +141,10 @@ def pass_to_ml(id: str, company: str):
     component = ml_client.components.get(cfg.ml_component)
     logger.info(f'output: {component.outputs}')
 
+    from azure.ai.ml import dsl, Input, Output
     @dsl.pipeline(compute=cfg.compute_cluster, description=f"Map pipeline for {company}")
     def map_pipeline(company, data, config_path):
-        job = map_component(company=company, data=data, config_path=config_path)
+        job = component(company=company, data=data, config_path=config_path)
         return {
             "output": job.outputs.output
         }
@@ -191,10 +189,11 @@ def get_client(cfg):
     logger.info(f"Workspace: {cfg.workspace}")
     logger.info(f"Subscription ID: {cfg.subscription_id}")
     
-    # authenticate
+    from azure.identity import DefaultAzureCredential
     credential = DefaultAzureCredential()
     credential.get_token("https://management.azure.com/.default")
-
+    
+    from azure.ai.ml import MLClient
     # Get a handle to the workspace
     return MLClient(
         credential=credential,
@@ -215,12 +214,12 @@ def get_status(id: str):
 
 def get_result(id: str):
     ml_client = get_client(FunctionCfg())
-
+    import tempfile
     temp_dir = tempfile.TemporaryDirectory()
     logger.info("tmp dir {}".format(temp_dir.name))
-    ml_client.jobs.download(name=id, download_path=temp_dir, output_name="output")
-    out_file = os.path.join(temp_dir.name, "named-outputs/output")
+    ml_client.jobs.download(name=id, download_path=temp_dir.name, output_name="output")
+    out_file = os.path.join(temp_dir.name, "named-outputs/output/output")
     logger.info("out_file {}".format(out_file))
     with open(out_file, "rb") as f:
         data = f.read()
-    return str(data, "utf-8")
+    return json.loads(str(data, "utf-8"))

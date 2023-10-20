@@ -37,6 +37,10 @@ test/remote/pretty:
 test/local:
 	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' \
 	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
+test/local/status:
+	curl -X GET http://localhost:7071/api/status/$(job_id) -i -H 'Accept: application/json'
+test/local/result:
+	curl -X GET http://localhost:7071/api/result/$(job_id) -H 'Accept: application/json' | jq .
 ############################################
 clean/req:
 	rm -f requirements.txt
