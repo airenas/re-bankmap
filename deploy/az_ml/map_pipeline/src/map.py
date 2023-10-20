@@ -1,6 +1,7 @@
 import os
 import argparse
 import mlflow
+import time
 
 import json
 from datetime import datetime
@@ -9,6 +10,13 @@ from bankmap.az.zip import save_extract_zip
 from bankmap.cfg import PredictionCfg
 from bankmap.entry_mapper import do_mapping, make_stats
 from bankmap.logger import logger
+
+
+def log_elapsed(_start, what, metrics):
+    end = time.time()
+    elapsed = (end - _start)
+    metrics[what + "_sec"] = elapsed
+    return end
 
 
 def load_config(company, path):
@@ -44,11 +52,19 @@ def load_config_or_default(company, path):
     return PredictionCfg.default(company)
 
 
+def save_res(res, company, output):
+    logger.info("saving res of {} to {}".format(company, output))
+    with open(output, 'w') as fw:
+        fw.write(json.dumps(res, ensure_ascii=False, indent=2))
+    logger.info("Saved {}".format(output))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--company", type=str, required=True, default="")
     parser.add_argument("--input_file", type=str, help="path to input zip file")
     parser.add_argument("--config_path", type=str, help="path to config")
+    parser.add_argument("--output", type=str, help="path to output file")
     args = parser.parse_args()
 
     mlflow.start_run()
@@ -57,7 +73,12 @@ def main():
     logger.info("config_path: {}".format(args.config_path))
     mlflow.set_tag("company", args.company)
 
-    res = process(args.company, args.input_file, args.config_path)
+    res, ok = process(args.company, args.input_file, args.config_path)
+    if ok:
+       save_res(res, args.company, args.output) 
+    else:
+        mlflow.set_tag("LOG_STATUS", "FAILED")
+        mlflow.set_tag("Error", res.error)
     mlflow.end_run()
 
 
@@ -97,10 +118,10 @@ def process(company: str, in_file: str, in_config_path: str):
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
-        return json_resp(res, HTTPStatus.OK)
+        return res, True
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        return {"error": str(err)}, False
 
 
 if __name__ == "__main__":
