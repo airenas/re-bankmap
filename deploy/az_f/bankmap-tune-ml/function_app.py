@@ -1,6 +1,7 @@
 import json
 import os
 from http import HTTPStatus
+from datetime import datetime
 
 import azure.functions as func
 from azure.ai.ml import MLClient
@@ -110,7 +111,7 @@ def process(zipfile: str):
         workspace_name=f_cfg.workspace,
     )
 
-    tune_component = ml_client.components.get(cfg.ml_component)
+    tune_component = ml_client.components.get(f_cfg.ml_component)
     logger.info(f'output: {tune_component.outputs}')
 
     @dsl.pipeline(compute=f_cfg.compute_cluster, description=f"Tune pipeline for {company}")
