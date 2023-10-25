@@ -42,7 +42,6 @@ loop once/several times a day
 
     docu -> predictor: POST data(zip file, companyID)
     activate predictor
-    predictor -> predictor: unzip
     predictor -> storage_cfg: get params(companyID)
     activate storage_cfg
     storage_cfg --> predictor
