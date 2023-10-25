@@ -6,6 +6,8 @@ import azure.functions as func
 from azure.ai.ml import MLClient
 from azure.ai.ml import dsl, Input, Output
 from azure.identity import DefaultAzureCredential
+from bankmap.az.config import load_config_or_default
+from bankmap.cfg import PredictionCfg
 
 from bankmap.logger import logger
 
@@ -41,6 +43,11 @@ def get_version():
         logger.error(err)
         return "???"
 
+
+def force_tune():
+    v = os.getenv('FORCE_TUNE', default="").lower()
+    return v == "1" or v == "true"
+    
 
 @app.function_name(name="HTTPTrigger")
 @app.route(route="tune/{blobName}")
@@ -78,13 +85,18 @@ def process(zipfile: str):
     name = os.path.basename(zipfile)
     company = os.path.splitext(name)[0]
     logger.info(f"Company: {company}")
-    cfg = FunctionCfg()
-    logger.info(f"Cluster: {cfg.compute_cluster}")
-    input_file = cfg.input_path_template.format(company)
+    cfg = load_config_or_default(company)
+    if not force_tune() and cfg.next_train and cfg.next_train > datetime.now() \
+            and PredictionCfg.version() <= cfg.version:
+        logger.warn("Skip tune params, next tune after {}".format(cfg.next_train))
+        return
+    f_cfg = FunctionCfg()
+    logger.info(f"Cluster: {f_cfg.compute_cluster}")
+    input_file = f_cfg.input_path_template.format(company)
     logger.info(f"Input file: {input_file}")
-    logger.info(f"Workspace: {cfg.workspace}")
-    logger.info(f"Subscription ID: {cfg.subscription_id}")
-    logger.info(f"ML component: {cfg.ml_component}")
+    logger.info(f"Workspace: {f_cfg.workspace}")
+    logger.info(f"Subscription ID: {f_cfg.subscription_id}")
+    logger.info(f"ML component: {f_cfg.ml_component}")
 
     # authenticate
     credential = DefaultAzureCredential()
@@ -93,17 +105,17 @@ def process(zipfile: str):
     # Get a handle to the workspace
     ml_client = MLClient(
         credential=credential,
-        subscription_id=cfg.subscription_id,
+        subscription_id=f_cfg.subscription_id,
         resource_group_name="DocuBank",
-        workspace_name=cfg.workspace,
+        workspace_name=f_cfg.workspace,
     )
 
     tune_component = ml_client.components.get(cfg.ml_component)
     logger.info(f'output: {tune_component.outputs}')
 
-    @dsl.pipeline(compute=cfg.compute_cluster, description=f"Tune pipeline for {company}")
+    @dsl.pipeline(compute=f_cfg.compute_cluster, description=f"Tune pipeline for {company}")
     def pipeline(company, data):
-        output_path = cfg.output_path
+        output_path = f_cfg.output_path
         tune_job = tune_component(company=company, data=data)
         tune_job.outputs["output_path"] = Output(type="uri_folder", mode="rw_mount", path=output_path)
         logger.info(f'output: {tune_job.outputs["output_path"]}')
