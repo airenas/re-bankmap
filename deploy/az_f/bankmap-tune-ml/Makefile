@@ -14,7 +14,7 @@ update/bankmap:
 # 	az functionapp plan create --name bankmapPremiumPlan --resource-group $(func_resource_group) \
 # 		--location $(func_location) --sku EP1 --is-linux true --max-burst 1
 create/function:
-	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.8 \
+	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.9 \
 		--functions-version 4 --name $(func_name) --os-type linux --storage-account $(func_storage) \
 		--resource-group $(func_resource_group)
 # create/function/premium:
