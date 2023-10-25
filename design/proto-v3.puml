@@ -1,0 +1,155 @@
+@startuml Doc import
+skinparam sequence {
+    ParticipantBorderColor Black
+    ActorBorderColor Black
+
+    ParticipantBackgroundColor White
+    ActorBackgroundColor White
+
+    ArrowColor black
+    LifeLineBorderColor black
+    LifeLineBackgroundColor lightgray
+
+    BoxBorderColor black
+}
+skinparam databaseBackgroundColor White
+skinparam dataBaseBorderColor Blue
+
+hide footbox
+title Doc Import v2
+
+' skinparam handwritten true
+
+participant "BF" as docu
+participant "External\nBank System" as bank
+participant "Azure Function" as predictor
+participant "Azure Storage\n(work data)" as storage_wrk
+participant "Azure Storage\n(configs)" as storage_cfg
+participant "Azure Storage\n(data)" as storage_data
+participant "Azure\nTune Function" as trainer
+participant "ML\nWorkspace" as workspace
+participant "ML\nCompute cluster" as cluster
+
+
+== 1a. BF adds job ==
+
+loop once/several times a day
+    docu -> bank: get new statements
+    activate docu
+    activate bank
+    bank --> docu:
+    deactivate bank
+
+    docu -> predictor: POST data(zip file, companyID)
+    activate predictor
+    predictor -> predictor: unzip
+    predictor -> storage_cfg: get params(companyID)
+    activate storage_cfg
+    storage_cfg --> predictor
+    deactivate storage_cfg
+    alt no params in storage or company params older than 7 days
+        predictor -> storage_data: save(zip)
+        activate storage_data
+        storage_data --> predictor
+        deactivate storage_data
+    end
+    predictor -> storage_wrk: save(zip)
+    activate storage_wrk
+    storage_wrk --> predictor
+    deactivate storage_wrk
+    
+    predictor -> workspace: create predict pipeline (companyID)
+    activate workspace
+    workspace --> predictor: jobID
+    deactivate workspace
+    predictor --> docu: result(jobID)
+    deactivate predictor
+    deactivate docu
+end
+
+== 1b. BF checks job's status ==
+
+loop every 30 s
+    docu -> predictor: GET status/jobID
+    activate docu
+    activate predictor
+    predictor -> workspace: get pipeline (jobID) status
+    activate workspace
+    workspace --> predictor: status
+    deactivate workspace
+    predictor --> docu: status
+    deactivate predictor
+    deactivate docu
+end
+
+== 1c. BF retrieves results when job's status == COMPLETED == 
+
+docu -> predictor: GET result/jobID
+activate docu
+activate predictor
+predictor -> workspace: get pipeline (jobID) result
+activate workspace
+workspace --> predictor: result JSON
+deactivate workspace
+predictor --> docu: predictions JSON
+deactivate predictor
+deactivate docu
+
+== 2a. Predict pipeline ==
+workspace -> cluster: pass data to worker cluster 
+activate workspace
+activate cluster
+cluster -> storage_cfg: get params(companyID)
+activate storage_cfg
+storage_cfg --> cluster
+deactivate storage_cfg
+cluster -> storage_wrk: get data(companyID)
+activate storage_wrk
+storage_wrk --> cluster
+deactivate storage_wrk
+cluster -> cluster: predict mappings
+cluster -> workspace: save results
+workspace --> cluster
+deactivate cluster
+deactivate workspace
+
+
+== 2. Tuning company's reject limit params ==
+loop for each msg
+    storage_data -> trainer: listen blob storage update events
+    activate trainer
+    trainer -> storage_cfg: get params(companyID)
+    activate storage_cfg
+    storage_cfg --> trainer
+    deactivate storage_cfg
+    alt no params in storage or company params older than 7 days
+        trainer -> workspace: create tune pipeline (companyID)
+        activate workspace
+        workspace --> trainer
+        deactivate workspace
+    end
+    deactivate trainer
+ end   
+
+
+== 2a. Tuning pipeline - company's reject limit params ==
+workspace -> cluster: pass data to worker cluster 
+activate workspace
+activate cluster
+cluster -> storage_cfg: get params(companyID)
+activate storage_cfg
+storage_cfg --> cluster
+deactivate storage_cfg
+cluster -> storage_data: get data(companyID)
+activate storage_data
+storage_data --> cluster
+deactivate storage_data
+cluster -> cluster: tune params
+cluster -> storage_cfg: save new params(companyID)
+activate storage_cfg
+storage_cfg --> cluster
+deactivate storage_cfg
+deactivate cluster
+deactivate workspace
+
+@enduml
