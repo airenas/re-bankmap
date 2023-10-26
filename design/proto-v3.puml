@@ -94,7 +94,7 @@ predictor --> docu: predictions JSON
 deactivate predictor
 deactivate docu
 
-== 2a. Predict pipeline ==
+== 1d. Predict pipeline ==
 workspace -> cluster: pass data to worker cluster 
 activate workspace
 activate cluster
