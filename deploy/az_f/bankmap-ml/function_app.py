@@ -104,21 +104,20 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("company {}".format(company))
         cfg = load_config_or_default(company)
 
+        # TODO: no need to save to local storage    
         zip_bytes = req.get_body()
         data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
-        next_t = log_elapsed(start, "extract_zip", metrics)
-
+        
         check_copy_data(cfg, out_file)
         check_copy_work_data(cfg, id, out_file)
-        next_t = log_elapsed(next_t, "copy_to_storage", metrics)
+        next_t = log_elapsed(start, "copy_to_storage", metrics)
 
         logger.info("pass to ml pipeline")
-        job_id = pass_to_ml(id, company)
-        
-        log_elapsed(next_t, "map", metrics)
+        job_id, metrics_pipe = pass_to_ml(id, company)
+        metrics.update(metrics_pipe)
+        log_elapsed(next_t, "total_start_pipeline", metrics)
         log_elapsed(start, "total", metrics)
-        info = {}
-        info["app_version"] = app_ver
+        info = {"app_version": app_ver}
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
         res = {"company": company, "id": id, "job_id": job_id, "metrics": metrics, "info": info}
@@ -129,8 +128,10 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def pass_to_ml(id: str, company: str):
+    start, metrics = time.time(), {}
     cfg = FunctionCfg()
     ml_client = get_client(cfg)
+    next_t = log_elapsed(start, "init_ml_client", metrics)
 
     logger.info(f"Cluster: {cfg.compute_cluster}")
     input_file = cfg.input_path_template.format(id)
@@ -140,6 +141,7 @@ def pass_to_ml(id: str, company: str):
 
     component = ml_client.components.get(cfg.ml_component)
     logger.info(f'output: {component.outputs}')
+    next_t = log_elapsed(next_t, "init_pipeline_component", metrics)
 
     from azure.ai.ml import dsl, Input, Output
     @dsl.pipeline(compute=cfg.compute_cluster, description=f"Map pipeline for {company}")
@@ -149,9 +151,11 @@ def pass_to_ml(id: str, company: str):
             "output": job.outputs.output
         }
     pl = map_pipeline(company=company, data=Input(type="uri_file", path=input_file), config_path=Input(type="uri_folder", path=cfg.config_path))
+    next_t = log_elapsed(next_t, "init_pipeline", metrics)
     pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=f"map for {company}")
     logger.info(f'output: {pipeline_job.name}')
-    return pipeline_job.name
+    log_elapsed(next_t, "create_job", metrics)
+    return pipeline_job.name, metrics
 
 
 @app.function_name(name="bankmap-status")
