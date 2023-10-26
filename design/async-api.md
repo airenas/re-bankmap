@@ -2,7 +2,7 @@
 ## Info
 Request timeout'as visiems kvietiniams = 1m. 
 
-Kiek aš bandžiau funkcija į užklausą atsako per 3-10s, bet jei `cold` startas, kvietinys užtrunka 30-60s. `Cold`` startas vyksta, jei funkcija nebuvo kviesta per paskutines 5m.
+Kiek aš bandžiau funkcija į užklausą atsako per 3-10s, bet jei `cold` startas, kvietinys užtrunka 30-60s. `Cold` startas vyksta, jei funkcija nebuvo kviesta per paskutines 5m.
 
 ## 1. Siunčiame atpažinimui, gauname `job_id`
 Kvietinys toks pat kaip ir dabartinis
