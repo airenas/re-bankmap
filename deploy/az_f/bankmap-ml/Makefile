@@ -12,7 +12,7 @@ create/az-group:
 create/storage-account:
 	az storage account create --name $(func_storage) --sku Standard_LRS --resource-group $(func_resource_group)
 create/function:
-	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.8 \
+	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.9 \
 		--functions-version 4 --name $(func_name) --os-type linux --storage-account $(func_storage) \
 		--resource-group $(func_resource_group)
 enable/indexing:		
@@ -39,8 +39,12 @@ test/local:
 	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
 test/local/status:
 	curl -X GET http://localhost:7071/api/status/$(job_id) -i -H 'Accept: application/json'
+test/remote/status:
+	curl -X GET https://$(func_name).azurewebsites.net/api/status/$(job_id)?code=$(app_key) -i -H 'Accept: application/json'	
 test/local/result:
 	curl -X GET http://localhost:7071/api/result/$(job_id) -H 'Accept: application/json' | jq .
+test/remote/result:
+	curl -X GET https://$(func_name).azurewebsites.net/api/result/$(job_id)?code=$(app_key) -H 'Accept: application/json' | jq .	
 ############################################
 clean/req:
 	rm -f requirements.txt

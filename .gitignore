@@ -161,3 +161,4 @@ deploy/az_f/bankmap-tune-ml/.version
 deploy/az_ml/tune_pipeline/env
 deploy/az_f/bankmap-ml/requirements.txt
 deploy/az_f/bankmap-ml/Makefile.options
+deploy/az_f/bankmap-ml/.version
