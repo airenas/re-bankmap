@@ -22,7 +22,7 @@ class FunctionCfg:
         self.compute_cluster = os.getenv('COMPUTE_CLUSTER', 'cpu-cluster-lp')
         self.input_path_template = os.getenv('INPUT_DATA_PATH_TEMPLATE',
                                              'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
-                                             'resourcegroups/DocuBank/workspaces/test/datastores/devcopy/paths/{}.zip')
+                                             'resourcegroups/DocuBank/workspaces/test/datastores/datacopy/paths/{}.zip')
         self.config_path = os.getenv('CONFIG_PATH',
                                              'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
                                              'resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')                                             
