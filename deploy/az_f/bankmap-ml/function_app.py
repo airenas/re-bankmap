@@ -27,7 +27,7 @@ class FunctionCfg:
                                              'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
                                              'resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')                                             
         self.subscription_id = os.getenv('SUBSCRIPTION_ID')
-        self.workspace = os.getenv('ML_WORKSPACE', "test")
+        self.workspace = os.getenv('ML_WORKSPACE', "bankmap")
         self.ml_component = os.getenv('ML_COMPONENT', "bankmap")
 
 
@@ -165,10 +165,14 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info(f"got request for {job_id}")
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
+    from azure.core.exceptions import ResourceNotFoundError
     try:
         status = get_status(job_id)
         res = {"status": status, "job_id": job_id}
         return json_resp(res, HTTPStatus.OK)
+    except ResourceNotFoundError as err:
+        logger.exception(err)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST) 
     except BaseException as err:
         logger.exception(err)
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR) 
@@ -181,9 +185,13 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info(f"got resulr request for {job_id}")
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
+    from azure.core.exceptions import ResourceNotFoundError
     try:
         res = get_result(job_id)
         return json_resp(res, HTTPStatus.OK)
+    except ResourceNotFoundError as err:
+        logger.exception(err)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)     
     except BaseException as err:
         logger.exception(err)
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)  
