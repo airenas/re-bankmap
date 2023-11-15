@@ -11,6 +11,6 @@ dependencies:
   - pip:
     - azure-functions==1.13.3
     - azure-storage-blob==12.13.0
-    - "git+https://github.com/airenas/re-bankmap.git@v0.2.276-beta#egg=bankmap"
+    - "git+https://github.com/airenas/re-bankmap.git@v0.2.277-beta#egg=bankmap"
     - mlflow== 2.4.1
     - azureml-mlflow==1.51.0
