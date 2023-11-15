@@ -52,7 +52,8 @@ def prepare_vend_sfs(df, v_data, accounts):
             continue
         _id = d['Vendor_No_']
         if e_str(_id) == '':
-            raise RuntimeError("no vendor_no {}".format(d))
+            logger.warn("no vendor_no {}".format(d))
+            continue
         vd = v_data[_id]
         res.append([LType.VEND.to_s(), _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
                     d['Due_Date'],
