@@ -39,17 +39,17 @@ class PaymentType(Enum):
 
     @staticmethod
     def from_s(s):
-        if s == "CRDT":
+        if s == "CRDT" or s == "Credit":
             return PaymentType.CRDT
-        if s == "DBIT":
+        if s == "DBIT" or s == "Debit":
             return PaymentType.DBIT
         raise Exception("Unknown doc type '{}'".format(s))
 
     def to_s(self):
         if self == PaymentType.CRDT:
-            return "CRDT"
+            return "Credit"
         if self == PaymentType.DBIT:
-            return "DBIT"
+            return "Debit"
         raise Exception("Unknown payment type '{}'".format(self))
 
 
