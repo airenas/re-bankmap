@@ -2,17 +2,18 @@ import base64
 import json
 import os
 import time
-import ulid
 from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
+import ulid
 from azure.functions import HttpMethod
 
 from bankmap.az.config import load_config_or_default
 from bankmap.az.zip import copy_data, save_extract_zip, upload_file, get_container_name
 from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
+
 
 # from azure.ai.ml import dsl, Input, Output
 
@@ -24,8 +25,8 @@ class FunctionCfg:
                                              'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
                                              'resourcegroups/DocuBank/workspaces/test/datastores/datawork/paths/{}.zip')
         self.config_path = os.getenv('CONFIG_PATH',
-                                             'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
-                                             'resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')                                             
+                                     'azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/'
+                                     'resourcegroups/DocuBank/workspaces/test/datastores/configs/paths/')
         self.subscription_id = os.getenv('SUBSCRIPTION_ID')
         self.workspace = os.getenv('ML_WORKSPACE', "bankmap")
         self.ml_component = os.getenv('ML_COMPONENT', "bankmap")
@@ -104,10 +105,10 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("company {}".format(company))
         cfg = load_config_or_default(company)
 
-        # TODO: no need to save to local storage    
+        # TODO: no need to save to local storage
         zip_bytes = req.get_body()
         data_dir, out_file, temp_dir = save_extract_zip(zip_bytes)
-        
+
         check_copy_data(cfg, out_file)
         check_copy_work_data(cfg, id, out_file)
         next_t = log_elapsed(start, "copy_to_storage", metrics)
@@ -143,14 +144,17 @@ def pass_to_ml(id: str, company: str):
     logger.info(f'output: {component.outputs}')
     next_t = log_elapsed(next_t, "init_pipeline_component", metrics)
 
-    from azure.ai.ml import dsl, Input, Output
+    from azure.ai.ml import dsl, Input
+
     @dsl.pipeline(compute=cfg.compute_cluster, description=f"Map pipeline for {company}")
     def map_pipeline(company, data, config_path):
         job = component(company=company, data=data, config_path=config_path)
         return {
             "output": job.outputs.output
         }
-    pl = map_pipeline(company=company, data=Input(type="uri_file", path=input_file), config_path=Input(type="uri_folder", path=cfg.config_path))
+
+    pl = map_pipeline(company=company, data=Input(type="uri_file", path=input_file),
+                      config_path=Input(type="uri_folder", path=cfg.config_path))
     next_t = log_elapsed(next_t, "init_pipeline", metrics)
     pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=f"map for {company}")
     logger.info(f'output: {pipeline_job.name}')
@@ -159,8 +163,8 @@ def pass_to_ml(id: str, company: str):
 
 
 @app.function_name(name="bankmap-status")
-@app.route(route="status/{jobID}", methods=[HttpMethod.GET]) 
-def map_function(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="status/{jobID}", methods=[HttpMethod.GET])
+def status_function(req: func.HttpRequest) -> func.HttpResponse:
     job_id = req.route_params.get('jobID')
     logger.info(f"got request for {job_id}")
     app_ver = get_version()
@@ -172,15 +176,15 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         return json_resp(res, HTTPStatus.OK)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST) 
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR) 
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 @app.function_name(name="bankmap-result")
-@app.route(route="result/{jobID}", methods=[HttpMethod.GET]) 
-def map_function(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="result/{jobID}", methods=[HttpMethod.GET])
+def result_function(req: func.HttpRequest) -> func.HttpResponse:
     job_id = req.route_params.get('jobID')
     logger.info(f"got resulr request for {job_id}")
     app_ver = get_version()
@@ -191,20 +195,20 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         return json_resp(res, HTTPStatus.OK)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)     
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)  
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 def get_client(cfg):
     logger.info(f"Workspace: {cfg.workspace}")
     logger.info(f"Subscription ID: {cfg.subscription_id}")
-    
+
     from azure.identity import DefaultAzureCredential
     credential = DefaultAzureCredential()
     credential.get_token("https://management.azure.com/.default")
-    
+
     from azure.ai.ml import MLClient
     # Get a handle to the workspace
     return MLClient(
@@ -215,13 +219,11 @@ def get_client(cfg):
     )
 
 
-
 def get_status(id: str):
     ml_client = get_client(FunctionCfg())
 
     retrieved_job = ml_client.jobs.get(id)
     return retrieved_job.status
-
 
 
 def get_result(id: str):

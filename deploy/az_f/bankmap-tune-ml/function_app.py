@@ -48,7 +48,7 @@ def get_version():
 def force_tune():
     v = os.getenv('FORCE_TUNE', default="").lower()
     return v == "1" or v == "true"
-    
+
 
 @app.function_name(name="HTTPTrigger")
 @app.route(route="tune/{blobName}")

@@ -1,14 +1,13 @@
-import os
 import argparse
-import mlflow
+import json
+import os
 import time
 
-import json
-from datetime import datetime
+import mlflow
 
 from bankmap.az.zip import save_extract_zip
 from bankmap.cfg import PredictionCfg
-from bankmap.entry_mapper import do_mapping, make_stats
+from bankmap.entry_mapper import do_mapping
 from bankmap.logger import logger
 
 
@@ -75,7 +74,7 @@ def main():
 
     res, ok = process(args.company, args.input_file, args.config_path)
     if ok:
-       save_res(res, args.company, args.output) 
+        save_res(res, args.company, args.output)
     else:
         mlflow.set_tag("LOG_STATUS", "FAILED")
         mlflow.set_tag("Error", res.error)
@@ -94,7 +93,7 @@ def get_version():
 def process(company: str, in_file: str, in_config_path: str):
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
-    
+
     start, metrics = time.time(), {}
     logger.info("got request")
 
