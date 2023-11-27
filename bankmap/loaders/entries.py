@@ -46,6 +46,8 @@ def load_bank_recognitions_map(file_name):
     res = {}
     data = df.to_dict('records')
     for d in data:
+        if not LType.supported(e_str(d['Bal__Account_Type'])):
+            continue
         no = e_str(d['Statement_External_Document_No_'])
         if no not in res:
             res[no] = Recognition(_type=e_str(d['Bal__Account_Type']), no=e_str(d['Bal__Account_No_']))

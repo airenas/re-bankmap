@@ -170,6 +170,10 @@ class LType(Enum):
             return LType.UNSET
         raise Exception("Unknown type {}".format(s))
 
+    @staticmethod
+    def supported(s):
+        return s == "Customer" or s == "Vendor" or s == "G/L Account" or s == "Bank Account"
+
     def to_s(self):
         if self == LType.CUST:
             return "Customer"
