@@ -11,7 +11,7 @@ Banko eilutes priskirti vienam iš 4 tipų:
 
 ir priskirti konkretų tiekėjo, kliento, BA, GL numerį 
 
-Galimas: 1 banko išrašas <---> 1 kl./tiek/bd/gl numeris DB
+Galimas: [0..n] banko išrašas <---> 1 kl./tiek/bd/gl numeris duomenų bazėje
 
 ## antrinis
 
