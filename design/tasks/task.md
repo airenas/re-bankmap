@@ -89,7 +89,7 @@ Sistema GL/BA/Tiekėjo šiai įmonei praktiškai neatpažinėja. Kiekvienai įmo
 
 GL:  177 įrašai, 175 atsisakė atpažinti, 2 atpažino teisingai
 
-Klientai: - 1482 įrašai, 42 atsisakė atpažinti, iš kitų 1410 padarė 9 klaidas
+Klientai: - 1452 įrašai, 42 atsisakė atpažinti, iš kitų 1410 padarė 9 klaidas
 
 
 SF priskyrimo tikslumas:
