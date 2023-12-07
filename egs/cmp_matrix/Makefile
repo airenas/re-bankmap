@@ -142,6 +142,14 @@ ${out_dir}/params.txt: ${out_dir}/entries_train.txt ${out_dir}/l_entries.txt ${o
 	mv $@_ $@
 tune: ${out_dir}/params.txt
 ############################################
+${out_dir}/entries_anonymized.txt: ${out_dir}/entries.txt
+	$(python_cmd) local/anonymize.py --f $^ > $@_
+	mv $@_ $@
+${out_dir}/l_entries_anonymized.txt: ${out_dir}/l_entries.txt
+	$(python_cmd) local/anonymize_le.py --f $^ > $@_
+	mv $@_ $@	
+anonymize: ${out_dir}/entries_anonymized.txt ${out_dir}/l_entries_anonymized.txt
+############################################
 clean:
 ifneq ($(force),1)	
 	@echo -n "Drop $(out_dir)? Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
@@ -151,3 +159,4 @@ endif
 clean/docs-predictions:
 	rm -f ${out_dir}/predicted.txt
 .EXPORT_ALL_VARIABLES:
+
