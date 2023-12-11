@@ -22,7 +22,7 @@ def load_config(company, path):
     file_name = "{}.json".format(company)
     fp = os.path.join(path, file_name)
     logger.info("load {}".format(fp))
-    with open(fp, 'r') as f:
+    with open(fp, 'rb') as f:
         data = f.read()
     logger.debug("data {}".format(str(data, "utf-8")))
     return PredictionCfg.from_dict(json.loads(str(data, "utf-8")))

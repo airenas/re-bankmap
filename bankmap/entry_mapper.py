@@ -260,7 +260,7 @@ if __name__ == "__main__":
             cfg = PredictionCfg.from_dict(dic)
         cfg_loaded = True
     except BaseException as err:
-        _ = err
+        print(err)
         cfg = PredictionCfg()
     mappings, info = do_mapping(sys.argv[1], cfg=cfg)
     print(json.dumps(info.get("metrics", {}), ensure_ascii=False, indent=2))
