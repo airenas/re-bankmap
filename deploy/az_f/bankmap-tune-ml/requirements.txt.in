@@ -5,5 +5,4 @@
 azure-functions==1.13.3
 azure-storage-blob==12.16.0
 azure-ai-ml==1.11.0
-# git+https://github.com/airenas/re-bankmap.git@v${version}#egg=bankmap
-git+https://github.com/airenas/re-bankmap.git@v0.2.270-beta#egg=bankmap
+git+https://github.com/airenas/re-bankmap.git@v${version}#egg=bankmap

@@ -32,7 +32,7 @@ enable/indexing:
 	func azure storage fetch-connection-string $(func_storage)
 ############################################
 deploy: _version requirements.txt
-	func azure functionapp publish $(func_name)
+	func azure functionapp publish $(func_name) --python
 .PHONY: deploy	
 requirements.txt: requirements.txt.in
 	cat $< | envsubst > $@	
