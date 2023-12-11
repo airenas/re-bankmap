@@ -10,6 +10,7 @@ import ulid
 from azure.functions import HttpMethod
 
 from bankmap.az.config import load_config_or_default
+from bankmap.az.name import fix_exp_name
 from bankmap.az.zip import copy_data, save_extract_zip, upload_file, get_container_name
 from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
@@ -156,7 +157,8 @@ def pass_to_ml(id: str, company: str):
     pl = map_pipeline(company=company, data=Input(type="uri_file", path=input_file),
                       config_path=Input(type="uri_folder", path=cfg.config_path))
     next_t = log_elapsed(next_t, "init_pipeline", metrics)
-    pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=f"map for {company}")
+    exp_name = fix_exp_name(f"map for {company}", max_len=50)
+    pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=exp_name)
     logger.info(f'output: {pipeline_job.name}')
     log_elapsed(next_t, "create_job", metrics)
     return pipeline_job.name, metrics

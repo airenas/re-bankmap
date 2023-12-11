@@ -1,15 +1,16 @@
 import json
 import os
-from http import HTTPStatus
 from datetime import datetime
+from http import HTTPStatus
 
 import azure.functions as func
 from azure.ai.ml import MLClient
 from azure.ai.ml import dsl, Input, Output
 from azure.identity import DefaultAzureCredential
-from bankmap.az.config import load_config_or_default
-from bankmap.cfg import PredictionCfg
 
+from bankmap.az.config import load_config_or_default
+from bankmap.az.name import fix_exp_name
+from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
 
 
@@ -125,6 +126,7 @@ def process(zipfile: str):
         }
 
     pl = pipeline(company=company, data=Input(type="uri_file", path=input_file))
-    pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=f"tune params for {company}")
+    pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
+                                                                                    max_len=50))
     logger.info(f'output: {pipeline_job.name}')
     return pipeline_job.name
