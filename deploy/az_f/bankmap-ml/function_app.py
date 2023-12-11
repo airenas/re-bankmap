@@ -103,7 +103,9 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     try:
         if company:
             company = base64.b64decode(company.encode('ascii')).decode('utf-8')
-        logger.info("company {}".format(company))
+            logger.info("company {}".format(company))
+            company = fix_exp_name(company, max_len=50)
+        logger.info("fixed company {}".format(company))
         cfg = load_config_or_default(company)
 
         # TODO: no need to save to local storage
