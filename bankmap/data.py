@@ -135,7 +135,8 @@ class DocType(Enum):
 
     @staticmethod
     def skip(s):
-        return s == "Mokėjimas" or s == "Payment" or s == "Reminder" or s == "Bill"
+        return (s == "Mokėjimas" or s == "Payment" or s == "Reminder" or s == "Bill" or s == "Prepayment"
+                or s == "Prepayment Refund")
 
     def to_s(self):
         if self == DocType.SF:
