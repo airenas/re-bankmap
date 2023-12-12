@@ -76,8 +76,8 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     names = pd.read_csv(vend_file_name, sep=',')
     logger.info("loaded sfs {} rows".format(len(names)))
 
-    c_d = {r['No_']: (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in names.to_dict('records')}
-    accounts_d = {r['Vendor_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records') if
+    c_d = {e_str(r['No_']): (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in names.to_dict('records')}
+    accounts_d = {e_str(r['Vendor_No_']): r['Bank_Account_No_'] for r in accounts.to_dict('records') if
                   e_str(r['Vendor_No_']) != ''}
 
     return prepare_vend_sfs(ledgers, c_d, accounts_d)
