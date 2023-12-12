@@ -149,13 +149,16 @@ def load_lines(file_name):
             continue
         found.add(ext_id)
         credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
-        values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
+        try:
+            values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
                   d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
                   e_float(d['N_Amt']), non_empty_str(d['N_BookDt_Dt'], d['N_BookDt_DtTm']), iban(d),
                   d['N_ND_TD_Refs_EndToEndId'], "",
                   e_currency(d['Acct_Ccy']),
                   "",
                   d['External_Document_No_'], '', d['Bank_Account_No_']]
+        except BaseException as err:
+            raise RuntimeError("wrong data {}: {}".format(d, str(err)))
         res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
     # stable sort by date
     sr = [v for v in enumerate(res)]
