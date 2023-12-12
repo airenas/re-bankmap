@@ -50,8 +50,8 @@ def prepare_vend_sfs(df, v_data, accounts):
         dt = e_str(d['Document_Type'])
         if not dt or DocType.skip(dt):
             continue
-        _id = d['Vendor_No_']
-        if e_str(_id) == '':
+        _id = e_str(d['Vendor_No_'])
+        if _id == '':
             logger.warn("no vendor_no {}".format(d))
             continue
         vd = v_data[_id]
