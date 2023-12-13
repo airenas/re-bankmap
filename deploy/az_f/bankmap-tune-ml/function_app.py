@@ -4,6 +4,7 @@ from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
+import backoff
 from azure.ai.ml import MLClient
 from azure.ai.ml import dsl, Input, Output
 from azure.identity import DefaultAzureCredential
@@ -126,7 +127,21 @@ def process(zipfile: str):
         }
 
     pl = pipeline(company=company, data=Input(type="uri_file", path=input_file))
-    pipeline_job = ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
-                                                                                    max_len=50))
+
+    fc = 0
+
+    def should_retry(exception):
+        global fc
+        if exception is not None:
+            fc += 1
+            logger.warning(f'fail {fc}, exception: {exception}')
+        return isinstance(exception, Exception)
+
+    @backoff.on_predicate(backoff.expo, should_retry, max_tries=3)
+    def invoke_ml():
+        return ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
+                                                                                max_len=50))
+
+    pipeline_job = invoke_ml()
     logger.info(f'output: {pipeline_job.name}')
     return pipeline_job.name
