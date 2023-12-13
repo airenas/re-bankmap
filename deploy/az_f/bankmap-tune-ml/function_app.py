@@ -134,14 +134,17 @@ def process(zipfile: str):
         nonlocal fc
         if isinstance(exception, Exception):
             fc += 1
-            logger.warning(f'fail {fc}, exception: {exception}')
+            logger.exception(f'fail: {fc}, exception: {exception}')
         return isinstance(exception, Exception)
 
-    @backoff.on_predicate(backoff.expo, should_retry, max_tries=3)
+    @backoff.on_predicate(backoff.expo, should_retry, max_tries=5)
     def invoke_ml():
         return ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
                                                                                 max_len=50))
 
     pipeline_job = invoke_ml()
+    if fc > 0:
+        logger.info(f'done after failing {fc} times')
+
     logger.info(f'output: {pipeline_job.name}')
     return pipeline_job.name
