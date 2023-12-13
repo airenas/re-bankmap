@@ -131,8 +131,8 @@ def process(zipfile: str):
     fc = 0
 
     def should_retry(exception):
-        global fc
-        if exception is not None:
+        nonlocal fc
+        if isinstance(exception, Exception):
             fc += 1
             logger.warning(f'fail {fc}, exception: {exception}')
         return isinstance(exception, Exception)
