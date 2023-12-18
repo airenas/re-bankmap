@@ -98,7 +98,7 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
 def param_names():
     return ["name_eq", "name_sim", "iban_match",
             "ext_doc", "ext_doc_sim", "due_date", "entry_date", "amount_match", "has_past", "curr_match",
-            "payment_match"]
+            "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob"]
 
 
 # sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])

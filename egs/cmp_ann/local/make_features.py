@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from bankmap.data import Entry, App, Arena, LEntry, Ctx
+from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.similarity.similarities import prepare_history_map
 from egs.cmp_ann.local.similarity import similarity
@@ -31,6 +32,7 @@ class Feature:
 def get_features(ctx, arena, entry: Entry, entry_dic):
     dt = entry.date
     arena.move(dt)
+    ctx.stats.move(dt)
     arr_v = []
     arr_it = []
 
@@ -97,7 +99,8 @@ def main(argv):
         l_entries = [LEntry(_l) for _l in ledgers.to_dict('records')]
         apps = [App(_i) for _i in apps_t.to_dict('records')]
         data.arena = Arena(l_entries, apps)
-        data.ctx = Ctx(history_days=args.history)
+        stats = Stats(entries)
+        data.ctx = Ctx(history_days=args.history, stats=stats)
         logger.debug("init ended")
 
     threads = 12
