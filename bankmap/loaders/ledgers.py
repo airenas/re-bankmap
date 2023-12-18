@@ -14,7 +14,7 @@ def prepare_cust_sfs(df, c_data, accounts):
         dt = e_str(d['Document_Type'])
         if not dt or DocType.skip(dt):
             continue
-        _id = d['Customer_No_']
+        _id = e_str(d['Customer_No_'])
         cd = c_data[_id]
         res.append([LType.CUST.to_s(), _id, cd[0], accounts.get(_id, ''), d['Document_No_'],
                     d['Due_Date'], d['Document_Date'],
@@ -30,7 +30,7 @@ def prepare_cust_sfs(df, c_data, accounts):
 # returns dataframe
 def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
     logger.info("loading sfs {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',')
+    ledgers = pd.read_csv(ledgers_file_name, sep=',', dtype={'Customer_No_': str})
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
     accounts = pd.read_csv(ba_file_name, sep=',')
     logger.info("loaded ba {} rows".format(len(accounts)))
@@ -69,14 +69,15 @@ def prepare_vend_sfs(df, v_data, accounts):
 # returns dataframe
 def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     logger.info("loading sfs {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',')
+    ledgers = pd.read_csv(ledgers_file_name, sep=',', dtype={'Vendor_No_': str})
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
     accounts = pd.read_csv(ba_file_name, sep=',')
     logger.info("loaded ba {} rows".format(len(accounts)))
     names = pd.read_csv(vend_file_name, sep=',')
     logger.info("loaded sfs {} rows".format(len(names)))
 
-    c_d = {e_str(r['No_']): (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in names.to_dict('records')}
+    c_d = {e_str(r['No_']): (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in
+           names.to_dict('records')}
     accounts_d = {e_str(r['Vendor_No_']): r['Bank_Account_No_'] for r in accounts.to_dict('records') if
                   e_str(r['Vendor_No_']) != ''}
 
@@ -106,7 +107,7 @@ def load_ba(ledgers_file_name):
     res = []
     data = df.to_dict('records')
     for d in data:
-        _id = d['No_']
+        _id = e_str(d['No_'])
         res.append([LType.BA.to_s(), _id, d['Search_Name'], d['IBAN'], '',
                     '',
                     '', '', 0, e_currency(d['Currency_Code']),

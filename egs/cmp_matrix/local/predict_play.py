@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from bankmap.data import LEntry, App, Arena, Entry, Ctx
+from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
 
@@ -22,6 +23,7 @@ def get_best_account(ctx, arena, row, entry_dict):
     bv, be, b = -1, None, []
     dt = row.date
     arena.move(dt)
+    ctx.stats.move(dt)
 
     def check(e):
         nonlocal bv, be, b
@@ -88,7 +90,8 @@ def main(argv):
         l_entries = [LEntry(_l) for _l in ledgers.to_dict('records')]
         apps = [App(_i) for _i in apps_t.to_dict('records')]
         data.arena = Arena(l_entries, apps)
-        data.ctx = Ctx(history_days=args.history)
+        stats = Stats(entries)
+        data.ctx = Ctx(history_days=args.history, stats=stats)
         logger.debug("init ended")
 
     threads = 12

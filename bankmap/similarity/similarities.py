@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from bankmap.data import PaymentType, LEntry, Entry, LType, DocType, Ctx
+from bankmap.history_stats import stat_target_key
 from bankmap.logger import logger
 from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
@@ -71,7 +72,7 @@ def cached_name_sim(ctx, nl, ne):
     return res
 
 
-def similarity(ctx: Ctx, ledger, entry, prev_entries):
+def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res = []
     nl = ledger.name
     ne = entry.who
@@ -86,15 +87,26 @@ def similarity(ctx: Ctx, ledger, entry, prev_entries):
     res.append(has_past_transaction(ctx, ledger.id, prev_entries, entry))
     res.append(1 if ledger.currency.casefold() == entry.currency.casefold() else 0)
     res.append(1 if payment_match(ledger, entry) else 0)
+    res.append(ctx.stats.who.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.iban.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.iban_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.who_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
 
     return res
 
 
 def param_names():
-    return ["name_eq", "name_sim", "iban_match",
-            "ext_doc", "ext_doc_sim", "due_date", "entry_date", "amount_match", "has_past", "curr_match",
-            "payment_match"]
+    return ["name_eq", "name_sim", "iban_match", "ext_doc", "ext_doc_sim",
+            "due_date", "entry_date", "amount_match", "has_past", "curr_match",
+            "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob"]
 
+
+sim_imp_S1 = np.array(
+    [
+        0.58871234, 0.36948084, 0.17431711, 0.33272096, 0.09060666,
+        0.22587429, 0.08930895, 0.29486793, 0.0233124, 0.46856608,
+        0.2590398, 0.07337495, 0.20706663, 0.36512314, 0.18762794
+    ])
 
 # sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
 
@@ -119,14 +131,12 @@ sim_imp_H = np.array(
         0.004099692328662934, 0.06602886071574558, 0.059467572404456284, 0.8381943803507718, 0.22441089863777464,
         0.49163849484216277
     ])
-
 sim_imp_H3 = np.array(
     [
         0.3942912413788648, 0.2182280759544389, 0.2083965633207662, 0.2760959484156407, 0.14594665067132784,
         0.0001649041610409126, 0.0643040483489635, 0.17058212169293785, 0.8209759515680628, 0.03116974205230305,
-        0.6862174516242097
+        0.6862174516242097, 0.3, 0.3, 0.3, 0.3
     ])
-
 sim_imp_U2 = np.array(
     [
         0.4374178397438139, 0.8320182667619358, 0.34839284318279357, 0.2853718866008894, 0.5975536488446007,
@@ -134,7 +144,7 @@ sim_imp_U2 = np.array(
         0.9245665686233056
     ])
 
-sim_imp = sim_imp_H3
+sim_imp = sim_imp_S1
 
 
 def sim_val(v):

@@ -36,7 +36,7 @@ class PredictionCfg:
 
     @classmethod
     def version(cls):
-        return 1
+        return 2
 
     @classmethod
     def from_dict(cls, param):

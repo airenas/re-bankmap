@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 
 from bankmap.data import Entry, LEntry, LType, App, Arena, Ctx
+from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
 from bankmap.similarity.similarities import sim_val, similarity, param_names, sim_imp, prepare_history_map
@@ -55,9 +56,11 @@ def main(argv):
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     entry_dic = prepare_history_map(entries)
-    ctx = Ctx(history_days=args.history)
+    stats = Stats(entries)
+    ctx = Ctx(history_days=args.history, stats=stats)
 
     row = entries[int(args.i)]
+    stats.move(row.date)
     logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
     logger.info("Msg       : {}".format(row.msg))
     logger.info("Wanted    : {}".format(row.doc_ids))
