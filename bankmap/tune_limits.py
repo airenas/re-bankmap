@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, Ctx, LType, Arena, App
+from bankmap.history_stats import Stats
 from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
@@ -19,6 +20,7 @@ def get_best_account(ctx, arena, entry, entry_dict):
     bv, be = -1, None
     dt = entry.date
     arena.move(dt)
+    ctx.stats.move(dt)
 
     def check(e):
         nonlocal bv, be
@@ -121,6 +123,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     historical_entries = prepare_history_map(entries)
     log_elapsed(start_t, "prepare_entries")
     arena = Arena(l_entries, apps)
+    stats = Stats(entries)
     log_elapsed(start_t, "prepare_arena")
     start_t = log_elapsed(start, "prepare_total")
 
@@ -129,7 +132,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     logger.info("predicting last {} entries".format(len(test)))
     res_info["tune_count"] = len(test)
     cmps = []
-    ctx = Ctx()
+    ctx = Ctx(stats=stats)
     pi, pr = 0, 0
     for i, entry in enumerate(test):
         be, bv = get_best_account(ctx, arena, entry, historical_entries)

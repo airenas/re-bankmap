@@ -96,10 +96,17 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
 
 
 def param_names():
-    return ["name_eq", "name_sim", "iban_match",
-            "ext_doc", "ext_doc_sim", "due_date", "entry_date", "amount_match", "has_past", "curr_match",
+    return ["name_eq", "name_sim", "iban_match", "ext_doc", "ext_doc_sim",
+            "due_date", "entry_date", "amount_match", "has_past", "curr_match",
             "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob"]
 
+
+sim_imp_S1 = np.array(
+    [
+        0.56516384, 0.35470161, 0.16734443, 0.31941212, 0.08698239,
+        0.21683932, 0.08573659, 0.28307321, 0.0223799, 0.44982344,
+        0.24867821, 0.07043995, 0.19878396, 0.35051822, 0.18012282
+    ])
 
 # sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
 
@@ -124,14 +131,12 @@ sim_imp_H = np.array(
         0.004099692328662934, 0.06602886071574558, 0.059467572404456284, 0.8381943803507718, 0.22441089863777464,
         0.49163849484216277
     ])
-
 sim_imp_H3 = np.array(
     [
         0.3942912413788648, 0.2182280759544389, 0.2083965633207662, 0.2760959484156407, 0.14594665067132784,
         0.0001649041610409126, 0.0643040483489635, 0.17058212169293785, 0.8209759515680628, 0.03116974205230305,
         0.6862174516242097, 0.3, 0.3, 0.3, 0.3
     ])
-
 sim_imp_U2 = np.array(
     [
         0.4374178397438139, 0.8320182667619358, 0.34839284318279357, 0.2853718866008894, 0.5975536488446007,
@@ -139,7 +144,7 @@ sim_imp_U2 = np.array(
         0.9245665686233056
     ])
 
-sim_imp = sim_imp_H3
+sim_imp = sim_imp_S1
 
 
 def sim_val(v):

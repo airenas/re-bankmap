@@ -2,11 +2,13 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timedelta
 
 import numpy
 
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, LType, Ctx, PredictData, TextToAccount
+from bankmap.history_stats import Stats
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.loaders.text_to_account import load_text_to_accounts
@@ -210,6 +212,10 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     log_elapsed(start_t, "prepare_entries")
+    stats = Stats(entries)
+    stats.move(datetime.now() + timedelta(days=1))
+    logger.info("move stats")
+    ctx = Ctx(stats=stats)
     pd = PredictData(gl_ba=gl_ba, sfs=sfs, historical_entries=prepare_history_map(entries),
                      text_to_account_map=text_to_account_map)
     log_elapsed(start_t, "prepare_entries")
@@ -218,7 +224,6 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     logger.warning("predicting...")
     test = new_entries
     predict_res = []
-    ctx = Ctx()
     pi, pr, pr_tta, sims = 0, 0, 0, []
     for entry in test:
         e_res = predict_entry(ctx, pd, entry, cfg)
