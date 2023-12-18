@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
 from bankmap.data import Entry, LEntry, App, Arena, Ctx
+from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_imp, prepare_history_map
 
@@ -15,6 +16,7 @@ from bankmap.similarity.similarities import similarity, sim_imp, prepare_history
 def calc_sims(ctx, arena, row, entry_dict):
     dt = row.date
     arena.move(dt)
+    ctx.stats.move(dt)
 
     els = []
     sims = []
@@ -120,10 +122,12 @@ def main(argv):
     entry_dic = prepare_history_map(entries)
 
     mtrx = []
-    ctx = Ctx(history_days=args.history)
+    stats = Stats(entries)
+    ctx = Ctx(history_days=args.history, stats=stats)
     with tqdm(desc="preparing train", total=len(X)) as pbar:
         for i in range(len(X)):
             pbar.update(1)
+
             mtrx.append(calc_sims(ctx, arena, X[i], entry_dic))
 
     model = Selector(mtrx)
@@ -148,7 +152,12 @@ def main(argv):
         "has_past": hp.uniform("has_past", 0, 1),
         "curr_match": hp.uniform("curr_match", 0, 1),
         "payment_match": hp.uniform("payment_match", 0, 1),
+        "hist_who_prob": hp.uniform("hist_who_prob", 0, 1),
+        "hist_iban_prob": hp.uniform("hist_iban_prob", 0, 1),
+        "hist_iban_msgc_prob": hp.uniform("hist_iban_msgc_prob", 0, 1),
+        "hist_who_msgc_prob": hp.uniform("hist_who_msgc_prob", 0, 1),
     }
+
     scores = []
 
     f = open(args.out, "w")

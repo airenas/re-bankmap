@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from bankmap.data import PaymentType, LEntry, Entry, LType, DocType, Ctx
+from bankmap.history_stats import stat_target_key
 from bankmap.logger import logger
 from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
@@ -71,7 +72,7 @@ def cached_name_sim(ctx, nl, ne):
     return res
 
 
-def similarity(ctx: Ctx, ledger, entry, prev_entries):
+def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res = []
     nl = ledger.name
     ne = entry.who
@@ -86,6 +87,10 @@ def similarity(ctx: Ctx, ledger, entry, prev_entries):
     res.append(has_past_transaction(ctx, ledger.id, prev_entries, entry))
     res.append(1 if ledger.currency.casefold() == entry.currency.casefold() else 0)
     res.append(1 if payment_match(ledger, entry) else 0)
+    res.append(ctx.stats.who.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.iban.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.iban_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
+    res.append(ctx.stats.who_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
 
     return res
 
@@ -124,7 +129,7 @@ sim_imp_H3 = np.array(
     [
         0.3942912413788648, 0.2182280759544389, 0.2083965633207662, 0.2760959484156407, 0.14594665067132784,
         0.0001649041610409126, 0.0643040483489635, 0.17058212169293785, 0.8209759515680628, 0.03116974205230305,
-        0.6862174516242097
+        0.6862174516242097, 0.3, 0.3, 0.3, 0.3
     ])
 
 sim_imp_U2 = np.array(

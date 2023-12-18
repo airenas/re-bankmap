@@ -12,9 +12,10 @@ time_parser = parser()
 
 
 class Ctx:
-    def __init__(self, history_days: int = None):
+    def __init__(self, history_days: int = None, stats=None):
         self.name_sim_cache = {}
         self.history = timedelta(days=history_days) if history_days is not None else None
+        self.stats = stats
 
 
 class App:
@@ -73,6 +74,7 @@ class Entry:
         self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
         self.doc_ids = e_str(row['RecDocs'])
         self.rec_type = LType.from_s(e_str(row['RecType']))
+        self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
