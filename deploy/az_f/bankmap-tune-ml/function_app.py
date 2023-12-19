@@ -131,11 +131,12 @@ def process(zipfile: str):
     fc = 0
 
     def should_retry(exception):
+        logger.info(f'retry output: {exception}')
         nonlocal fc
-        if isinstance(exception, Exception):
+        if isinstance(exception, BaseException):
             fc += 1
             logger.exception(f'fail: {fc}, exception: {exception}')
-        return isinstance(exception, Exception)
+        return isinstance(exception, BaseException)
 
     @backoff.on_predicate(backoff.expo, should_retry, max_tries=5)
     def invoke_ml():
