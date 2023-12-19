@@ -50,9 +50,6 @@ class Stats:
         self.iban_msgc = Stat(entries=entries, key_func=iban_msgc_stat_key)
         self.who_msgc = Stat(entries=entries, key_func=who_msgc_stat_key)
 
-
-        pass
-
     def move(self, dt):
         self.who.move(dt)
         self.iban.move(dt)
