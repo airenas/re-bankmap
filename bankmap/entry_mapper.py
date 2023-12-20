@@ -15,7 +15,7 @@ from bankmap.loaders.text_to_account import load_text_to_accounts
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
 from bankmap.predict.text_to_account import map_text_to_account
-from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
+from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map, param_names
 from bankmap.utils.utils import empty_if_n, str_date
 
 text_to_account_type_str = "Text to Account"
@@ -82,6 +82,10 @@ def add_alternatives(cfg, pred, was):
     return alt
 
 
+def prepare_sims(similarities):
+    return dict(zip(param_names(), similarities))
+
+
 def predict_entry(ctx, pd, entry, cfg):
     logger.debug("Recognizing: {}, {}, {}".format(entry.date, entry.amount, entry.ext_id))
     pred = []
@@ -114,7 +118,7 @@ def predict_entry(ctx, pd, entry, cfg):
                 recognized = None
         if "main" not in res:
             res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
-                           "confidence_score": cs, "type": "Similarity"}
+                           "confidence_score": cs, "type": "Similarity", "details": prepare_sims(e["sim"])}
             was.add(recognized.id)
             logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
                                                                                 recognized.type.to_s()))
