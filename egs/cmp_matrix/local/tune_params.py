@@ -10,7 +10,7 @@ from tqdm import tqdm
 from bankmap.data import Entry, LEntry, App, Arena, Ctx
 from bankmap.history_stats import Stats
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_imp, prepare_history_map
+from bankmap.similarity.similarities import similarity, sim_imp, prepare_history_map, param_names
 
 
 def calc_sims(ctx, arena, row, entry_dict):
@@ -62,21 +62,8 @@ class Selector:
 
     def get_params(self, params):
         out = np.array(sim_imp, copy=True)
-        out[0] = params["name_eq"]
-        out[1] = params["name_sim"]
-        out[2] = params.get("iban_match", out[2])
-        out[3] = params.get("ext_doc", out[3])
-        out[4] = params.get("ext_doc_sim", out[4])
-        out[5] = params.get("due_date", out[5])
-        out[6] = params.get("entry_date", out[6])
-        out[7] = params.get("amount_match", out[7])
-        out[8] = params.get("has_past", out[8])
-        out[9] = params.get("curr_match", out[8])
-        out[10] = params.get("payment_match", out[10])
-        out[11] = params.get("hist_who_prob", out[11])
-        out[12] = params.get("hist_iban_prob", out[12])
-        out[13] = params.get("hist_iban_msgc_prob", out[13])
-        out[14] = params.get("hist_who_msgc_prob", out[13])
+        for i, v in enumerate(param_names()):
+            out[i] = params.get(v, out[i])
         return out
 
 
@@ -144,23 +131,7 @@ def main(argv):
 
     model_v = Selector(mtrx_v)
 
-    param_grid = {
-        "name_eq": hp.uniform("name_eq", 0, 1),
-        "name_sim": hp.uniform("name_sim", 0, 1),
-        "iban_match": hp.uniform("iban_match", 0, 1),
-        "ext_doc": hp.uniform("ext_doc", 0, 1),
-        "ext_doc_sim": hp.uniform("ext_doc_sim", 0, 1),
-        "due_date": hp.uniform("due_date", 0, 1),
-        "entry_date": hp.uniform("entry_date", 0, 1),
-        "amount_match": hp.uniform("amount_match", 0, 1),
-        "has_past": hp.uniform("has_past", 0, 1),
-        "curr_match": hp.uniform("curr_match", 0, 1),
-        "payment_match": hp.uniform("payment_match", 0, 1),
-        "hist_who_prob": hp.uniform("hist_who_prob", 0, 1),
-        "hist_iban_prob": hp.uniform("hist_iban_prob", 0, 1),
-        "hist_iban_msgc_prob": hp.uniform("hist_iban_msgc_prob", 0, 1),
-        "hist_who_msgc_prob": hp.uniform("hist_who_msgc_prob", 0, 1),
-    }
+    param_grid = {v: hp.uniform(v, 0, 1) for v in param_names()}
 
     scores = []
 

@@ -84,7 +84,7 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res.append(date_sim(ledger.due_date, entry.date))
     res.append(date_sim(entry.date, ledger.doc_date))
     res.append(amount_match(ledger, entry))
-    res.append(has_past_transaction(ctx, ledger.id, prev_entries, entry))
+    # res.append(has_past_transaction(ctx, ledger.id, prev_entries, entry))
     res.append(1 if ledger.currency.casefold() == entry.currency.casefold() else 0)
     res.append(1 if payment_match(ledger, entry) else 0)
     res.append(ctx.stats.who.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
@@ -97,15 +97,22 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
 
 def param_names():
     return ["name_eq", "name_sim", "iban_match", "ext_doc", "ext_doc_sim",
-            "due_date", "entry_date", "amount_match", "has_past", "curr_match",
+            "due_date", "entry_date", "amount_match", "curr_match",
             "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob"]
 
 
 sim_imp_S1 = np.array(
     [
         0.58871234, 0.36948084, 0.17431711, 0.33272096, 0.09060666,
-        0.22587429, 0.08930895, 0.29486793, 0.0233124, 0.46856608,
+        0.22587429, 0.08930895, 0.29486793, 0.46856608,
         0.2590398, 0.07337495, 0.20706663, 0.36512314, 0.18762794
+    ])
+
+sim_imp_H1 = np.array(
+    [
+        0.8628683352824896, 0.4119600389536562, 0.6448816283309591, 0.8220992872946082, 0.6091990029424436,
+        0.04003457024516763, 0.03379346086996538, 0.11086513462825098, 0.5701585268600046,
+        0.003388514260351194, 0.49816499132678915, 0.9610704617749053, 0.7178763016256616, 0.9949890908807503
     ])
 
 # sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
