@@ -52,21 +52,21 @@ def force_tune():
     return v == "1" or v == "true"
 
 
-@app.function_name(name="HTTPTrigger")
-@app.route(route="tune/{blobName}")
-def http_start(req: func.HttpRequest):
-    blob_name = req.route_params.get('blobName')
-    logger.info(f"Python blob trigger function processed blob {blob_name}")
-    try:
-        p_name = process(container + "/" + blob_name)
-        res = {"job_name": p_name}
-        return func.HttpResponse(body=json.dumps(res, ensure_ascii=False), status_code=int(HTTPStatus.OK),
-                                 mimetype="application/json")
-    except BaseException as err:
-        logger.exception(err)
-        return func.HttpResponse(body=json.dumps(str(err), ensure_ascii=False),
-                                 status_code=int(HTTPStatus.INTERNAL_SERVER_ERROROK),
-                                 mimetype="application/json")
+# @app.function_name(name="HTTPTrigger")
+# @app.route(route="tune/{blobName}")
+# def http_start(req: func.HttpRequest):
+#     blob_name = req.route_params.get('blobName')
+#     logger.info(f"Python blob trigger function processed blob {blob_name}")
+#     try:
+#         p_name = process(container + "/" + blob_name)
+#         res = {"job_name": p_name}
+#         return func.HttpResponse(body=json.dumps(res, ensure_ascii=False), status_code=int(HTTPStatus.OK),
+#                                  mimetype="application/json")
+#     except BaseException as err:
+#         logger.exception(err)
+#         return func.HttpResponse(body=json.dumps(str(err), ensure_ascii=False),
+#                                  status_code=int(HTTPStatus.INTERNAL_SERVER_ERROROK),
+#                                  mimetype="application/json")
 
 
 @app.function_name(name="BlobTrigger")
