@@ -228,8 +228,16 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     logger.warning("predicting...")
     test = new_entries
     predict_res = []
-    pi, pr, pr_tta, sims = 0, 0, 0, []
+    pi, pr, pr_tta, sims, skip_old = 0, 0, 0, [], 0
+
+    old_limit = None
+    if cfg.skip_older_than_days > 0:
+        old_limit = datetime.now() - timedelta(days=cfg.skip_older_than_days)
+        res_info["skip_old_days"] = cfg.skip_older_than_days
     for entry in test:
+        if old_limit and entry.date < old_limit:
+            skip_old += 1
+            continue
         e_res = predict_entry(ctx, pd, entry, cfg)
         main_pred = e_res.get("main")
         if e_res and main_pred:
@@ -238,6 +246,12 @@ def do_mapping(data_dir, cfg: PredictionCfg):
             sims.append(main_pred.get("similarity", 0))
         predict_res.append(e_res)
         pi += 1
+
+        elapsed_time = time.time() - start
+        if cfg.timeout_sec and 0 < cfg.timeout_sec < elapsed_time:
+            raise TimeoutError(f"Script stopped after running more that {cfg.timeout_sec} s")
+
+    res_info["skipped_old"] = skip_old
     res_info["recommended"] = pr
     res_info["recommended_tta"] = pr_tta
     log_elapsed(start_t, "predicting")

@@ -18,7 +18,9 @@ class PredictionCfg:
                  tune_count=None,
                  tune_date=None,
                  version=0,
-                 text_map_limit=2.0):
+                 text_map_limit=2.0,
+                 timeout_sec=3600,
+                 skip_older_than_days=60):
         self.limit = limit
         self.limits = limits
         self.tops = top_best
@@ -29,6 +31,8 @@ class PredictionCfg:
         self.tune_date: datetime.datetime = get_date(tune_date)
         self.version = version
         self.text_map_limit = text_map_limit
+        self.timeout_sec = timeout_sec
+        self.skip_older_than_days = skip_older_than_days
 
     @classmethod
     def default(cls, company):
@@ -52,6 +56,8 @@ class PredictionCfg:
             "tune_count": self.tune_count,
             "version": self.version,
             "text_map_limit": self.text_map_limit,
+            "timeout_sec": self.timeout_sec,
+            "skip_older_than_days": self.skip_older_than_days
         }
         if self.next_train:
             res["next_train"] = self.next_train.isoformat()
