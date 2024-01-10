@@ -53,12 +53,12 @@ def force_tune():
 
 
 @app.function_name(name="LiveTimer")
-@app.schedule(schedule="0 * * * *",
-              arg_name="liveTimer",
-              run_on_startup=True)
-def test_function(live_timer: func.TimerRequest) -> None:
+@app.schedule(schedule="0 0 * * * *", arg_name="live_timer", run_on_startup=False)
+def timer_function(live_timer: func.TimerRequest) -> None:
     now = datetime.now()
     logger.info(f'Python Live timer ran at {now}')
+    if live_timer.past_due:
+        logger.info('The timer is past due!')
 
 
 @app.function_name(name="HTTPTrigger")
@@ -82,7 +82,7 @@ def http_start(req: func.HttpRequest):
 @app.blob_trigger(arg_name="zipfile",
                   path=container + "/{name}.zip",
                   connection="STORAGE_CONNECTION_STRING")
-def test_function(zipfile: func.InputStream):
+def blob_function(zipfile: func.InputStream):
     now = datetime.now()
     logger.info(f"Python blob trigger function processing blob {zipfile.name}. Run at {now}")
     try:
