@@ -75,9 +75,12 @@ def main():
     res, ok = process(args.company, args.input_file, args.config_path)
     if ok:
         save_res(res, args.company, args.output)
+        sizes = res.get("info", {}).get("sizes", {})
+        mlflow.set_tag("Lines", sizes.get("Bank_Statement_Lines", 0))
+        mlflow.set_tag("Recommended", sizes.get("recommended", 0))
     else:
         mlflow.set_tag("LOG_STATUS", "FAILED")
-        mlflow.set_tag("Error", res.error)
+        mlflow.set_tag("Error", res.get('error', "Unknown error"))
     mlflow.end_run()
 
 
