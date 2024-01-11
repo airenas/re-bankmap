@@ -76,8 +76,9 @@ def main():
     if ok:
         save_res(res, args.company, args.output)
         sizes = res.get("info", {}).get("sizes", {})
-        mlflow.set_tag("Lines", sizes.get("Bank_Statement_Lines", 0))
-        mlflow.set_tag("Recommended", sizes.get("recommended", 0))
+        mlflow.log_metric("lines", sizes.get("Bank_Statement_Lines", 0))
+        mlflow.log_metric("recommended", sizes.get("recommended", 0))
+        mlflow.log_metric("recommended_percent", sizes.get("recommended_percent", 0))
     else:
         mlflow.set_tag("LOG_STATUS", "FAILED")
         mlflow.set_tag("Error", res.get('error', "Unknown error"))
