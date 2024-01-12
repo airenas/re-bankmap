@@ -78,10 +78,13 @@ def main():
         sizes = res.get("info", {}).get("sizes", {})
         mlflow.log_metric("lines", sizes.get("Bank_Statement_Lines", 0))
         mlflow.log_metric("recommended", sizes.get("recommended", 0))
+        mlflow.log_metric("skipped_old", sizes.get("skipped_old", 0))
         mlflow.log_metric("recommended_percent", sizes.get("recommended_percent", 0))
     else:
-        mlflow.set_tag("LOG_STATUS", "FAILED")
-        mlflow.set_tag("Error", res.get('error', "Unknown error"))
+        err_str = res.get('error', "Unknown error")
+        mlflow.set_tag("Error", err_str)
+        mlflow.set_tag("LOG_STATUS", "FAILED")   # this does not work
+        raise RuntimeError(err_str)
     mlflow.end_run()
 
 
@@ -97,6 +100,7 @@ def get_version():
 def process(company: str, in_file: str, in_config_path: str):
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
+    mlflow.set_tag("version", app_ver)
 
     start, metrics = time.time(), {}
     logger.info("got request")
