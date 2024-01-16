@@ -76,29 +76,28 @@ Pvz.: įrašas (2023 12 01) -> panašus įrašas (2023 11 11) -> RecAcount -> Ti
 
 ## Rezultatai dabar
 
-Pirminio uždavinio šiems duomenims (paskutiniai 2000 įrašų)
+Pirminio uždavinio šiems duomenims (paskutiniai 2714 įrašų)
 
 ```bash
-Acc GL             : 1.000 (0/2)	rejected: 0.99 175/177
-Acc BA             : 1.000 (0/9)	rejected: 0.87 62/71
-Acc Vendor         : 1.000 (0/25)	rejected: 0.67 51/76
-Acc Customer       : 0.994 (9/1410)	rejected: 0.03 42/1452
-
+Acc BA             : 0.659 (14/41)	rejected: 0.59 59/100
+Acc GL             : 0.995 (1/185)	rejected: 0.24 60/245
+Acc Customer       : 0.999 (2/2041)	rejected: 0.09 205/2246
+Acc Vendor         : 0.955 (2/44)	rejected: 0.61 68/112
 ```
-Sistema GL/BA/Tiekėjo šiai įmonei praktiškai neatpažinėja. Kiekvienai įmonei pagal istorinius duomenis nustatomi atpažinimo slenksčiai kiekvienam tipui. 
+Sistema BA/Tiekėjo šiai įmonei praktiškai neatpažinėja. Kiekvienai įmonei pagal istorinius duomenis nustatomi atpažinimo slenksčiai kiekvienam tipui. 
 
-GL:  177 įrašai, 175 atsisakė atpažinti, 2 atpažino teisingai
+GL:  245 įrašai, 60 atsisakė atpažinti, 184 iš likusių 185 atpažino teisingai
 
-Klientai: - 1452 įrašai, 42 atsisakė atpažinti, iš kitų 1410 padarė 9 klaidas
+Klientai: - 2246 įrašai, 205 atsisakė atpažinti, iš kitų 2041 padarė 2 klaidas
 
 
 SF priskyrimo tikslumas:
 ```
-Acc all 0.947 (99/1883) s:45, i:35, d:19	(rejected 63, no doc: 298)
+Acc all 0.951 (128/2618) s:51, i:55, d:22	(rejected 358, no doc: 425)
 ```
 
 ## Info 
 
-Dabar naudojami kriterijai atstumui skaičiuoti: https://github.com/airenas/re-bankmap/blob/b4d54d6d4e487f34e09c7b7de5ac9cf97fe4f12f/bankmap/similarity/similarities.py#L74C9-L74C9
+Dabar naudojami kriterijai atstumui skaičiuoti: https://github.com/airenas/re-bankmap/blob/6d497592378485d0f7b0c1c2350749cff6c36387/bankmap/similarity/similarities.py#L75
 
 Realizacijos schema: https://github.com/airenas/re-bankmap/blob/main/design/proto-v3.png
