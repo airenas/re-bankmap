@@ -6,6 +6,7 @@ from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
+import backoff
 import ulid
 from azure.functions import HttpMethod
 
@@ -117,7 +118,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         next_t = log_elapsed(start, "copy_to_storage", metrics)
 
         logger.info("pass to ml pipeline")
-        job_id, metrics_pipe = pass_to_ml(id, company)
+        job_id, metrics_pipe = pass_to_ml_retry(id, company)
         metrics.update(metrics_pipe)
         log_elapsed(next_t, "total_start_pipeline", metrics)
         log_elapsed(start, "total", metrics)
@@ -129,6 +130,26 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     except BaseException as err:
         logger.exception(err)
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+
+
+def pass_to_ml_retry(id: str, company: str):
+    fc = 0
+
+    def should_retry(exception):
+        logger.info(f'retry output: {exception}')
+        nonlocal fc
+        if isinstance(exception, BaseException):
+            fc += 1
+            logger.exception(f'fail: {fc}, exception: {exception}')
+        return isinstance(exception, BaseException)
+
+    @backoff.on_predicate(backoff.expo, should_retry, max_tries=3)
+    def invoke_ml():
+        return pass_to_ml(id, company)
+
+    job_name, metrics = invoke_ml()
+    metrics["retry_count"] = fc
+    return job_name, metrics
 
 
 def pass_to_ml(id: str, company: str):
