@@ -125,7 +125,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         next_t = log_elapsed(start, "copy_to_storage", metrics)
 
         logger.info("pass to ml pipeline")
-        job_id, metrics_pipe = pass_to_ml_retry(id, company)
+        job_id, metrics_pipe = pass_to_ml_retry(id, company, trace_id)
         metrics.update(metrics_pipe)
         log_elapsed(next_t, "total_start_pipeline", metrics)
         log_elapsed(start, "total", metrics)
@@ -139,23 +139,23 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, trace_id)
 
 
-def pass_to_ml_retry(id: str, company: str):
+def pass_to_ml_retry(id: str, company: str, trace_id: str):
     attempts = 0
 
-    @backoff.on_exception(backoff.expo, exception=Exception, max_tries=3)
+    @backoff.on_exception(backoff.expo, exception=Exception, max_tries=5)
     def invoke_ml():
         nonlocal attempts
         try:
             attempts += 1
             return pass_to_ml(id, company)
         except BaseException as err:
-            logger.exception(f'FAIL ML {attempts}: {err}')
+            logger.exception(f'FAIL ML {attempts}: {trace_id}:{company} {err}')
             raise
 
     job_name, metrics = invoke_ml()
     metrics["retry_count"] = attempts - 1
     if attempts > 1:
-        logger.info(f'done with attempts: {attempts}')
+        logger.info(f'done with attempts: {attempts} {trace_id}')
     return job_name, metrics
 
 
