@@ -3,10 +3,11 @@
 ############################################
 log=info
 python_cmd=PYTHONPATH=../../../ LOG_LEVEL=$(log) python
+VERSION?=$(version)
 ############################################
 deploy: src/version.txt conda.yaml
 	$(python_cmd) deploy.py --run deploy
-test: _version
+test:
 	$(python_cmd) deploy.py --run test
 .PHONY: deploy	
 src/version.txt:
