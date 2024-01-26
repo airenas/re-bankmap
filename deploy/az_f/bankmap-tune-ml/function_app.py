@@ -138,24 +138,22 @@ def process(zipfile: str):
 
     pl = pipeline(company=company, data=Input(type="uri_file", path=input_file))
 
-    fc = 0
+    attempts = 0
 
-    def should_retry(exception):
-        logger.info(f'retry output: {exception}')
-        nonlocal fc
-        if isinstance(exception, BaseException):
-            fc += 1
-            logger.exception(f'fail: {fc}, exception: {exception}')
-        return isinstance(exception, BaseException)
-
-    @backoff.on_predicate(backoff.expo, should_retry, max_tries=5)
+    @backoff.on_exception(backoff.expo, exception=Exception, max_tries=3)
     def invoke_ml():
-        return ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
-                                                                                max_len=50))
+        nonlocal attempts
+        try:
+            attempts += 1
+            return ml_client.jobs.create_or_update(pl, experiment_name=fix_exp_name(f"tune params for {company}",
+                                                                                    max_len=50))
+        except BaseException as err:
+            logger.exception(f'FAIL ML {attempts}: {err}')
+            raise
 
     pipeline_job = invoke_ml()
-    if fc > 0:
-        logger.info(f'done after failing {fc} times')
+    if attempts > 1:
+        logger.info(f'done with attempts: {attempts}')
 
     logger.info(f'output: {pipeline_job.name}')
     return pipeline_job.name
