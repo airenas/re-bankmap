@@ -86,7 +86,7 @@ def to_date(p):
             return None
         if isinstance(p, datetime.datetime):
             return p
-        return time_parser.parse(p)
+        return datetime.datetime.fromisoformat(p)
     except BaseException as err:
         logger.error("date:'{}'".format(p))
         raise err
