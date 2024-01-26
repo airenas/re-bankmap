@@ -133,22 +133,22 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def pass_to_ml_retry(id: str, company: str):
-    fc = 0
+    attempts = 0
 
-    def should_retry(exception):
-        logger.info(f'retry output: {exception}')
-        nonlocal fc
-        if isinstance(exception, BaseException):
-            fc += 1
-            logger.exception(f'fail: {fc}, exception: {exception}')
-        return isinstance(exception, BaseException)
-
-    @backoff.on_predicate(backoff.expo, should_retry, max_tries=3)
+    @backoff.on_exception(backoff.expo, exception=Exception, max_tries=3)
     def invoke_ml():
-        return pass_to_ml(id, company)
+        nonlocal attempts
+        try:
+            attempts += 1
+            return pass_to_ml(id, company)
+        except BaseException as err:
+            logger.exception(f'FAIL ML {attempts}: {err}')
+            raise
 
     job_name, metrics = invoke_ml()
-    metrics["retry_count"] = fc
+    metrics["retry_count"] = attempts - 1
+    if attempts > 1:
+        logger.info(f'done with attempts: {attempts}')
     return job_name, metrics
 
 
