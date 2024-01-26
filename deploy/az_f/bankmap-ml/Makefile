@@ -30,21 +30,21 @@ _version:
 ############################################
 test/remote:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' -H 'Trace-ID: test01234' --data-binary @${file}
 test/remote/pretty:
 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file} | jq .
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' -H 'Trace-ID: test01234' --data-binary @${file} | jq .
 test/local:
 	curl -X POST http://localhost:7071/api/map -i -H 'Accept: application/json' \
-	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @${file}
+	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' -H 'Trace-ID: test01234' --data-binary @${file}
 test/local/status:
-	curl -X GET http://localhost:7071/api/status/$(job_id) -i -H 'Accept: application/json'
+	curl -X GET http://localhost:7071/api/status/$(job_id) -i -H 'Accept: application/json' -H 'Trace-ID: test01234'
 test/remote/status:
-	curl -X GET https://$(func_name).azurewebsites.net/api/status/$(job_id)?code=$(app_key) -i -H 'Accept: application/json'	
+	curl -X GET https://$(func_name).azurewebsites.net/api/status/$(job_id)?code=$(app_key) -i -H 'Accept: application/json' -H 'Trace-ID: test01234'
 test/local/result:
 	curl -X GET http://localhost:7071/api/result/$(job_id) -H 'Accept: application/json' | jq .
 test/remote/result:
-	curl -X GET https://$(func_name).azurewebsites.net/api/result/$(job_id)?code=$(app_key) -H 'Accept: application/json' | jq .	
+	curl -X GET https://$(func_name).azurewebsites.net/api/result/$(job_id)?code=$(app_key) -H 'Accept: application/json' -H 'Trace-ID: test01234' | jq .
 ############################################
 clean/req:
 	rm -f requirements.txt

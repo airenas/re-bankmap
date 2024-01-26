@@ -34,8 +34,8 @@ class FunctionCfg:
 app = func.FunctionApp()
 
 
-def json_resp(value, code: int, name, trace_id: str):
-    logger.info(f"return {name}, code:{code}, trace: {trace_id}")
+def json_resp(value, code: int, trace_id: str):
+    logger.info(f"end: {trace_id}, code: {code}")
     return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code),
                              mimetype="application/json")
 
@@ -87,9 +87,12 @@ def check_copy_work_data(cfg: PredictionCfg, ulid: str, out_file):
         logger.exception(err)
 
 
-def get_log_trace(req, name):
+def get_log_trace(req, name, job: str):
     trace_id = req.headers.get("Trace-ID", "")
-    logger.info(f"start {name}, trace: {trace_id}")
+    trace_id = f"{name}:{trace_id}"
+    if job:
+        trace_id = f"{trace_id}:{job}"
+    logger.info(f"start: {trace_id}")
     return trace_id
 
 
@@ -99,7 +102,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     start, metrics = time.time(), {}
-    trace_id = get_log_trace(req, "put")
+    trace_id = get_log_trace(req, "post", "")
     id = str(ulid.new())
 
     company = req.headers.get("RecognitionForId", None)
@@ -129,11 +132,11 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         info = {"app_version": app_ver}
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
-        res = {"company": company, "id": id, "job_id": job_id, "metrics": metrics, "info": info}
-        return json_resp(res, HTTPStatus.OK, "put", trace_id)
+        res = {"company": company, "id": id, "job_id": job_id, "metrics": metrics, "info": info, "trace_id": trace_id}
+        return json_resp(res, HTTPStatus.OK, trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "put", trace_id)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, trace_id)
 
 
 def pass_to_ml_retry(id: str, company: str):
@@ -194,42 +197,40 @@ def pass_to_ml(id: str, company: str):
 @app.function_name(name="bankmap-status")
 @app.route(route="status/{jobID}", methods=[HttpMethod.GET])
 def status_function(req: func.HttpRequest) -> func.HttpResponse:
-    trace_id = get_log_trace(req, "status")
     job_id = req.route_params.get('jobID')
-    logger.info(f"got request for {job_id}")
+    trace_id = get_log_trace(req, "status", job_id)
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     from azure.core.exceptions import ResourceNotFoundError
     try:
         status = get_status(job_id)
-        res = {"status": status, "job_id": job_id}
-        return json_resp(res, HTTPStatus.OK, "status", trace_id)
+        res = {"status": status, "job_id": job_id, "trace_id": trace_id}
+        return json_resp(res, HTTPStatus.OK, trace_id)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, "status", trace_id)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "status", trace_id)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, trace_id)
 
 
 @app.function_name(name="bankmap-result")
 @app.route(route="result/{jobID}", methods=[HttpMethod.GET])
 def result_function(req: func.HttpRequest) -> func.HttpResponse:
-    trace_id = get_log_trace(req, "result")
     job_id = req.route_params.get('jobID')
-    logger.info(f"got resulr request for {job_id}")
+    trace_id = get_log_trace(req, "result", job_id)
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     from azure.core.exceptions import ResourceNotFoundError
     try:
         res = get_result(job_id)
-        return json_resp(res, HTTPStatus.OK, "result", trace_id)
+        return json_resp(res, HTTPStatus.OK, trace_id)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, "result", trace_id)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "result", trace_id)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, trace_id)
 
 
 def get_client(cfg):
