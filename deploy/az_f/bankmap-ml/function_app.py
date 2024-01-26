@@ -17,9 +17,6 @@ from bankmap.cfg import PredictionCfg
 from bankmap.logger import logger
 
 
-# from azure.ai.ml import dsl, Input, Output
-
-
 class FunctionCfg:
     def __init__(self):
         self.compute_cluster = os.getenv('COMPUTE_CLUSTER', 'cpu-cluster-lp')
@@ -37,7 +34,8 @@ class FunctionCfg:
 app = func.FunctionApp()
 
 
-def json_resp(value, code: int):
+def json_resp(value, code: int, name, trace_id: str):
+    logger.info(f"return {name}, code:{code}, trace: {trace_id}")
     return func.HttpResponse(body=json.dumps(value, ensure_ascii=False), status_code=int(code),
                              mimetype="application/json")
 
@@ -89,13 +87,19 @@ def check_copy_work_data(cfg: PredictionCfg, ulid: str, out_file):
         logger.exception(err)
 
 
+def get_log_trace(req, name):
+    trace_id = req.headers.get("Trace-ID", "")
+    logger.info(f"start {name}, trace: {trace_id}")
+    return trace_id
+
+
 @app.function_name(name="bankmap-put")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def map_function(req: func.HttpRequest) -> func.HttpResponse:
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     start, metrics = time.time(), {}
-    logger.info("got request")
+    trace_id = get_log_trace(req, "put")
     id = str(ulid.new())
 
     company = req.headers.get("RecognitionForId", None)
@@ -106,7 +110,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
             company = base64.b64decode(company.encode('ascii')).decode('utf-8')
             logger.info("company {}".format(company))
             company = fix_exp_name(company, max_len=50)
-        logger.info("fixed company {}".format(company))
+        logger.info(f"fixed company {company}:{trace_id}")
         cfg = load_config_or_default(company)
 
         # TODO: no need to save to local storage
@@ -126,10 +130,10 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
         res = {"company": company, "id": id, "job_id": job_id, "metrics": metrics, "info": info}
-        return json_resp(res, HTTPStatus.OK)
+        return json_resp(res, HTTPStatus.OK, "put", trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "put", trace_id)
 
 
 def pass_to_ml_retry(id: str, company: str):
@@ -190,6 +194,7 @@ def pass_to_ml(id: str, company: str):
 @app.function_name(name="bankmap-status")
 @app.route(route="status/{jobID}", methods=[HttpMethod.GET])
 def status_function(req: func.HttpRequest) -> func.HttpResponse:
+    trace_id = get_log_trace(req, "status")
     job_id = req.route_params.get('jobID')
     logger.info(f"got request for {job_id}")
     app_ver = get_version()
@@ -198,18 +203,19 @@ def status_function(req: func.HttpRequest) -> func.HttpResponse:
     try:
         status = get_status(job_id)
         res = {"status": status, "job_id": job_id}
-        return json_resp(res, HTTPStatus.OK)
+        return json_resp(res, HTTPStatus.OK, "status", trace_id)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, "status", trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "status", trace_id)
 
 
 @app.function_name(name="bankmap-result")
 @app.route(route="result/{jobID}", methods=[HttpMethod.GET])
 def result_function(req: func.HttpRequest) -> func.HttpResponse:
+    trace_id = get_log_trace(req, "result")
     job_id = req.route_params.get('jobID')
     logger.info(f"got resulr request for {job_id}")
     app_ver = get_version()
@@ -217,13 +223,13 @@ def result_function(req: func.HttpRequest) -> func.HttpResponse:
     from azure.core.exceptions import ResourceNotFoundError
     try:
         res = get_result(job_id)
-        return json_resp(res, HTTPStatus.OK)
+        return json_resp(res, HTTPStatus.OK, "result", trace_id)
     except ResourceNotFoundError as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST)
+        return json_resp({"error": str(err)}, HTTPStatus.BAD_REQUEST, "result", trace_id)
     except BaseException as err:
         logger.exception(err)
-        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, "result", trace_id)
 
 
 def get_client(cfg):
