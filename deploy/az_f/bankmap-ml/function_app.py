@@ -203,8 +203,10 @@ def status_function(req: func.HttpRequest) -> func.HttpResponse:
     logger.info("version {}".format(app_ver))
     from azure.core.exceptions import ResourceNotFoundError
     try:
-        status = get_status(job_id)
+        status, error_msg = get_status(job_id)
         res = {"status": status, "job_id": job_id, "trace_id": trace_id}
+        if error_msg:
+            res["error"] = error_msg
         return json_resp(res, HTTPStatus.OK, trace_id)
     except ResourceNotFoundError as err:
         logger.exception(err)
@@ -233,6 +235,22 @@ def result_function(req: func.HttpRequest) -> func.HttpResponse:
         return json_resp({"error": str(err)}, HTTPStatus.INTERNAL_SERVER_ERROR, trace_id)
 
 
+def get_job_error(ml_client, job):
+    try:
+        workspace = ml_client.workspaces.get("bankmap")
+        import mlflow
+        mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
+        r_filter = "tags.mlflow.rootRunId='" + job.name + "' and tags.mlflow.runName='job'"
+        runs = mlflow.search_runs(experiment_names=[job.experiment_name], filter_string=r_filter, output_format="list")
+        logger.info(f"got failed runs {len(runs)}")
+        if len(runs) != 1:
+            logger.exception(f'No runs for job {job.name}')
+        return runs[0].data.tags.get('Error', 'Unknown error')
+    except BaseException as err:
+        logger.exception(err)
+    return ''
+
+
 def get_client(cfg):
     logger.info(f"Workspace: {cfg.workspace}")
     logger.info(f"Subscription ID: {cfg.subscription_id}")
@@ -254,8 +272,10 @@ def get_client(cfg):
 def get_status(id: str):
     ml_client = get_client(FunctionCfg())
 
-    retrieved_job = ml_client.jobs.get(id)
-    return retrieved_job.status
+    error_msg, retrieved_job = '', ml_client.jobs.get(id)
+    if retrieved_job.status == "Failed":
+        error_msg = get_job_error(ml_client, retrieved_job)
+    return retrieved_job.status, error_msg
 
 
 def get_result(id: str):

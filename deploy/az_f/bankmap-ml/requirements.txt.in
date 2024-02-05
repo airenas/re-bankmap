@@ -8,3 +8,5 @@ azure-ai-ml==1.12.1
 git+https://github.com/airenas/re-bankmap.git@v${version}#egg=bankmap
 ulid-py==1.1.0
 backoff==2.2.1
+mlflow==2.4.1
+azureml-mlflow==1.51.0
