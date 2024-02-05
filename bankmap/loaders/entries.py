@@ -30,7 +30,7 @@ def load_docs_map(file_name, _type: str):
             ra[0].add(iid)
             res[id] = ra
         except BaseException as err:
-            raise RuntimeError("wrong data {}: {}".format(d, str(err)))
+            raise RuntimeError(f"wrong data: {str(err)}")
     logger.debug("skipped future docs: {}".format(skip))
     return res
 
@@ -158,7 +158,7 @@ def load_lines(file_name):
                       "",
                       d['External_Document_No_'], '', d['Bank_Account_No_']]
         except BaseException as err:
-            raise RuntimeError("wrong data {}: {}".format(d, str(err)))
+            raise RuntimeError(f"wrong data: {str(err)}")
         res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
     # stable sort by date
     sr = [v for v in enumerate(res)]
