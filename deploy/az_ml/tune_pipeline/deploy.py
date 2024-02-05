@@ -19,8 +19,8 @@ class Params:
         self.code_dir = "./src"
         self.env_name = "bankmap-tune"
         self.component_name = "bankmap_tune"
-        self.output_path = f"azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/configs/paths/"
-        self.input_path = f"azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/datacopy/paths/"
+        self.output_path = f"azureml://subscriptions/{self.subscription_id}/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/configs/paths/"
+        self.input_path = f"azureml://subscriptions/{self.subscription_id}/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/datacopy/paths/"
 
 
 def init_client(params: Params):
@@ -80,8 +80,8 @@ def init_component(ml_client, env, params: Params):
     logger.info(f"outputs {outputs['output_path'].path}")
     tune_component = command(
         name=params.component_name,
-        display_name="Tune bankmap params for a company",
-        description="Tune limits for bankmap company",
+        display_name="Tunes bankmap params for a company",
+        description="Tunes limits for a company",
         inputs={
             "data": Input(type="uri_file"),
             "company": Input(type="string")
@@ -127,7 +127,7 @@ def test(ml_client, params: Params):
 
     company = "hum"
     pipeline = tune_pipeline(company=company, data=Input(type="uri_file",
-                                                         path=f"azureml://subscriptions/ae0eff97-7885-4c1e-b23c-d8a627ef292f/resourcegroups/DocuBank/workspaces/{params.workspace_name}/datastores/datacopy/paths/{company}.zip")
+                                                         path=f"azureml://subscriptions/{params.subscription_id}/resourcegroups/DocuBank/workspaces/{params.workspace_name}/datastores/datacopy/paths/{company}.zip")
                              )
 
     pipeline_job = ml_client.jobs.create_or_update(pipeline, experiment_name="Tune")
