@@ -45,7 +45,12 @@ def is_ok(run, to_date):
 def delete_runs(mlflow, to_date):
     logger.info(f"deleting to {to_date}")
     logger.info(f"loading runs....")
-    runs = mlflow.search_runs(experiment_ids=[], max_results=5000, order_by=["start_time ASC"],
+    from_date = to_date - timedelta(hours=24 * 20)
+    unix_timestamp = datetime.timestamp(from_date) * 1000
+    filter_str = f'attributes.start_time > "{int(unix_timestamp)}"'
+    logger.info(f"filter_str {filter_str}")
+    runs = mlflow.search_runs(experiment_ids=[], max_results=10000, order_by=["start_time ASC"],
+                              filter_string=filter_str,
                               output_format="list", run_view_type=ViewType.ACTIVE_ONLY,
                               search_all_experiments=True)
     logger.info(f"runs {len(runs)}")
@@ -62,7 +67,7 @@ def delete_runs(mlflow, to_date):
             r_date = datetime.fromtimestamp(r.info.start_time / 1000, tz=timezone.utc)
             r_name = r.data.tags.get('mlflow.note.content', r.data.tags.get('company', '??'))
             if is_ok(r, to_date):
-                logger.info(f"{j} delete {r_date} {r_name} {r.info.run_id}")
+                print(f"{j} delete {r_date} {r_name} {r.info.run_id}")
                 mlflow.delete_run(r.info.run_id)
                 progress.update(task1, advance=1)
 
@@ -85,12 +90,12 @@ def delete_experiments(mlflow):
         for j, e in enumerate(experiments):
             runs = mlflow.search_runs(experiment_ids=[e.experiment_id], max_results=5000, order_by=["start_time DESC"],
                                       output_format="list", run_view_type=ViewType.ACTIVE_ONLY)
-            logger.info(f"experiment {e.name}: runs {len(runs)}")
+            print(f"experiment {e.name}: runs {len(runs)}")
             if all_deleted(runs):
-                logger.info(f"{j} delete {e.experiment_id} {e.name} {e.creation_time}")
+                print(f"{j} delete {e.experiment_id} {e.name} {e.creation_time}")
                 mlflow.delete_experiment(e.experiment_id)
             else:
-                logger.info(f"experiment {e.name}: skip delete")
+                print(f"experiment {e.name}: skip delete")
             progress.update(task1, advance=1)
 
 
