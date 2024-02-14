@@ -52,16 +52,7 @@ def force_tune():
     return v == "1" or v == "true"
 
 
-@app.function_name(name="LiveTimer")
-@app.schedule(schedule="0 0 * * * *", arg_name="live_timer", run_on_startup=False)
-def timer_function(live_timer: func.TimerRequest) -> None:
-    now = datetime.now()
-    logger.info(f'Python Live timer ran at {now}')
-    if live_timer.past_due:
-        logger.info('The timer is past due!')
-
-
-@app.function_name(name="HTTPTrigger")
+@app.function_name(name="http-start")
 @app.route(route="tune/{blobName}")
 def http_start(req: func.HttpRequest):
     blob_name = req.route_params.get('blobName')
@@ -76,6 +67,13 @@ def http_start(req: func.HttpRequest):
         return func.HttpResponse(body=json.dumps(str(err), ensure_ascii=False),
                                  status_code=int(HTTPStatus.INTERNAL_SERVER_ERROROK),
                                  mimetype="application/json")
+
+
+@app.function_name(name="http-live")
+@app.route(route="live")
+def http_live(req: func.HttpRequest):
+    logger.info(f"Live...")
+    return func.HttpResponse(body='{"status":"ok"}', status_code=int(HTTPStatus.OK), mimetype="application/json")
 
 
 @app.function_name(name="BlobTrigger")
