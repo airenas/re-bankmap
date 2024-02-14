@@ -249,7 +249,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
         elapsed_time = time.time() - start
         if cfg.timeout_sec and 0 < cfg.timeout_sec < elapsed_time:
-            raise TimeoutError(f"Script stopped after running more that {cfg.timeout_sec} s")
+            raise TimeoutError(f"Script stopped after running more than {cfg.timeout_sec} s")
 
     res_info["skipped_old"] = skip_old
     res_info["recommended"] = pr
