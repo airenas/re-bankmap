@@ -1,12 +1,14 @@
 import base64
 import json
 import os
+import random
 import time
 from datetime import datetime
 from http import HTTPStatus
 
 import azure.functions as func
 import backoff
+import requests
 import ulid
 from azure.functions import HttpMethod
 
@@ -29,6 +31,7 @@ class FunctionCfg:
         self.subscription_id = os.getenv('SUBSCRIPTION_ID')
         self.workspace = os.getenv('ML_WORKSPACE', "bankmap")
         self.ml_component = os.getenv('ML_COMPONENT', "bankmap")
+        self.tune_live_url = os.getenv('TUNE_LIVE_URL', "")
 
 
 app = func.FunctionApp()
@@ -96,6 +99,26 @@ def get_log_trace(req, name, job: str):
     return trace_id
 
 
+def wake_tune_func():
+    try:
+        cfg = FunctionCfg()
+        if not cfg.tune_live_url:
+            logger.info("no tune url")
+            return
+
+        if random.random() > 0.9:
+            logger.info("call tune func")
+            response = requests.get(cfg.tune_live_url, timeout=3)
+            if response.status_code >= 400:
+                logger.warn(f"Request failed with status code {response.status_code}")
+            else:
+                logger.info("call tune live OK")
+        else:
+            logger.info("skip call tune func")
+    except BaseException as err:
+        logger.exception(err)
+
+
 @app.function_name(name="bankmap-put")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def map_function(req: func.HttpRequest) -> func.HttpResponse:
@@ -123,6 +146,7 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
         check_copy_data(cfg, out_file)
         check_copy_work_data(cfg, id, out_file)
         next_t = log_elapsed(start, "copy_to_storage", metrics)
+        wake_tune_func()
 
         logger.info("pass to ml pipeline")
         job_id, metrics_pipe = pass_to_ml_retry(id, company, trace_id)
@@ -240,11 +264,12 @@ def get_job_error(ml_client, job):
         workspace = ml_client.workspaces.get("bankmap")
         import mlflow
         mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
-        r_filter = "tags.mlflow.rootRunId='" + job.name + "' and tags.mlflow.runName='job'"
+        r_filter = f"tags.mlflow.rootRunId='{job.name}' and tags.mlflow.runName='job'"
         runs = mlflow.search_runs(experiment_names=[job.experiment_name], filter_string=r_filter, output_format="list")
         logger.info(f"got failed runs {len(runs)}")
         if len(runs) != 1:
             logger.exception(f'No runs for job {job.name}')
+            return 'Unknown error'
         return runs[0].data.tags.get('Error', 'Unknown error')
     except BaseException as err:
         logger.exception(err)

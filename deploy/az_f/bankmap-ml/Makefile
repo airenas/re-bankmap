@@ -1,5 +1,4 @@
 -include $(cfg)
--include ../../../.version
 file?=./../bankmap/test.zip
 ############################################
 run/local:
@@ -23,7 +22,7 @@ get/storage-account/cs:
 deploy: _version requirements.txt
 	func azure functionapp publish $(func_name) --python
 .PHONY: deploy	
-requirements.txt: requirements.txt.in
+requirements.txt: requirements.txt.in $(cfg)
 	cat $< | envsubst > $@	
 _version:
 	echo $(version) > .version
