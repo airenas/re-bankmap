@@ -78,6 +78,7 @@ def delete_runs(to_date, experiments, name, pw: ProgressWrap):
 
     res = []
     pw.progress.update(pw.task, description=f"Deleting runs for {name}...", total=count)
+    pw.progress.update(pw.task, completed=0)
     for j, r in enumerate(runs):
         r_date = datetime.fromtimestamp(r.info.start_time / 1000, tz=timezone.utc)
         r_name = r.data.tags.get('mlflow.note.content', r.data.tags.get('company', '??'))
