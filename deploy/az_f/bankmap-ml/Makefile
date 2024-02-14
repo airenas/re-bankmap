@@ -24,7 +24,7 @@ deploy: _version requirements.txt
 .PHONY: deploy	
 requirements.txt: requirements.txt.in $(cfg)
 	cat $< | envsubst > $@	
-_version:
+_version: $(cfg)
 	echo $(version) > .version
 ############################################
 test/remote:

@@ -1,5 +1,4 @@
 -include $(cfg)
--include ../../../.version
 ############################################
 run/local:
 	func start
@@ -34,9 +33,9 @@ enable/indexing:
 deploy: _version requirements.txt
 	func azure functionapp publish $(func_name) --python
 .PHONY: deploy	
-requirements.txt: requirements.txt.in
+requirements.txt: requirements.txt.in $(cfg)
 	cat $< | envsubst > $@	
-_version:
+_version: $(cfg)
 	echo $(version) > .version
 ############################################
 test/remote:
