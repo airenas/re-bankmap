@@ -7,6 +7,7 @@ import azure.functions as func
 import backoff
 from azure.ai.ml import MLClient
 from azure.ai.ml import dsl, Input, Output
+from azure.functions import HttpMethod
 from azure.identity import DefaultAzureCredential
 
 from bankmap.az.config import load_config_or_default
@@ -70,7 +71,7 @@ def http_start(req: func.HttpRequest):
 
 
 @app.function_name(name="http-live")
-@app.route(route="live")
+@app.route(route="live", methods=[HttpMethod.GET])
 def http_live(req: func.HttpRequest):
     logger.info(f"Live...")
     return func.HttpResponse(body='{"status":"ok"}', status_code=int(HTTPStatus.OK), mimetype="application/json")

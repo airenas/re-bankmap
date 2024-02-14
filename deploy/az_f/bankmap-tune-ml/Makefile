@@ -42,7 +42,7 @@ _version:
 test/remote:
 	curl -X POST https://$(func_name).azurewebsites.net/api/tune/$(file)?code=$(app_key) -i -H 'Accept: application/json'
 test/live:
-	curl -X POST https://$(func_name).azurewebsites.net/api/live?code=$(app_key) -i -H 'Accept: application/json'
+	curl -X GET https://$(func_name).azurewebsites.net/api/live?code=$(app_key) -i -H 'Accept: application/json'
 # test/remote/pretty:
 # 	curl -X POST https://$(func_name).azurewebsites.net/api/map?code=$(app_key) -H 'Accept: application/json' \
 # 	    -H 'content-type: application/octet-stream' -H 'RecognitionForId: aHVt' --data-binary @test.zip | jq .
