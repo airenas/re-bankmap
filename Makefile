@@ -3,7 +3,7 @@
 -include .version
 ############################################
 install/req:
-	# conda create --name bankmap python=3.10
+	# conda create --name bankmap python=3.11
 	pip install -r requirements.txt
 
 test/unit:

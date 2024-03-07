@@ -3,7 +3,7 @@ tqdm~=4.64.1
 numpy~=1.23.3
 jellyfish~=0.9.0
 scikit-learn~=1.1.2
-tensorflow~=2.10.0
+tensorflow~=2.15.0
 hyperopt~=0.2.7
 git+https://github.com/airenas/python-string-similarity.git@v0.2.87#egg=strsimpy
 azure-storage-blob==12.16.0
