@@ -105,13 +105,14 @@ def wake_tune_func():
     if not cfg.tune_live_url:
         logger.info("no tune url")
         return
-    if not random.random() > 0.9:
+    if random.random() < 0.9:
         logger.info("skip call tune func")
         return
 
+    logger.info("call tune func")
+
     def call_tune(tune_live_url):
         try:
-            logger.info("call tune func")
             response = requests.get(tune_live_url, timeout=3)
             if response.status_code >= 400:
                 logger.warn(f"Request failed with status code {response.status_code}")
