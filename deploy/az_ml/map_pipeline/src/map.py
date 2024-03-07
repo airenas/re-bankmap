@@ -77,8 +77,10 @@ def main():
         save_res(res, args.company, args.output)
         sizes = res.get("info", {}).get("sizes", {})
         mlflow.log_metric("lines", sizes.get("Bank_Statement_Lines", 0))
-        mlflow.log_metric("recommended", sizes.get("recommended", 0))
-        mlflow.log_metric("skipped_old", sizes.get("skipped_old", 0))
+        mlflow.log_metric("lines_checked", sizes.get("Bank_Statement_Lines", 0) - sizes.get("skipped_old", 0))
+        mlflow.log_metric("lines_skipped", sizes.get("skipped_old", 0))
+        mlflow.log_metric("recommended_ai", sizes.get("recommended", 0) - sizes.get("recommended_tta", 0))
+        mlflow.log_metric("recommended_tta", sizes.get("recommended_tta", 0))
         mlflow.log_metric("recommended_percent", sizes.get("recommended_percent", 0))
     else:
         err_str = res.get('error', "Unknown error")
