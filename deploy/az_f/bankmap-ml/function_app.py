@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import random
+import threading
 import time
 from datetime import datetime
 from http import HTTPStatus
@@ -100,23 +101,28 @@ def get_log_trace(req, name, job: str):
 
 
 def wake_tune_func():
-    try:
-        cfg = FunctionCfg()
-        if not cfg.tune_live_url:
-            logger.info("no tune url")
-            return
+    cfg = FunctionCfg()
+    if not cfg.tune_live_url:
+        logger.info("no tune url")
+        return
+    if not random.random() > 0.9:
+        logger.info("skip call tune func")
+        return
 
-        if random.random() > 0.9:
+    def call_tune(tune_live_url):
+        try:
             logger.info("call tune func")
-            response = requests.get(cfg.tune_live_url, timeout=3)
+            response = requests.get(tune_live_url, timeout=3)
             if response.status_code >= 400:
                 logger.warn(f"Request failed with status code {response.status_code}")
             else:
                 logger.info("call tune live OK")
-        else:
-            logger.info("skip call tune func")
-    except BaseException as err:
-        logger.exception(err)
+        except BaseException as err:
+            logger.exception(err)
+
+    thread = threading.Thread(target=call_tune, args=cfg.tune_live_url)
+    thread.daemon = True
+    thread.start()
 
 
 @app.function_name(name="bankmap-put")
@@ -201,7 +207,7 @@ def pass_to_ml(id: str, company: str):
 
     from azure.ai.ml import dsl, Input
 
-    @dsl.pipeline(compute=cfg.compute_cluster, description=f"Map pipeline for {company}")
+    @dsl.pipeline(name="map", compute=cfg.compute_cluster, description=f"Map pipeline for {company}")
     def map_pipeline(company, data, config_path):
         job = component(company=company, data=data, config_path=config_path)
         return {
