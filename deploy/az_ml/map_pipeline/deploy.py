@@ -117,6 +117,7 @@ def test(ml_client, params: Params):
     logger.info(f'output: {map_component}')
 
     @dsl.pipeline(
+        name="map",
         compute=params.cpu_compute_target,
         description="test map pipeline"
     )
