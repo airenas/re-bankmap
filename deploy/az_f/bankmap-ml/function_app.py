@@ -12,6 +12,7 @@ import backoff
 import requests
 import ulid
 from azure.functions import HttpMethod
+from requests.exceptions import ReadTimeout
 
 from bankmap.az.config import load_config_or_default
 from bankmap.az.name import fix_exp_name
@@ -118,6 +119,8 @@ def wake_tune_func():
                 logger.warn(f"Request failed with status code {response.status_code}")
             else:
                 logger.info("call tune live OK")
+        except ReadTimeout:
+            logger.info("ReadTimeout invoking tune wakeup. Should be OK")
         except BaseException as err:
             logger.exception(err)
 
