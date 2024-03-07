@@ -121,7 +121,7 @@ def wake_tune_func():
         except BaseException as err:
             logger.exception(err)
 
-    thread = threading.Thread(target=call_tune, args=cfg.tune_live_url)
+    thread = threading.Thread(target=call_tune, args=(cfg.tune_live_url,))
     thread.daemon = True
     thread.start()
 
