@@ -1,6 +1,7 @@
 import pandas as pd
+from jsonlines import jsonlines
 
-from bankmap.data import e_str, e_date, to_date, e_currency, e_float, Entry, PaymentType, Recognition, LType
+from bankmap.data import e_str, Entry, PaymentType, Recognition, LType, e_str_ne, e_date_ne
 from bankmap.logger import logger
 
 
@@ -9,48 +10,42 @@ from bankmap.logger import logger
 # _type = [Cust, Vend]
 def load_docs_map(file_name, _type: str):
     logger.info("loading entries {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
-    logger.info("loaded entries {} rows".format(len(df)))
-    logger.debug("{}".format(df.head(n=10)))
-    logger.debug("Headers: {}".format(list(df)))
-    skip = 0
+    # skip = 0
     res = {}
-    data = df.to_dict('records')
-    for d in data:
-        try:
-            id = e_str(d['Statement_External_Document_No_'])
-            st_date = e_date(d[_type + '_Posting_Date'])
-            doc_date = e_date(d['Applied_' + _type + '_Document_Date'])
-            cv = e_str(d['Vend_Vendor_No_' if _type == "Vend" else 'Cust_Customer_No_'])
-            if st_date < doc_date:
-                skip += 1
-                continue
-            iid = e_str(d['Applied_' + _type + '_Document_No_'])
-            ra = res.get(id, (set(), cv))
-            ra[0].add(iid)
-            res[id] = ra
-        except BaseException as err:
-            raise RuntimeError(f"wrong data: {str(err)}")
-    logger.debug("skipped future docs: {}".format(skip))
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            try:
+                id = e_str_ne(d, 'externalDocumentNumber')
+                cv = e_str_ne(d, 'recognizedAccountNumber')
+                iid = e_str_ne(d, 'appliedDocumentNumber')
+                ra = res.get(id, (set(), cv))
+                ra[0].add(iid)
+                res[id] = ra
+            except BaseException as err:
+                raise RuntimeError(f"wrong data: {str(err)}")
+
+    logger.info(f"loaded entries {len(res)} rows")
+    # logger.debug("skipped future docs: {}".format(skip))
     return res
 
 
 # loads data from Bank_Account_Recognitions
 # returns map [statement no][Recognized]
 def load_bank_recognitions_map(file_name):
-    logger.info("loading Bank_Account_Recognitions {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
-    logger.info("loaded Bank_Account_Recognitions {} rows".format(len(df)))
-    logger.debug("{}".format(df.head(n=10)))
-    logger.debug("Headers: {}".format(list(df)))
+    logger.info("loading {}".format(file_name))
     res = {}
-    data = df.to_dict('records')
-    for d in data:
-        if not LType.supported(e_str(d['Bal__Account_Type'])):
-            continue
-        no = e_str(d['Statement_External_Document_No_'])
-        if no not in res:
-            res[no] = Recognition(_type=e_str(d['Bal__Account_Type']), no=e_str(d['Bal__Account_No_']))
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            if not LType.supported(e_str_ne(d, 'balAccountType')):
+                continue
+            no = e_str(d.get('statementExternalDocumentNumber'))
+            if no not in res:
+                res[no] = Recognition(_type=e_str_ne(d, 'balAccountType'), no=e_str_ne(d, 'balAccountNumber'))
+    logger.info("loaded bankAccountRecognitions {} rows".format(len(res)))
     return res
 
 
@@ -62,9 +57,9 @@ def is_recognized(param):
 
 
 def iban(p):
-    if p["N_ND_TD_RP_DbtrAcct_Id_IBAN"] != p["N_ND_TD_RP_DbtrAcct_Id_IBAN"]:
-        return p["N_ND_TD_RP_CdtrAcct_Id_IBAN"]
-    return p["N_ND_TD_RP_DbtrAcct_Id_IBAN"]
+    if e_str(p.get('creditorIban')):
+        return e_str(p.get('creditorIban'))
+    return e_str(p.get('debtorIban'))
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
@@ -72,49 +67,50 @@ entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', '
 
 
 # loads data from Bank_Statement_Entries
-# returns panda table
 def load_entries(file_name, ba_map, cv_map):
-    logger.info("loading entries {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
-    logger.info("loaded entries {} rows".format(len(df)))
-    logger.debug("{}".format(df.head(n=10)))
-    hd = list(df)
-    logger.debug("Headers: {}".format(hd))
-
+    logger.info("loading {}".format(file_name))
     res = []
-
     found = set()
-    data = df.to_dict('records')
-    for d in data:
-        ext_id = e_str(d['External_Document_No_'])
-        if ext_id in found:
-            continue
-        found.add(ext_id)
-        rec_no, tp = '', LType.from_s('')
-        t_rec = ba_map.get(ext_id, None)
-        if t_rec:
-            rec_no, tp = t_rec.no, t_rec.type
-        docs = cv_map.get(ext_id, ("", ""))
-        if docs[1] and docs[1] != rec_no:
-            logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
-            rec_no = docs[1]
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
 
-        if e_str(d['Operation_Date']) != '0':
-            res.append([d['Description'], d['Message_to_Recipient'], d['N_CdtDbtInd'],
-                        e_float(d['N_Amt']), d['Operation_Date'], iban(d),
-                        d['N_ND_TD_Refs_EndToEndId'],
-                        rec_no,
-                        e_currency(d['Acct_Ccy']),
-                        docs[0],
-                        d['External_Document_No_'], tp.to_s(), d['Bank_Account_No_']])
-        else:
-            logger.warn("no operation date: {}".format(d))
+            ext_id = e_str(d.get('externalDocumentNumber'))
+            if ext_id in found:
+                continue
+            found.add(ext_id)
+            rec_no, tp = '', LType.from_s('')
+            t_rec = ba_map.get(ext_id, None)
+            if t_rec:
+                rec_no, tp = t_rec.no, t_rec.type
+            docs = cv_map.get(ext_id, ("", ""))
+            if docs[1] and docs[1] != rec_no:
+                logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
+                rec_no = docs[1]
+
+            if e_str(d.get('operationDate')) != '':
+                res.append({'description': d.get('description'),
+                            'message': d.get('messageToRecipient'),
+                            'transactionType': PaymentType.from_s(e_str(d.get('transactionType'))),
+                            'amount': d.get('amount'),
+                            'date': e_date_ne(d, 'operationDate'),
+                            'iban': iban(d),
+                            'e2eId': d.get('endToEndId'),
+                            'recAccount': rec_no,
+                            'currency': d.get('accountCurrency'),
+                            'recDocs': docs[0],
+                            'recType': tp,
+                            'externalDocumentNumber': d.get('externalDocumentNumber'),
+                            'bankAccount': d.get('bankAccountNumber')
+                            })
+            else:
+                logger.warn("no operation date: {}".format(d))
     # stable sort by date
     sr = [v for v in enumerate(res)]
-    sr.sort(key=lambda e: (to_date(e[1][4]).timestamp(), e[0]))
+    sr.sort(key=lambda e: (e[1]['date'].timestamp(), e[0]))
     res = [v[1] for v in sr]
-    df = pd.DataFrame(res, columns=entry_cols)
-    return df
+    return res
 
 
 def f_name(check, f1, f2):
@@ -133,36 +129,41 @@ def non_empty_str(s1, s2):
 # loads data from Bank_Statement_Lines
 # returns Entries list
 def load_lines(file_name):
-    logger.info("loading entry lines {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
-    logger.info("loaded entry lines {} rows".format(len(df)))
-    logger.debug("{}".format(df.head(n=10)))
-    hd = list(df)
-    logger.debug("Headers: {}".format(hd))
+    logger.info("loading {}".format(file_name))
     res = []
     found = set()
-    data = df.to_dict('records')
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
 
-    for d in data:
-        ext_id = e_str(d['External_Document_No_'])
-        if ext_id in found:
-            continue
-        found.add(ext_id)
-        credit = PaymentType.from_s(d['N_CdtDbtInd']) == PaymentType.CRDT
-        try:
-            values = [d[f_name(not credit, "N_ND_TD_RP_Cdtr_Nm", "N_ND_TD_RP_Dbtr_Nm")],
-                      d["N_ND_TD_RmtInf_Ustrd"], d['N_CdtDbtInd'],
-                      e_float(d['N_Amt']), non_empty_str(d['N_BookDt_Dt'], d['N_BookDt_DtTm']), iban(d),
-                      d['N_ND_TD_Refs_EndToEndId'], "",
-                      e_currency(d['Acct_Ccy']),
-                      "",
-                      d['External_Document_No_'], '', d['Bank_Account_No_']]
-        except BaseException as err:
-            raise RuntimeError(f"wrong data: {str(err)}")
-        res.append(Entry({key: value for key, value in zip(entry_cols, values)}))
+            ext_id = e_str(d.get('externalDocumentNumber'))
+            if ext_id in found:
+                continue
+            found.add(ext_id)
+            credit = PaymentType.from_s(d['transactionType']) == PaymentType.CRDT
+
+            if e_str(d.get('operationDate')) != '':
+                value = {'description': d.get('description'),
+                         'message': d.get('transactionText'),
+                         'transactionType': PaymentType.from_s(e_str(d.get('transactionType'))),
+                         'amount': d.get('statementAmount'),
+                         'date': e_date_ne(d, 'operationDate'),
+                         'iban': iban(d),
+                         'e2eId': d.get('endToEndId'),
+                         'recAccount': "",
+                         'currency': d.get('accountCurrency'),
+                         'recDocs': "",
+                         'recType': LType.from_s(""),
+                         'bankAccount': d.get('bankAccountNumber'),
+                         'externalDocumentNumber': d.get('externalDocumentNumber'),
+                         }
+                res.append(Entry(value))
+            else:
+                logger.warn("no operation date: {}".format(d))
     # stable sort by date
     sr = [v for v in enumerate(res)]
-    sr.sort(key=lambda e: (e[1].date, e[0]))
+    sr.sort(key=lambda e: (e[1].date.timestamp(), e[0]))
     res = [v[1] for v in sr]
     return res
 

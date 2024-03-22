@@ -1,115 +1,152 @@
 import pandas as pd
+from jsonlines import jsonlines
 
-from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType
+from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType, e_str_ne
 from bankmap.logger import logger
 
-ledger_cols = ['Type', 'No', 'Name', 'IBAN', 'Document_No', 'Due_Date', 'Document_Date', 'ExtDoc', 'Amount',
-               'Currency', 'Document_Type', 'Closed_Date', 'Map_Type', 'Open', 'Remaining_Amount']
+
+def load_IBANs(file_name, _type):
+    logger.info("loading {}".format(file_name))
+    res = {}
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            cust = e_str(d.get(_type + 'Number'))
+            no = e_str(d.get('bankAccountNumber'))  # TODO
+            res[cust] = no
+    logger.info(f"loaded {len(res)} rows in {file_name}")
+    return res
 
 
-def prepare_cust_sfs(df, c_data, accounts):
-    res = []
-    data = df.to_dict('records')
-    for d in data:
-        dt = e_str(d['Document_Type'])
-        if not dt or DocType.skip(dt):
-            continue
-        _id = e_str(d['Customer_No_'])
-        cd = c_data[_id]
-        res.append([LType.CUST.to_s(), _id, cd[0], accounts.get(_id, ''), d['Document_No_'],
-                    d['Due_Date'], d['Document_Date'],
-                    d['External_Document_No_'],
-                    e_float(d['Amount']),
-                    e_currency(d['Currency_Code']),
-                    dt,
-                    e_date(d['ClosedAtDate']), cd[1].to_s(), d['Open'], d['Remaining_Amount']])
-    return pd.DataFrame(res, columns=ledger_cols)
+def load_cust_names(file_name):
+    logger.info("loading {}".format(file_name))
+    res = {}
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            cust = e_str_ne(d, 'number')
+            name = e_str(d.get('name'))
+            method = MapType.from_s(e_str(d.get('applicationMethod')))
+            res[cust] = (name, method)
+    logger.info(f"loaded {len(res)} rows in {file_name}")
+    return res
 
 
-# loads customer SF
-# returns dataframe
 def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
-    logger.info("loading sfs {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',', dtype={'Customer_No_': str})
-    logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    accounts = pd.read_csv(ba_file_name, sep=',')
-    logger.info("loaded ba {} rows".format(len(accounts)))
-    names = pd.read_csv(cust_file_name, sep=',', dtype={'No_': str})
-    logger.info("loaded sfs {} rows".format(len(names)))
+    ibans = load_IBANs(ba_file_name, 'customer')
+    names = load_cust_names(cust_file_name)
 
-    c_d = {e_str(r['No_']): (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in names.to_dict('records')}
-    accounts_d = {r['Customer_No_']: r['Bank_Account_No_'] for r in accounts.to_dict('records')}
-
-    return prepare_cust_sfs(ledgers, c_d, accounts_d)
-
-
-def prepare_vend_sfs(df, v_data, accounts):
+    logger.info("loading {}".format(ledgers_file_name))
     res = []
-    data = df.to_dict('records')
-    for d in data:
-        dt = e_str(d['Document_Type'])
-        if not dt or DocType.skip(dt):
-            continue
-        _id = e_str(d['Vendor_No_'])
-        if _id == '':
-            logger.warn("no vendor_no {}".format(d))
-            continue
-        vd = v_data[_id]
-        res.append([LType.VEND.to_s(), _id, vd[0], accounts.get(_id, ''), d['Document_No_'],
-                    d['Due_Date'],
-                    d['Document_Date'], d['External_Document_No_'],
-                    d['Amount'],
-                    e_currency(d['Currency_Code']),
-                    dt,
-                    e_date(d['ClosedAtDate']), vd[1].to_s(), d['Open'], d['Remaining_Amount']])
-    return pd.DataFrame(res, columns=ledger_cols)
+    with jsonlines.open(ledgers_file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            dt = e_str(d['documentType'])
+            if not dt or DocType.skip(dt):
+                continue
+            _id = e_str_ne(d, 'customerNumber')
+            cd = names[_id]
+            res.append({'type': LType.CUST.to_s(), "number": _id, 'name': cd[0],
+                        'iban': ibans.get(_id, ''), 'documentNumber': d['documentNumber'],
+                        'dueDate': d['dueDate'],
+                        'documentDate': d['documentDate'],
+                        'externalDocumentNumber': d['externalDocumentNumber'],
+                        'amount': e_float(d['amount']),
+                        'currencyCode': e_currency(d.get('currencyCode')),
+                        'documentType': dt,
+                        'closedAtDate': e_date(d['closedAtDate']),
+                        'mapType': cd[1].to_s(),
+                        'open': d['isOpen'],
+                        'remainingAmount': d['remainingAmount']})
+
+    return res
 
 
 # loads vendor SF
-# returns dataframe
 def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
-    logger.info("loading sfs {}".format(ledgers_file_name))
-    ledgers = pd.read_csv(ledgers_file_name, sep=',', dtype={'Vendor_No_': str})
-    logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    accounts = pd.read_csv(ba_file_name, sep=',')
-    logger.info("loaded ba {} rows".format(len(accounts)))
-    names = pd.read_csv(vend_file_name, sep=',', dtype={'No_': str})
-    logger.info("loaded sfs {} rows".format(len(names)))
+    ibans = load_IBANs(ba_file_name, 'vendor')
+    names = load_cust_names(vend_file_name)
 
-    c_d = {e_str(r['No_']): (r['Name'], MapType.from_s(e_str(r['Application_Method']))) for r in
-           names.to_dict('records')}
-    accounts_d = {e_str(r['Vendor_No_']): r['Bank_Account_No_'] for r in accounts.to_dict('records') if
-                  e_str(r['Vendor_No_']) != ''}
+    logger.info("loading {}".format(ledgers_file_name))
+    res = []
+    with jsonlines.open(ledgers_file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            dt = e_str(d['documentType'])
+            if not dt or DocType.skip(dt):
+                continue
+            _id = e_str_ne(d, 'vendorNumber')
+            cd = names[_id]
+            res.append({'type': LType.VEND.to_s(), "number": _id, 'name': cd[0],
+                        'iban': ibans.get(_id, ''), 'documentNumber': d['documentNumber'],
+                        'dueDate': d['dueDate'],
+                        'documentDate': d['documentDate'],
+                        'externalDocumentNumber': d['externalDocumentNumber'],
+                        'amount': e_float(d['amount']),
+                        'currencyCode': e_currency(d.get('currencyCode')),
+                        'documentType': dt,
+                        'closedAtDate': e_date(d['closedAtDate']),
+                        'mapType': cd[1].to_s(),
+                        'open': d['isOpen'],
+                        'remainingAmount': d['remainingAmount']})
 
-    return prepare_vend_sfs(ledgers, c_d, accounts_d)
+    return res
 
 
 # loads GL
 # returns dataframe
 def load_gls(ledgers_file_name):
-    logger.info("loading gls {}".format(ledgers_file_name))
-    df = pd.read_csv(ledgers_file_name, sep=',')
+    logger.info("loading {}".format(ledgers_file_name))
     res = []
-    data = df.to_dict('records')
-    for d in data:
-        _id = d['No_']
-        res.append([LType.GL.to_s(), _id, d['Search_Name'], '', '',
-                    '',
-                    '', '', 0, 'EUR', LType.GL.to_s(), '', MapType.UNUSED.to_s(), '', 0])
-    return pd.DataFrame(res, columns=ledger_cols)
+    with jsonlines.open(ledgers_file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            _id = e_str_ne(d, 'number')
+            res.append({'type': LType.GL.to_s(), "number": _id,
+                        'name': e_str(d.get('searchName')),  # TODO or name
+                        'iban': '', 'documentNumber': '',
+                        'dueDate': '',
+                        'documentDate': '',
+                        'externalDocumentNumber': '',
+                        'amount': 0,
+                        'currencyCode': 'EUR',
+                        'documentType': LType.GL.to_s(),
+                        'closedAtDate': '',
+                        'mapType': MapType.UNUSED.to_s(),
+                        'open': True,
+                        'remainingAmount': 0})
+
+    return res
 
 
 # loads BA
 # returns dataframe
 def load_ba(ledgers_file_name):
-    logger.info("loading ba {}".format(ledgers_file_name))
-    df = pd.read_csv(ledgers_file_name, sep=',')
+    logger.info("loading {}".format(ledgers_file_name))
     res = []
-    data = df.to_dict('records')
-    for d in data:
-        _id = e_str(d['No_'])
-        res.append([LType.BA.to_s(), _id, d['Search_Name'], d['IBAN'], '',
-                    '',
-                    '', '', 0, e_currency(d['Currency_Code']),
-                    LType.BA.to_s(), '', MapType.UNUSED.to_s(), '', 0])
-    return pd.DataFrame(res, columns=ledger_cols)
+    with jsonlines.open(ledgers_file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            _id = e_str_ne(d, 'number')
+            res.append({'type': LType.BA.to_s(), "number": _id,
+                        'name': e_str(d.get('searchName')),  # TODO or name
+                        'iban': e_str(d.get('iban')),
+                        'documentNumber': '',
+                        'dueDate': '',
+                        'documentDate': '',
+                        'externalDocumentNumber': '',
+                        'amount': 0,
+                        'currencyCode': e_currency(d.get('currencyCode')),
+                        'documentType': LType.BA.to_s(),
+                        'closedAtDate': '',
+                        'mapType': MapType.UNUSED.to_s(),
+                        'open': True,
+                        'remainingAmount': 0})
+
+    return res

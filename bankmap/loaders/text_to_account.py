@@ -1,26 +1,26 @@
-import pandas as pd
+from jsonlines import jsonlines
 
-from bankmap.data import TextToAccountMap, LType
+from bankmap.data import TextToAccountMap, LType, e_str
 from bankmap.logger import logger
-
-text_to_account_map_cols = ['Text', 'Type', 'Account', 'Credit_Account', 'Debit_Account']
 
 
 def load_text_to_accounts(file_name):
-    logger.info("loading text_to_accounts {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',', dtype={x: 'str' for x in
-                                                ['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
-                                                 'Credit_Acc__No_', 'Debit_Acc__No_']})
-    return load_text_to_accounts_df(df)
+    logger.info("loading {}".format(file_name))
+    res = []
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            try:
+                if LType.supported(d['balSourceType']):
+                    res.append(TextToAccountMap(type_v=LType.from_s(e_str(d['balSourceType'])),
+                                                text=e_str(d.get('mappingText')),
+                                                account=e_str(d.get('balSourceNumber')),
+                                                credit_account=e_str(d.get('creditAccountNumber')),
+                                                debit_account=e_str(d.get('debitAccountNumber')),
+                                                ))
+            except BaseException as err:
+                raise RuntimeError(f"wrong data: {str(err)}")
 
-
-def load_text_to_accounts_df(df):
-    res_data = []
-    data = df.to_dict('records')
-    for d in data:
-        if LType.supported(d['Bal__Source_Type']):
-            res_data.append([d['Mapping_Text'], d['Bal__Source_Type'], d['Bal__Source_No_'], d['Credit_Acc__No_'],
-                             d['Debit_Acc__No_']])
-    res = [TextToAccountMap(d) for d in pd.DataFrame(res_data, columns=text_to_account_map_cols).to_dict('records')]
-    res.sort(key=lambda e: -len(e.text))
+    logger.info(f"loaded {len(res)} rows")
     return res

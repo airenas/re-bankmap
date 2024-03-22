@@ -62,19 +62,20 @@ class Recognition:
 
 class Entry:
     def __init__(self, row):
-        self.bank_account = e_str(row['BankAccount'])
-        self.ext_id = row['DocNo']
-        self.who = e_str(row['Description'])
-        self.iban = e_str(row['IBAN'])
-        self.msg = e_str(row['Message'])
-        self.date = to_date(row['Date'])
-        self.amount = e_float(row['Amount'])
-        self.rec_id = e_str(row['RecAccount'])
-        self.currency = row['Currency']
-        self.type = PaymentType.from_s(e_str(row['CdtDbtInd']))
-        self.doc_ids = e_str(row['RecDocs'])
-        self.rec_type = LType.from_s(e_str(row['RecType']))
+        self.bank_account = e_str(row['bankAccount'])
+        self.ext_id = row['externalDocumentNumber']
+        self.who = e_str(row['description'])
+        self.iban = e_str(row['iban'])
+        self.msg = e_str(row['message'])
+        self.date = to_date(row['date'])
+        self.amount = e_float(row['amount'])
+        self.rec_id = e_str(row['recAccount'])
+        self.currency = row['currency']
+        self.type = row['transactionType']
+        self.doc_ids = e_str(row['recDocs'])
+        self.rec_type = row['recType']
         self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
+        self.e2e_id = row['e2eId']
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -194,25 +195,25 @@ class LType(Enum):
 class LEntry:
     def __init__(self, row):
         try:
-            self.type = LType.from_s(e_str(row['Type']))
-            self.id = e_str(row['No'])  # vendor/cust/gl/ba
-            self.name = e_str(row['Name'])
-            self.iban = e_str(row['IBAN'])
-            self.ext_doc = e_str(row['ExtDoc'])
-            self.doc_no = e_str(row['Document_No'])
-            self.doc_date = to_date(row['Document_Date'])
+            self.type = LType.from_s(e_str(row['type']))
+            self.id = e_str(row['number'])  # vendor/cust/gl/ba
+            self.name = e_str(row['name'])
+            self.iban = e_str(row['iban'])
+            self.ext_doc = e_str(row['externalDocumentNumber'])
+            self.doc_no = e_str(row['documentNumber'])
+            self.doc_date = row['documentDate']
             try:
-                self.due_date = to_date(row['Due_Date'])
+                self.due_date = row['dueDate']
             except BaseException as err:
                 logger.warn("no due date: err: {}".format(err))
                 self.due_date = self.doc_date
-            self.amount = e_float(row['Amount'])
-            self.currency = row['Currency']
-            self.doc_type = DocType.from_s(e_str(row['Document_Type']))
-            self.closed_date = to_date(row['Closed_Date'])
-            self.map_type = MapType.from_s(row['Map_Type'])
-            self.open = e_str(row['Open']) == 'True'
-            self.remaining_amount = e_float(row['Remaining_Amount'])
+            self.amount = row['amount']
+            self.currency = row['currencyCode']
+            self.doc_type = DocType.from_s(row['documentType'])
+            self.closed_date = to_date(row['closedAtDate'])
+            self.map_type = MapType.from_s(row['mapType'])
+            self.open = e_str(row['open']) == 'True'
+            self.remaining_amount = e_float(row['remainingAmount'])
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 
@@ -230,21 +231,25 @@ class TextToAccount:
 
 
 class TextToAccountMap:
-    def __init__(self, row):
-        try:
-            self.type = LType.from_s(e_str(row['Type']))
-            self.text = e_str(row['Text']).strip()
-            self.account = e_str(row['Account'])
-            self.credit_account = e_str(row['Credit_Account'])
-            self.debit_account = e_str(row['Debit_Account'])
-        except BaseException as err:
-            raise Exception("Err: {}: for {}".format(err, row))
+    def __init__(self, type_v, text, account, credit_account, debit_account):
+        self.type = type_v
+        self.text = text
+        self.account = account
+        self.credit_account = credit_account
+        self.debit_account = debit_account
 
 
 def e_str(p):
-    if p != p:
+    if p is None:
         return ''
     return str(p).strip()
+
+
+def e_str_ne(d, name):
+    res = e_str(d.get(name))
+    if res == '':
+        raise Exception(f"Empty {name}")
+    return res
 
 
 def e_float(p):
@@ -253,9 +258,12 @@ def e_float(p):
     return float(e_str(p).replace(",", "."))
 
 
+def e_date_ne(d, name):
+    res = e_str_ne(d, name)
+    return to_date(res)
+
+
 def e_date(p):
-    if p != p:
-        return ""
     res = e_str(p)
     if res == "0":
         return ""
@@ -263,7 +271,7 @@ def e_date(p):
 
 
 def e_currency(p):
-    if p != p:
+    if p is None:
         return "EUR"
     return e_str(p).upper()
 
