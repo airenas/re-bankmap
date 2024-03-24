@@ -150,34 +150,34 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     logger.info("data dir {}".format(data_dir))
     c_docs_map = load_docs_map(os.path.join(data_dir, "customerRecognitions.jsonl"), "Cust")
     v_docs_map = load_docs_map(os.path.join(data_dir, "vendorRecognitions.jsonl"), "Vend")
-    res_info = {"customerRecognitions": len(c_docs_map), "vendorRecognitions": len(v_docs_map)}
+    res_info = {"customer_recognitions": len(c_docs_map), "vendor_recognitions": len(v_docs_map)}
     cv_docs_map = c_docs_map
     cv_docs_map.update(v_docs_map)
 
     ba_map = load_bank_recognitions_map(os.path.join(data_dir, "bankAccountRecognitions.jsonl"))
-    res_info["bankAccountRecognitions"] = len(ba_map)
+    res_info["bank_account_recognitions"] = len(ba_map)
     start_t = log_elapsed(start, "load_recognitions")
 
     entries_df = load_entries(os.path.join(data_dir, "bankStatementEntries.jsonl"), ba_map, cv_docs_map)
-    res_info["bankStatementEntries"] = len(entries_df)
+    res_info["bank_statement_entries"] = len(entries_df)
     start_t = log_elapsed(start_t, "load_entries")
 
     customer_sf_df = load_customer_sfs(os.path.join(data_dir, "customerLedgerEntries.jsonl"),
                                        os.path.join(data_dir, "customerBankAccounts.jsonl"),
                                        os.path.join(data_dir, "customers.jsonl"))
-    res_info["customerLedgerEntries"] = len(customer_sf_df)
+    res_info["customer_ledger_entries"] = len(customer_sf_df)
 
     vendor_sf_df = load_vendor_sfs(os.path.join(data_dir, "vendorLedgerEntries.jsonl"),
                                    os.path.join(data_dir, "vendorBankAccounts.jsonl"),
                                    os.path.join(data_dir, "vendors.jsonl"))
-    res_info["vendorLedgerEntries"] = len(vendor_sf_df)
+    res_info["vendor_ledger_entries"] = len(vendor_sf_df)
     start_t = log_elapsed(start_t, "load_ledgers")
 
     gl_df = load_gls(os.path.join(data_dir, "glAccounts.jsonl"))
-    res_info["glAccounts"] = len(gl_df)
+    res_info["gl_accounts"] = len(gl_df)
 
     ba_df = load_ba(os.path.join(data_dir, "bankAccounts.jsonl"))
-    res_info["bankAccounts"] = len(ba_df)
+    res_info["bank_accounts"] = len(ba_df)
     start_t = log_elapsed(start_t, "load_gl_ba")
 
     gl_ba = [LEntry(r) for r in gl_df] + \
@@ -187,7 +187,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
     sfs = [s for s in sfs if s.open]
-    res_info["openSFs"] = len(sfs)
+    res_info["open_sfs"] = len(sfs)
     for s in sfs:
         s.amount = s.remaining_amount
     # customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
@@ -199,7 +199,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     # start_t = log_elapsed(start_t, "load_applications")
 
     new_entries = load_lines(os.path.join(data_dir, "bankStatementLines.jsonl"))
-    res_info["bankStatementLines"] = len(new_entries)
+    res_info["bank_statement_lines"] = len(new_entries)
     start_t = log_elapsed(start_t, "load_entry_lines")
 
     entries = [Entry(e) for e in entries_df]
@@ -211,7 +211,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     except BaseException as _err:
         logger.error(_err)
         text_to_account_map = []
-    res_info["textToAccountMappings"] = len(text_to_account_map)
+    res_info["text_to_account_mappings"] = len(text_to_account_map)
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     log_elapsed(start_t, "prepare_entries")
