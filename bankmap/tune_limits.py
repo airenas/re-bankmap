@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from bankmap.cfg import PredictionCfg
 from bankmap.data import LEntry, Entry, Ctx, LType, Arena, App
 from bankmap.history_stats import Stats
-from bankmap.loaders.apps import load_customer_apps, load_vendor_apps
+from bankmap.loaders.apps import load_apps
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
 from bankmap.logger import logger
@@ -65,57 +65,56 @@ def tune_limits(data_dir, cfg: PredictionCfg):
 
     start = time.time()
     logger.info("data dir {}".format(data_dir))
-    c_docs_map = load_docs_map(os.path.join(data_dir, "Customer_Recognitions.csv"), "Cust")
-    v_docs_map = load_docs_map(os.path.join(data_dir, "Vendor_Recognitions.csv"), "Vend")
-    res_info = {"Customer_Recognitions": len(c_docs_map), "Vendor_Recognitions": len(v_docs_map)}
+    c_docs_map = load_docs_map(os.path.join(data_dir, "customerRecognitions.jsonl"), "Cust")
+    v_docs_map = load_docs_map(os.path.join(data_dir, "vendorRecognitions.jsonl"), "Vend")
+    res_info = {"customer_recognitions": len(c_docs_map), "vendor_recognitions": len(v_docs_map)}
     cv_docs_map = c_docs_map
     cv_docs_map.update(v_docs_map)
 
-    ba_map = load_bank_recognitions_map(os.path.join(data_dir, "Bank_Account_Recognitions.csv"))
-    res_info["Bank_Account_Recognitions"] = len(ba_map)
+    ba_map = load_bank_recognitions_map(os.path.join(data_dir, "bankAccountRecognitions.jsonl"))
+    res_info["bank_account_recognitions"] = len(ba_map)
     start_t = log_elapsed(start, "load_recognitions")
 
-    entries_df = load_entries(os.path.join(data_dir, "Bank_Statement_Entries.csv"), ba_map, cv_docs_map)
-    res_info["Bank_Statement_Entries"] = len(entries_df)
+    entries_df = load_entries(os.path.join(data_dir, "bankStatementEntries.jsonl"), ba_map, cv_docs_map)
+    res_info["bank_statement_entries"] = len(entries_df)
     start_t = log_elapsed(start_t, "load_entries")
 
-    customer_sf_df = load_customer_sfs(os.path.join(data_dir, "Customer_Ledger_Entries.csv"),
-                                       os.path.join(data_dir, "Customer_Bank_Accounts.csv"),
-                                       os.path.join(data_dir, "Customers.csv"))
-    res_info["Customer_Ledger_Entries"] = len(customer_sf_df)
+    customer_sf_df = load_customer_sfs(os.path.join(data_dir, "customerLedgerEntries.jsonl"),
+                                       os.path.join(data_dir, "customerBankAccounts.jsonl"),
+                                       os.path.join(data_dir, "customers.jsonl"))
+    res_info["customer_ledger_entries"] = len(customer_sf_df)
 
-    vendor_sf_df = load_vendor_sfs(os.path.join(data_dir, "Vendor_Ledger_Entries.csv"),
-                                   os.path.join(data_dir, "Vendor_Bank_Accounts.csv"),
-                                   os.path.join(data_dir, "Vendors.csv"))
-    res_info["Vendor_Ledger_Entries"] = len(vendor_sf_df)
+    vendor_sf_df = load_vendor_sfs(os.path.join(data_dir, "vendorLedgerEntries.jsonl"),
+                                   os.path.join(data_dir, "vendorBankAccounts.jsonl"),
+                                   os.path.join(data_dir, "vendors.jsonl"))
+    res_info["vendor_ledger_entries"] = len(vendor_sf_df)
     start_t = log_elapsed(start_t, "load_ledgers")
 
-    gl_df = load_gls(os.path.join(data_dir, "GL_Accounts.csv"))
-    res_info["GL_Accounts"] = len(gl_df)
+    gl_df = load_gls(os.path.join(data_dir, "glAccounts.jsonl"))
+    res_info["gl_accounts"] = len(gl_df)
 
-    ba_df = load_ba(os.path.join(data_dir, "Bank_Accounts.csv"))
-    res_info["Bank_Accounts"] = len(ba_df)
+    ba_df = load_ba(os.path.join(data_dir, "bankAccounts.jsonl"))
+    res_info["bank_accounts"] = len(ba_df)
     start_t = log_elapsed(start_t, "load_gl_ba")
 
-    gl_ba = [LEntry(r) for r in gl_df.to_dict('records')] + \
-            [LEntry(r) for r in ba_df.to_dict('records')]
-    sfs = [LEntry(r) for r in customer_sf_df.to_dict('records')] + \
-          [LEntry(r) for r in vendor_sf_df.to_dict('records')]
+    gl_ba = [LEntry(r) for r in gl_df] + \
+            [LEntry(r) for r in ba_df]
+    sfs = [LEntry(r) for r in customer_sf_df] + \
+          [LEntry(r) for r in vendor_sf_df]
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
     l_entries = sfs + gl_ba
-    customer_apps_df = load_customer_apps(os.path.join(data_dir, "Customer_Applications.csv"), l_entries)
-    res_info["Customer_Applications"] = len(customer_apps_df)
+    customer_apps_df = load_apps(os.path.join(data_dir, "customerApplications.jsonl"), l_entries, "Customer")
+    res_info["customer_applications"] = len(customer_apps_df)
 
-    vendor_apps_df = load_vendor_apps(os.path.join(data_dir, "Vendor_Applications.csv"), l_entries)
-    res_info["Vendor_Applications"] = len(vendor_apps_df)
+    vendor_apps_df = load_apps(os.path.join(data_dir, "vendorApplications.jsonl"), l_entries, "Vendor")
+    res_info["vendor_applications"] = len(vendor_apps_df)
     res_info["l_entries"] = len(l_entries)
     start_t = log_elapsed(start_t, "load_applications")
 
-    entries_d = entries_df.to_dict('records')
-    entries = [Entry(e) for e in entries_d]
-    apps = [App(r) for r in customer_apps_df.to_dict('records')] + \
-           [App(r) for r in vendor_apps_df.to_dict('records')]
+    entries = [Entry(e) for e in entries_df]
+    apps = [App(r) for r in customer_apps_df] + \
+           [App(r) for r in vendor_apps_df]
 
     entries = [e for e in entries if e.rec_type != LType.UNSET]
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
@@ -152,7 +151,7 @@ def tune_limits(data_dir, cfg: PredictionCfg):
 
 
 def make_tune_stats(cfg: PredictionCfg, param):
-    return "stats:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company), param.get("Bank_Statement_Entries"),
+    return "stats:{}:{}:{}   cfg:{}:{}".format(empty_if_n(cfg.company), param.get("bank_statement_entries"),
                                                param.get("tune_count"), empty_if_n(cfg.tune_count),
                                                str_date(cfg.tune_date))
 

@@ -1,60 +1,32 @@
-import pandas as pd
+from jsonlines import jsonlines
 
-from bankmap.data import e_currency
+from bankmap.data import e_str_ne, e_date, e_date_ne, e_float
 from bankmap.logger import logger
 
-app_cols = ['Type', 'Apply_Date', 'Apply_Amount', 'Remaining_Amount', 'Document_No', 'CV_No']
 
-
-def prepare_cust_apps(df, l_map):
-    res = []
-    data = df.to_dict('records')
-    for d in data:
-        doc = d['Document_No_']
-        cv_no = l_map.get(doc, "")
-        date = d['Application_Created_Date']
-        if date == "0":  # close same day if not set
-            date = d['Posting_Date']
-        if cv_no:
-            res.append(['Customer', date,
-                        e_currency(d['Application_Amount']),
-                        e_currency(d['Remaining_Amount']),
-                        doc, cv_no
-                        ])
-    return pd.DataFrame(res, columns=app_cols)
-
-
-# loads customer apps
-# returns dataframe
-def load_customer_apps(apps_file_name, l_entries):
-    logger.info("loading apps {}".format(apps_file_name))
-    ledgers = pd.read_csv(apps_file_name, sep=',')
+# loads apps
+# returns array of map
+def load_apps(file_name, l_entries, _type):
     l_map = {e.doc_no: e.id for e in l_entries}
-    return prepare_cust_apps(ledgers, l_map)
-
-
-def prepare_vend_apps(df, l_map):
+    logger.info("loading {}".format(file_name))
     res = []
-    data = df.to_dict('records')
-    for d in data:
-        doc = d['Document_No_']
-        cv_no = l_map.get(doc, "")
-        date = d['Application_Created_Date']
-        if date == "0":  # close same day if not set
-            date = d['Posting_Date']
-        if cv_no:
-            res.append(['Vendor', date,
-                        e_currency(d['Application_Amount']),
-                        e_currency(d['Remaining_Amount']),
-                        doc, cv_no
-                        ])
-    return pd.DataFrame(res, columns=app_cols)
+    with jsonlines.open(file_name) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            doc = e_str_ne(d, 'documentNumber')
+            cv_no = l_map.get(doc, "")
 
-
-# loads vendor apps
-# returns dataframe
-def load_vendor_apps(apps_file_name, l_entries):
-    logger.info("loading apps {}".format(apps_file_name))
-    ledgers = pd.read_csv(apps_file_name, sep=',')
-    l_map = {e.doc_no: e.id for e in l_entries}
-    return prepare_vend_apps(ledgers, l_map)
+            date = e_date(d, 'applicationCreatedDateTime')
+            if date is None:  # close same day if not set
+                date = e_date_ne(d, 'postingDate')
+            if cv_no:
+                res.append({'type': _type,
+                            'apply_date': date,
+                            'apply_amount': e_float(d, 'applicationAmount'),
+                            'remaining_amount': e_float(d, 'remainingAmount'),
+                            'document_number': doc,
+                            'cv_number': cv_no
+                            })
+    logger.info(f"loaded {len(res)} rows in {file_name}")
+    return res

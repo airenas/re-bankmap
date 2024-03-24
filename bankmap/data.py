@@ -20,14 +20,12 @@ class Ctx:
 
 class App:
     def __init__(self, row):
-        self.type = LType.from_s(e_str(row['Type']))
-        self.doc_no = e_str(row['Document_No'])
-        # self.entry_no = e_str(row['Entry_No'])
-        self.apply_date = to_date(row['Apply_Date'])
-        self.amount = e_float(row['Apply_Amount'])
-        self.remaining = e_float(row['Remaining_Amount'])
-        self.cv_no = e_str(row['CV_No'])
-        # self.cv_name = e_str(row['CV_Name'])
+        self.type = LType.from_s(row['type'])
+        self.doc_no = row['document_number']
+        self.apply_date = row['apply_date']
+        self.amount = row['apply_amount']
+        self.remaining = row['remaining_amount']
+        self.cv_no = row['cv_number']
 
     def to_str(self):
         return "{} - {} - {} ({})[{}:{}]".format(self.type, self.apply_date, self.amount,
@@ -68,7 +66,7 @@ class Entry:
         self.iban = e_str(row['iban'])
         self.msg = e_str(row['message'])
         self.date = to_date(row['date'])
-        self.amount = e_float(row['amount'])
+        self.amount = row['amount']
         self.rec_id = e_str(row['recAccount'])
         self.currency = row['currency']
         self.type = row['transactionType']
@@ -83,11 +81,12 @@ class Entry:
 
 def to_date(p):
     try:
-        if p != p or not p:
+        if p is None:
             return None
         if isinstance(p, datetime.datetime):
             return p
-        return datetime.datetime.fromisoformat(p)
+        res = datetime.datetime.fromisoformat(p)
+        return res.replace(tzinfo=None)
     except BaseException as err:
         logger.error("date:'{}'".format(p))
         raise err
@@ -210,10 +209,10 @@ class LEntry:
             self.amount = row['amount']
             self.currency = row['currencyCode']
             self.doc_type = DocType.from_s(row['documentType'])
-            self.closed_date = to_date(row['closedAtDate'])
+            self.closed_date = row['closedAtDate']
             self.map_type = MapType.from_s(row['mapType'])
             self.open = e_str(row['open']) == 'True'
-            self.remaining_amount = e_float(row['remainingAmount'])
+            self.remaining_amount = e_float(row, 'remainingAmount')
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 
@@ -245,6 +244,13 @@ def e_str(p):
     return str(p).strip()
 
 
+def e_str_e(d, name):
+    res = d.get(name)
+    if res is None:
+        return ''
+    return str(res).strip()
+
+
 def e_str_ne(d, name):
     res = e_str(d.get(name))
     if res == '':
@@ -252,10 +258,11 @@ def e_str_ne(d, name):
     return res
 
 
-def e_float(p):
-    if p != p:
+def e_float(d, name):
+    p = d.get(name)
+    if p is None:
         return 0
-    return float(e_str(p).replace(",", "."))
+    return float(p)
 
 
 def e_date_ne(d, name):
@@ -263,10 +270,10 @@ def e_date_ne(d, name):
     return to_date(res)
 
 
-def e_date(p):
-    res = e_str(p)
-    if res == "0":
-        return ""
+def e_date(d, name):
+    res = e_str_e(d, name)
+    if not res:
+        return None
     return to_date(res)
 
 
