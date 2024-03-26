@@ -1,18 +1,11 @@
-import pandas as pd
-
 from bankmap.data import LType
-from bankmap.loaders.text_to_account import load_text_to_accounts_df
-
-
-def test_empty():
-    assert load_text_to_accounts_df(pd.DataFrame([], columns=['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
-                                                              'Credit_Acc__No_', 'Debit_Acc__No_'])) == []
+from bankmap.loaders.text_to_account import read_text_to_accounts
 
 
 def test_simple():
-    maps = load_text_to_accounts_df(pd.DataFrame([["olia", "G/L Account", "12", "", ""]],
-                                                 columns=['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
-                                                          'Credit_Acc__No_', 'Debit_Acc__No_']))
+    maps = read_text_to_accounts([{'mappingText': 'olia', 'debitAccountNumber': '',
+                                   'creditAccountNumber': '', 'balSourceType': 'G/L Account', 'balSourceNumber': '12'}],
+                                 "t.jsonl")
     assert len(maps) == 1
     assert maps[0].text == "olia"
     assert maps[0].type == LType.GL
@@ -22,9 +15,10 @@ def test_simple():
 
 
 def test_credit():
-    maps = load_text_to_accounts_df(pd.DataFrame([["olia", "G/L Account", "12", "10", "11"]],
-                                                 columns=['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
-                                                          'Credit_Acc__No_', 'Debit_Acc__No_']))
+    maps = read_text_to_accounts([{'mappingText': 'olia', 'debitAccountNumber': '11',
+                                   'creditAccountNumber': '10', 'balSourceType': 'G/L Account',
+                                   'balSourceNumber': '12'}],
+                                 "t.jsonl")
     assert len(maps) == 1
     assert maps[0].text == "olia"
     assert maps[0].type == LType.GL
@@ -34,11 +28,18 @@ def test_credit():
 
 
 def test_sort():
-    maps = load_text_to_accounts_df(pd.DataFrame(
-        [["olia", "G/L Account", "12", "10", "11"], ["olia 2", "G/L Account", "12", "10", "11"],
-         ["o2", "G/L Account", "12", "10", "11"]],
-        columns=['Mapping_Text', 'Bal__Source_Type', 'Bal__Source_No_',
-                 'Credit_Acc__No_', 'Debit_Acc__No_']))
+    maps = read_text_to_accounts(
+        [{'mappingText': 'olia', 'debitAccountNumber': '11',
+          'creditAccountNumber': '10', 'balSourceType': 'G/L Account',
+          'balSourceNumber': '12'},
+         {'mappingText': 'olia 2', 'debitAccountNumber': '11',
+          'creditAccountNumber': '10', 'balSourceType': 'G/L Account',
+          'balSourceNumber': '12'},
+         {'mappingText': 'o2', 'debitAccountNumber': '11',
+          'creditAccountNumber': '10', 'balSourceType': 'G/L Account',
+          'balSourceNumber': '12'}
+         ],
+        "t.jsonl")
     assert len(maps) == 3
     assert maps[0].text == "olia 2"
     assert maps[1].text == "olia"
