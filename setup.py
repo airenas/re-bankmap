@@ -14,7 +14,7 @@ setup(
     author='Airenas Vaičiūnas',
     author_email='airenass@gmail.com',
     packages=find_packages(include=['bankmap', 'bankmap.*']),
-    version='0.1.' + git_version + "-beta",
+    version='0.3.' + git_version,
     license='BSD-3',
     description='Bank statement entries mapping to internal db entries',
     long_description=long_description,
@@ -25,6 +25,7 @@ setup(
         'tqdm~=4.64.1',
         'numpy~=1.23.3',
         'jellyfish~=0.9.0',
+        'jsonlines==4.0.0',
         'strsimpy @ git+https://github.com/airenas/python-string-similarity.git@v0.2.87#egg=strsimpy',
     ]
 )
