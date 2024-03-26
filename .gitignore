@@ -163,3 +163,4 @@ deploy/az_f/bankmap-ml/requirements.txt
 deploy/az_f/bankmap-ml/Makefile.options
 deploy/az_f/bankmap-ml/.version
 deploy/az_ml/tune_pipeline/Makefile.options
+egs/direct_class/mlruns/**

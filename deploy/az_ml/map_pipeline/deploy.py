@@ -17,8 +17,8 @@ class Params:
         self.cpu_compute_target = "cpu-cluster-lp"
         self.conda_file = "./conda.yaml"
         self.code_dir = "./src"
-        self.env_name = "bankmap"
-        self.component_name = "bankmap"
+        self.env_name = os.getenv("ENV_NAME")
+        self.component_name = os.getenv("COMPONENT_NAME")
         self.config_path = f"azureml://subscriptions/{self.subscription_id}/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/configs/paths/"
         self.input_path = f"azureml://subscriptions/{self.subscription_id}/resourcegroups/DocuBank/workspaces/{self.workspace_name}/datastores/datawork/paths/"
 
@@ -151,6 +151,8 @@ def main(argv):
     params = Params()
     logger.info(f"version : {params.version}")
     logger.info(f"workspace_name : {params.workspace_name}")
+    logger.info(f"component_name : {params.component_name}")
+    logger.info(f"env_name : {params.env_name}")
     logger.info(f"subscription_id : {params.subscription_id}")
     logger.info(f"cpu_compute_target : {params.cpu_compute_target}")
 

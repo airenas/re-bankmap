@@ -27,7 +27,7 @@ class FunctionCfg:
                                              'resourcegroups/DocuBank/workspaces/test/datastores/devcopy/paths/{}.zip')
         self.subscription_id = os.getenv('SUBSCRIPTION_ID')
         self.workspace = os.getenv('ML_WORKSPACE', "test")
-        self.ml_component = os.getenv('ML_COMPONENT', "bankmap_tune")
+        self.ml_component = os.getenv('ML_COMPONENT', "bankmap_tune_v2")
 
 
 app = func.FunctionApp()
