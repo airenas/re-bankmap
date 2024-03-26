@@ -1,7 +1,7 @@
 import pandas as pd
 from jsonlines import jsonlines
 
-from bankmap.data import e_str, Entry, PaymentType, Recognition, LType, e_str_ne, e_date_ne
+from bankmap.data import e_str, Entry, PaymentType, Recognition, LType, e_str_ne, e_date_ne, e_str_e
 from bankmap.logger import logger
 
 
@@ -58,8 +58,8 @@ def is_recognized(param):
 
 def iban(p):
     if e_str(p.get('creditorIban')):
-        return e_str(p.get('creditorIban'))
-    return e_str(p.get('debtorIban'))
+        return e_str_e(p, 'creditorIban')
+    return e_str_e(p, 'debtorIban')
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
@@ -126,8 +126,12 @@ def non_empty_str(s1, s2):
     return s1
 
 
-# loads data from Bank_Statement_Lines
-# returns Entries list
+def get_name(d, credit):
+    if credit:
+        return e_str(d.get('creditorName'))
+    return e_str(d.get('debtorName'))
+
+
 def load_lines(file_name):
     logger.info("loading {}".format(file_name))
     res = []
@@ -144,7 +148,7 @@ def load_lines(file_name):
             credit = PaymentType.from_s(d['transactionType']) == PaymentType.CRDT
 
             if e_str(d.get('operationDate')) != '':
-                value = {'description': d.get('description'),
+                value = {'description': get_name(d, credit),
                          'message': d.get('transactionText'),
                          'transactionType': PaymentType.from_s(e_str(d.get('transactionType'))),
                          'amount': d.get('statementAmount'),

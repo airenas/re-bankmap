@@ -19,7 +19,7 @@ def load_IBANs(file_name, _type):
     return res
 
 
-def load_cust_names(file_name):
+def load_names(file_name):
     logger.info("loading {}".format(file_name))
     res = {}
     with jsonlines.open(file_name) as reader:
@@ -36,7 +36,7 @@ def load_cust_names(file_name):
 
 def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
     ibans = load_IBANs(ba_file_name, 'customer')
-    names = load_cust_names(cust_file_name)
+    names = load_names(cust_file_name)
 
     logger.info("loading {}".format(ledgers_file_name))
     res = []
@@ -68,7 +68,7 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
 # loads vendor SF
 def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     ibans = load_IBANs(ba_file_name, 'vendor')
-    names = load_cust_names(vend_file_name)
+    names = load_names(vend_file_name)
 
     logger.info("loading {}".format(ledgers_file_name))
     res = []

@@ -10,6 +10,9 @@ from bankmap.similarity.similarity import num_close
 
 time_parser = parser()
 
+check_date_max = datetime.datetime.today() + timedelta(days=20 * 365)
+check_date_min = datetime.datetime.today() - timedelta(days=40 * 365)
+
 
 class Ctx:
     def __init__(self, history_days: int = None, stats=None):
@@ -73,7 +76,7 @@ class Entry:
         self.doc_ids = e_str(row['recDocs'])
         self.rec_type = row['recType']
         self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
-        self.e2e_id = row['e2eId']
+        self.e2e_id = e_str_e(row, 'e2eId')
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -81,11 +84,13 @@ class Entry:
 
 def to_date(p):
     try:
-        if p is None:
+        if p is None or p == '':
             return None
         if isinstance(p, datetime.datetime):
             return p
         res = datetime.datetime.fromisoformat(p)
+        if res > check_date_max or res < check_date_min:
+            raise Exception(f"Wrong date '{p}'")
         return res.replace(tzinfo=None)
     except BaseException as err:
         logger.error("date:'{}'".format(p))
