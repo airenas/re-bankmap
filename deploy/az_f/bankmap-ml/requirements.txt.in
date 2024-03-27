@@ -3,7 +3,7 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions==1.13.3
-azure-storage-blob==12.16.0
+azure-storage-blob==12.13.0
 azure-ai-ml==1.12.1
 git+https://github.com/airenas/re-bankmap.git@v${version}#egg=bankmap
 ulid-py==1.1.0

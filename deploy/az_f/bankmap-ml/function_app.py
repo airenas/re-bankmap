@@ -34,6 +34,7 @@ class FunctionCfg:
         self.workspace = os.getenv('ML_WORKSPACE', "bankmap")
         self.ml_component = os.getenv('ML_COMPONENT', "bankmap")
         self.tune_live_url = os.getenv('TUNE_LIVE_URL', "")
+        self.obsolete = os.getenv('FUNCTION_OBSOLETE', "") == "1"
 
 
 app = func.FunctionApp()
@@ -132,6 +133,7 @@ def wake_tune_func():
 @app.function_name(name="bankmap-put")
 @app.route(route="map", methods=[HttpMethod.POST])  # HTTP Trigger
 def map_function(req: func.HttpRequest) -> func.HttpResponse:
+    function_cfg = FunctionCfg()
     app_ver = get_version()
     logger.info("version {}".format(app_ver))
     start, metrics = time.time(), {}
@@ -141,6 +143,9 @@ def map_function(req: func.HttpRequest) -> func.HttpResponse:
     company = req.headers.get("RecognitionForId", None)
     logger.info("RecognitionForId {}".format(company))
     logger.info(f"ID {id}")
+    if function_cfg.obsolete:
+        return json_resp({"error": f"obsolete {app_ver}"}, HTTPStatus.BAD_REQUEST, trace_id)
+
     try:
         if company:
             company = base64.b64decode(company.encode('ascii')).decode('utf-8')

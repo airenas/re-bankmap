@@ -11,13 +11,21 @@ create/az-group:
 create/storage-account:
 	az storage account create --name $(func_storage) --sku Standard_LRS --resource-group $(func_resource_group)
 create/function:
-	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.9 \
+	az functionapp create --consumption-plan-location $(func_location) --runtime python --runtime-version 3.11 \
 		--functions-version 4 --name $(func_name) --os-type linux --storage-account $(func_storage) \
 		--resource-group $(func_resource_group)
 enable/indexing:		
 	az functionapp config appsettings set --name $(func_name) --resource-group $(func_resource_group) --settings AzureWebJobsFeatureFlags=EnableWorkerIndexing		
 get/storage-account/cs:
-	func azure storage fetch-connection-string $(func_storage)
+	func azure functionapp fetch-connection-string $(func_storage)
+
+get/settings:
+	func azure storage fetch-app-settings $(func_name)
+	func settings decrypt
+
+deploy/settings:
+	func azure functionapp publish $(func_name) --publish-settings-only 
+
 ############################################
 deploy: _version requirements.txt
 	func azure functionapp publish $(func_name) --python
