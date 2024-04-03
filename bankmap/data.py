@@ -71,7 +71,7 @@ class Entry:
         self.date = to_date(row['date'])
         self.amount = row['amount']
         self.rec_id = e_str(row['recAccount'])
-        self.currency = row['currency']
+        self.currency = e_currency(row['currency'])
         self.type = PaymentType.from_s(row['transactionType'])
         self.doc_ids = e_str(row['recDocs'])
         self.rec_type = LType.from_s(row['recType'])
@@ -213,7 +213,7 @@ class LEntry:
                 logger.warn("no due date: err: {}".format(err))
                 self.due_date = self.doc_date
             self.amount = row['amount']
-            self.currency = row['currencyCode']
+            self.currency = e_currency(row['currencyCode'])
             self.doc_type = DocType.from_s(row['documentType'])
             self.closed_date = to_date(row['closedAtDate'])
             self.map_type = MapType.from_s(row['mapType'])
@@ -284,7 +284,7 @@ def e_date(d, name):
 
 
 def e_currency(p):
-    if p is None:
+    if e_str(p) == "":
         return "EUR"
     return e_str(p).upper()
 

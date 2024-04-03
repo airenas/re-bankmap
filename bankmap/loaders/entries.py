@@ -160,15 +160,15 @@ def load_lines(file_name):
             if e_str(d.get('operationDate')) != '':
                 value = {'description': get_name(d, credit),
                          'message': d.get('transactionText'),
-                         'transactionType': PaymentType.from_s(e_str(d.get('transactionType'))),
+                         'transactionType': e_str(d.get('transactionType')),
                          'amount': d.get('statementAmount'),
-                         'date': e_date_ne(d, 'operationDate'),
+                         'date': e_str_ne(d, 'operationDate'),
                          'iban': iban(d),
                          'e2eId': d.get('endToEndId'),
                          'recAccount': "",
                          'currency': d.get('accountCurrency'),
                          'recDocs': "",
-                         'recType': LType.from_s(""),
+                         'recType': "",
                          'bankAccount': d.get('bankAccountNumber'),
                          'externalDocumentNumber': d.get('externalDocumentNumber'),
                          }
