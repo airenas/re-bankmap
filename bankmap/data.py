@@ -257,6 +257,14 @@ def e_str_e(d, name):
     return str(res).strip()
 
 
+def e_str_first(d, names):
+    for n in names:
+        v = e_str_e(d, n)
+        if v:
+            return v
+    return ''
+
+
 def e_str_ne(d, name):
     res = e_str(d.get(name))
     if res == '':

@@ -1,7 +1,7 @@
 import pandas as pd
 from jsonlines import jsonlines
 
-from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType, e_str_ne
+from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType, e_str_ne, e_str_first
 from bankmap.logger import logger
 
 
@@ -13,7 +13,7 @@ def load_IBANs(file_name, _type):
             if i == 0:
                 logger.debug(f"Item: {d}")
             cust = e_str(d.get(_type + 'Number'))
-            no = e_str(d.get('bankAccountNumber'))  # TODO
+            no = e_str_first(d, ['iban', 'bankAccountNumber'])
             res[cust] = no
     logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
@@ -108,7 +108,7 @@ def load_gls(ledgers_file_name):
                 logger.debug(f"Item: {d}")
             _id = e_str_ne(d, 'number')
             res.append({'type': LType.GL.to_s(), "number": _id,
-                        'name': e_str(d.get('searchName')),  # TODO or name
+                        'name': e_str_first(d, ['searchName', 'name']),
                         'iban': '', 'documentNumber': '',
                         'dueDate': None,
                         'documentDate': None,
@@ -135,7 +135,7 @@ def load_ba(ledgers_file_name):
                 logger.debug(f"Item: {d}")
             _id = e_str_ne(d, 'number')
             res.append({'type': LType.BA.to_s(), "number": _id,
-                        'name': e_str(d.get('searchName')),  # TODO or name
+                        'name': e_str_first(d, ['searchName', 'name']),
                         'iban': e_str(d.get('iban')),
                         'documentNumber': '',
                         'dueDate': None,
