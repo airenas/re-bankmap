@@ -1,13 +1,12 @@
 import argparse
-import json
 import sys
 
 from jsonlines import jsonlines
 
 from bankmap.data import LEntry
 from bankmap.loaders.apps import load_apps
-from bankmap.loaders.entries import DateTimeEncoder
 from bankmap.logger import logger
+from bankmap.utils.utils import json_str
 
 
 def main(argv):
@@ -32,7 +31,7 @@ def main(argv):
 
     df_out = load_apps(args.input, l_entries, "Vendor")
     for d in df_out:
-        print(json.dumps(d, cls=DateTimeEncoder), file=sys.stdout)
+        print(json_str(d), file=sys.stdout)
     logger.info("wrote {} apps".format(len(df_out)))
     logger.info("Done")
 

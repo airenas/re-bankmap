@@ -1,11 +1,10 @@
 import argparse
-import json
 import sys
 
 from jsonlines import jsonlines
 
-from bankmap.loaders.entries import DateTimeEncoder
 from bankmap.logger import logger
+from bankmap.utils.utils import json_str
 
 
 def main(argv):
@@ -30,11 +29,11 @@ def main(argv):
         test = entries[args.split:]
     with open(args.out_train, "w") as f:
         for d in train:
-            print(json.dumps(d, cls=DateTimeEncoder), file=f)
+            print(json_str(d), file=f)
         logger.info("saved train {} rows".format(len(train)))
     with open(args.out_test, "w") as f:
         for d in train:
-            print(json.dumps(d, cls=DateTimeEncoder), file=f)
+            print(json_str(d), file=f)
         logger.info("saved test {} rows".format(len(test)))
     logger.info("Done")
 

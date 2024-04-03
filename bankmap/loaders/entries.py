@@ -7,13 +7,6 @@ from bankmap.data import e_str, Entry, Recognition, LType, e_str_ne, e_date_ne, 
 from bankmap.logger import logger
 
 
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return json.JSONEncoder.default(self, obj)
-
-
 # loads data from Customer_Recognitions or Vendor_Recognitions
 # returns map of [statement no][[[mapper_internal doss], customer_no]]
 # _type = [Cust, Vend]

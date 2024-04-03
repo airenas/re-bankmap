@@ -1,11 +1,11 @@
 import argparse
-import json
 import sys
 
 from jsonlines import jsonlines
 
-from bankmap.loaders.entries import load_bank_recognitions_map, load_entries, DateTimeEncoder
+from bankmap.loaders.entries import load_bank_recognitions_map, load_entries
 from bankmap.logger import logger
+from bankmap.utils.utils import json_str
 
 
 def main(argv):
@@ -29,7 +29,7 @@ def main(argv):
 
     df = load_entries(args.input, ba_map, cv_map)
     for v in df:
-        print(json.dumps(v, cls=DateTimeEncoder), file=sys.stdout)
+        print(json_str(v), file=sys.stdout)
     logger.info("Done")
 
 

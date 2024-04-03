@@ -1,10 +1,9 @@
 import argparse
-import json
 import sys
 
-from bankmap.loaders.entries import DateTimeEncoder
 from bankmap.loaders.ledgers import load_ba
 from bankmap.logger import logger
+from bankmap.utils.utils import json_str
 
 
 def main(argv):
@@ -17,7 +16,7 @@ def main(argv):
     logger.info("Starting")
     df = load_ba(args.input)
     for d in df:
-        print(json.dumps(d, cls=DateTimeEncoder), file=sys.stdout)
+        print(json_str(d), file=sys.stdout)
     logger.info("Done")
 
 

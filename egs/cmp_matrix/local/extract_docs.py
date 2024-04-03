@@ -1,9 +1,9 @@
 import argparse
-import json
 import sys
 
 from bankmap.loaders.entries import load_docs_map
 from bankmap.logger import logger
+from bankmap.utils.utils import json_str
 
 
 def main(argv):
@@ -19,7 +19,7 @@ def main(argv):
     res = load_docs_map(args.input, args.name)
     for k, v in res.items():
         out_v = {"id": k, "ext_id": ";".join(v[0]), "cv_number": v[1]}
-        print(json.dumps(out_v), file=sys.stdout)
+        print(json_str(out_v), file=sys.stdout)
     logger.info("Done")
 
 
