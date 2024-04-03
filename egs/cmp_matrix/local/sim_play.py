@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-import pandas as pd
+from jsonlines import jsonlines
 
 from bankmap.data import Entry, LEntry, LType, App, Arena, Ctx
 from bankmap.history_stats import Stats
@@ -27,30 +27,40 @@ def main(argv):
     parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
     parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
     parser.add_argument("--apps", nargs='?', required=True, help="Applications file")
-    parser.add_argument("--i", nargs='?', required=True, help="Number of entries file to check")
+    parser.add_argument("--i", nargs='?', required=True, type=int, help="Number of entries file to check")
     parser.add_argument("--top", nargs='?', default=20, type=int, help="Show the top most similar items")
     parser.add_argument("--history", nargs='?', type=int, required=True, help="History in days to look for")
     args = parser.parse_args(args=argv)
 
     logger.info("Starting")
 
-    entries_t = pd.read_csv(args.input, sep=',')
+    entries_t = []
+    with jsonlines.open(args.input) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            entries_t.append(d)
     logger.info("loaded entries {} rows".format(len(entries_t)))
-    logger.debug("Headers: {}".format(list(entries_t)))
-    logger.debug("\n{}".format(entries_t.head(n=10)))
-    entries = [Entry(e) for e in entries_t.to_dict('records')]
 
-    ledgers = pd.read_csv(args.ledgers, sep=',')
+    ledgers = []
+    with jsonlines.open(args.ledgers) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            ledgers.append(d)
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    logger.debug("Headers: {}".format(list(ledgers)))
-    logger.debug("\n{}".format(ledgers.head(n=10)))
-    l_entries = [LEntry(_l) for _l in ledgers.to_dict('records')]
 
-    apps_t = pd.read_csv(args.apps, sep=',')
+    apps_t = []
+    with jsonlines.open(args.apps) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            apps_t.append(d)
     logger.info("loaded apps {} rows".format(len(apps_t)))
-    logger.debug("Headers: {}".format(list(apps_t)))
-    logger.debug("\n{}".format(apps_t.head(n=10)))
-    apps = [App(a) for a in apps_t.to_dict('records')]
+
+    entries = [Entry(e) for e in entries_t]
+    l_entries = [LEntry(_l) for _l in ledgers]
+    apps = [App(_i) for _i in apps_t]
 
     arena = Arena(l_entries, apps)
 
@@ -59,9 +69,9 @@ def main(argv):
     stats = Stats(entries)
     ctx = Ctx(history_days=args.history, stats=stats)
 
-    row = entries[int(args.i)]
+    row = entries[args.i]
     stats.move(row.date)
-    logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
+    logger.info("\n\n=============================\nTesting bank entry: \n{}".format(entries_t[args.i]))
     logger.info("Msg       : {}".format(row.msg))
     logger.info("Wanted    : {}".format(row.doc_ids))
     # logger.info("Ext doc no: {}".format(row.ext_id))
