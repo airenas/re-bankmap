@@ -28,58 +28,58 @@ ${out_dir}:
 ${out_dir}/extracted/.done: $(data_dir)/${zip} | ${out_dir}/extracted
 	unzip $(data_dir)/${zip} -d ${out_dir}/extracted
 	touch $@
-${out_dir}/entries.csv: ${out_dir}/extracted/.done
-	cat ${out_dir}/extracted/$(extr_dir)/Bank_Statement_Entries.csv | head -n $(take_n) > $@
+${out_dir}/entries.jsonl: ${out_dir}/extracted/.done
+	cat ${out_dir}/extracted/$(extr_dir)/bankStatementEntries.jsonl | head -n $(take_n) > $@
 ${out_dir}/docs_map.txt: ${out_dir}/c_docs_map.txt ${out_dir}/v_docs_map.txt
 	cat ${out_dir}/c_docs_map.txt > $@
-	tail -n +2 ${out_dir}/v_docs_map.txt >> $@
+	cat ${out_dir}/v_docs_map.txt >> $@
 ${out_dir}/c_docs_map.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/extract_docs.py --name Cust \
-	    --input ${out_dir}/extracted/$(extr_dir)/Customer_Recognitions.csv > $@_
+	    --input ${out_dir}/extracted/$(extr_dir)/customerRecognitions.jsonl > $@_
 	mv $@_ $@
 ${out_dir}/v_docs_map.txt: ${out_dir}/extracted/.done
 	$(python_cmd) local/extract_docs.py --name Vend \
-	    --input ${out_dir}/extracted/$(extr_dir)/Vendor_Recognitions.csv > $@_
+	    --input ${out_dir}/extracted/$(extr_dir)/vendorRecognitions.jsonl > $@_
 	mv $@_ $@		
-${out_dir}/entries.txt: ${out_dir}/entries.csv ${out_dir}/docs_map.txt
-	$(python_cmd) local/map_entries.py --input ${out_dir}/entries.csv \
-	    --input_map ${out_dir}/extracted/$(extr_dir)/Bank_Account_Recognitions.csv \
+${out_dir}/entries.txt: ${out_dir}/entries.jsonl ${out_dir}/docs_map.txt
+	$(python_cmd) local/map_entries.py --input ${out_dir}/entries.jsonl \
+	    --input_map ${out_dir}/extracted/$(extr_dir)/bankAccountRecognitions.jsonl \
 	    --docs_map ${out_dir}/docs_map.txt > $@_
 	mv $@_ $@
 ${out_dir}/entries_test.txt ${out_dir}/entries_train.txt: ${out_dir}/entries.txt
 	$(python_cmd) local/split.py --input ${out_dir}/entries.txt \
 	    --split $(split) --out_test ${out_dir}/entries_test.txt --out_train ${out_dir}/entries_train.txt
 ${out_dir}/cust_l_entries.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/Customer > $@_
+	$(python_cmd) local/map_customers.py --input ${out_dir}/extracted/$(extr_dir)/customer > $@_
 	mv $@_ $@
 ${out_dir}/gl_entries.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_gl.py --input ${out_dir}/extracted/$(extr_dir)/GL_Accounts.csv > $@_
+	$(python_cmd) local/map_gl.py --input ${out_dir}/extracted/$(extr_dir)/glAccounts.jsonl > $@_
 	mv $@_ $@
 ${out_dir}/ba_entries.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_ba.py --input ${out_dir}/extracted/$(extr_dir)/Bank_Accounts.csv > $@_
+	$(python_cmd) local/map_ba.py --input ${out_dir}/extracted/$(extr_dir)/bankAccounts.jsonl > $@_
 	mv $@_ $@
 ${out_dir}/vend_l_entries.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/Vendor > $@_
+	$(python_cmd) local/map_vendors.py --input ${out_dir}/extracted/$(extr_dir)/vendor > $@_
 	mv $@_ $@
 ##### map apps ################################
 ${out_dir}/cust_l_apps.txt: ${out_dir}/extracted/.done ${out_dir}/l_entries.txt
-	$(python_cmd) local/map_customers_app.py --input ${out_dir}/extracted/$(extr_dir)/Customer_Applications.csv \
+	$(python_cmd) local/map_customers_app.py --input ${out_dir}/extracted/$(extr_dir)/customerApplications.jsonl \
 		--ledgers ${out_dir}/l_entries.txt > $@_
 	mv $@_ $@
 ${out_dir}/vend_l_apps.txt: ${out_dir}/l_entries.txt ${out_dir}/extracted/.done
-	$(python_cmd) local/map_vendors_app.py --input ${out_dir}/extracted/$(extr_dir)/Vendor_Applications.csv \
+	$(python_cmd) local/map_vendors_app.py --input ${out_dir}/extracted/$(extr_dir)/vendorApplications.jsonl \
 		--ledgers ${out_dir}/l_entries.txt > $@_
 	mv $@_ $@
 ##### ledger entries ##########################				
 ${out_dir}/l_entries.txt: ${out_dir}/cust_l_entries.txt ${out_dir}/vend_l_entries.txt ${out_dir}/gl_entries.txt \
         ${out_dir}/ba_entries.txt
 	cat ${out_dir}/cust_l_entries.txt > $@
-	tail -n +2 ${out_dir}/vend_l_entries.txt >> $@
-	tail -n +2 ${out_dir}/gl_entries.txt >> $@
-	tail -n +2 ${out_dir}/ba_entries.txt >> $@
+	cat ${out_dir}/vend_l_entries.txt >> $@
+	cat ${out_dir}/gl_entries.txt >> $@
+	cat ${out_dir}/ba_entries.txt >> $@
 ${out_dir}/l_apps.txt: ${out_dir}/cust_l_apps.txt ${out_dir}/vend_l_apps.txt 
 	cat ${out_dir}/cust_l_apps.txt > $@
-	tail -n +2 ${out_dir}/vend_l_apps.txt >> $@
+	cat ${out_dir}/vend_l_apps.txt >> $@
 ${out_dir}/predicted_type.txt: ${out_dir}/entries_test.txt ${out_dir}/l_entries.txt ${out_dir}/l_apps.txt # ${model}
 	$(python_cmd) local/predict_play.py --input ${out_dir}/entries_test.txt --ledgers ${out_dir}/l_entries.txt \
 	    --apps ${out_dir}/l_apps.txt --history $(hist) > $@_

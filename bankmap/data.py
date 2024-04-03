@@ -25,7 +25,7 @@ class App:
     def __init__(self, row):
         self.type = LType.from_s(row['type'])
         self.doc_no = row['document_number']
-        self.apply_date = row['apply_date']
+        self.apply_date = to_date(row['apply_date'])
         self.amount = row['apply_amount']
         self.remaining = row['remaining_amount']
         self.cv_no = row['cv_number']
@@ -72,9 +72,9 @@ class Entry:
         self.amount = row['amount']
         self.rec_id = e_str(row['recAccount'])
         self.currency = row['currency']
-        self.type = row['transactionType']
+        self.type = PaymentType.from_s(row['transactionType'])
         self.doc_ids = e_str(row['recDocs'])
-        self.rec_type = row['recType']
+        self.rec_type = LType.from_s(row['recType'])
         self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
         self.e2e_id = e_str_e(row, 'e2eId')
 
@@ -89,9 +89,10 @@ def to_date(p):
         if isinstance(p, datetime.datetime):
             return p
         res = datetime.datetime.fromisoformat(p)
+        res = res.replace(tzinfo=None)
         if res > check_date_max or res < check_date_min:
             raise Exception(f"Wrong date '{p}'")
-        return res.replace(tzinfo=None)
+        return res
     except BaseException as err:
         logger.error("date:'{}'".format(p))
         raise err
@@ -205,16 +206,16 @@ class LEntry:
             self.iban = e_str(row['iban'])
             self.ext_doc = e_str(row['externalDocumentNumber'])
             self.doc_no = e_str(row['documentNumber'])
-            self.doc_date = row['documentDate']
+            self.doc_date = to_date(row['documentDate'])
             try:
-                self.due_date = row['dueDate']
+                self.due_date = to_date(row['dueDate'])
             except BaseException as err:
                 logger.warn("no due date: err: {}".format(err))
                 self.due_date = self.doc_date
             self.amount = row['amount']
             self.currency = row['currencyCode']
             self.doc_type = DocType.from_s(row['documentType'])
-            self.closed_date = row['closedAtDate']
+            self.closed_date = to_date(row['closedAtDate'])
             self.map_type = MapType.from_s(row['mapType'])
             self.open = e_str(row['open']) == 'True'
             self.remaining_amount = e_float(row, 'remainingAmount')

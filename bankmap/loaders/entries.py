@@ -1,8 +1,18 @@
+import json
+from datetime import datetime
+
 import pandas as pd
 from jsonlines import jsonlines
 
 from bankmap.data import e_str, Entry, PaymentType, Recognition, LType, e_str_ne, e_date_ne, e_str_e
 from bankmap.logger import logger
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 
 # loads data from Customer_Recognitions or Vendor_Recognitions
@@ -92,7 +102,7 @@ def load_entries(file_name, ba_map, cv_map):
             if e_str(d.get('operationDate')) != '':
                 res.append({'description': d.get('description'),
                             'message': d.get('messageToRecipient'),
-                            'transactionType': PaymentType.from_s(e_str(d.get('transactionType'))),
+                            'transactionType': e_str(d.get('transactionType')),
                             'amount': d.get('amount'),
                             'date': e_date_ne(d, 'operationDate'),
                             'iban': iban(d),
@@ -100,7 +110,7 @@ def load_entries(file_name, ba_map, cv_map):
                             'recAccount': rec_no,
                             'currency': d.get('accountCurrency'),
                             'recDocs': docs[0],
-                            'recType': tp,
+                            'recType': tp.to_s(),
                             'externalDocumentNumber': d.get('externalDocumentNumber'),
                             'bankAccount': d.get('bankAccountNumber')
                             })

@@ -1,7 +1,6 @@
 import argparse
+import json
 import sys
-
-import pandas as pd
 
 from bankmap.loaders.entries import load_docs_map
 from bankmap.logger import logger
@@ -18,9 +17,9 @@ def main(argv):
     logger.info("Starting")
 
     res = load_docs_map(args.input, args.name)
-    resc = [[k, ";".join(v[0]), v[1]] for k, v in res.items()]
-    df = pd.DataFrame(resc, columns=["ID", "Ext_ID", "Vend_Cust_No"])
-    df.to_csv(sys.stdout, index=False)
+    for k, v in res.items():
+        out_v = {"id": k, "ext_id": ";".join(v[0]), "cv_number": v[1]}
+        print(json.dumps(out_v), file=sys.stdout)
     logger.info("Done")
 
 

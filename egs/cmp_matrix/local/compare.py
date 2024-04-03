@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 
-import pandas as pd
+from jsonlines import jsonlines
 from sklearn.metrics import accuracy_score
 
 from bankmap.data import e_str, LType
@@ -65,14 +65,19 @@ def main(argv):
         y_pred_l = [line.strip() for line in f2]
     logger.info("loaded predicted {} rows".format(len(y_pred_l)))
 
-    entries = pd.read_csv(args.f1, sep=',')
+    entries = []
+    with jsonlines.open(args.f1) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            entries.append(d)
     logger.info("loaded entries {} rows".format(len(entries)))
-    logger.debug("Headers: {}".format(list(entries)))
-    y_true = entries["RecAccount"].values.tolist()
-    y_rec_type = [e_str(v) for v in entries["RecType"].values.tolist()]
+
+    y_true = [e["recAccount"] for e in entries]
+    y_rec_type = [e["recType"] for e in entries]
 
     y_true = ["%s:%s" % (y_rec_type[i], v) for i, v in enumerate(y_true)]
-    y_true_docs = entries["RecDocs"].values.tolist()
+    y_true_docs = [e["recDocs"] for e in entries]
     y_true_docs = [e_str(x) for x in y_true_docs]
 
     skip = args.skip

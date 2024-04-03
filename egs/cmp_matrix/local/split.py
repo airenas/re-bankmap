@@ -1,8 +1,10 @@
 import argparse
+import json
 import sys
 
-import pandas as pd
+from jsonlines import jsonlines
 
+from bankmap.loaders.entries import DateTimeEncoder
 from bankmap.logger import logger
 
 
@@ -18,15 +20,21 @@ def main(argv):
 
     logger.info("Starting")
 
-    entries = pd.read_csv(args.input, sep=',')
-    logger.info("loaded entries {} rows".format(len(entries)))
-    train = entries.head(n=args.split)
-    test = entries.tail(n=len(entries) - args.split)
+    entries = []
+    with jsonlines.open(args.input) as reader:
+        for (i, d) in enumerate(reader):
+            entries.append(d)
+    train = entries[:args.split]
+    test = []
+    if len(entries) > args.split:
+        test = entries[args.split:]
     with open(args.out_train, "w") as f:
-        train.to_csv(f, index=False)
+        for d in train:
+            print(json.dumps(d, cls=DateTimeEncoder), file=f)
         logger.info("saved train {} rows".format(len(train)))
     with open(args.out_test, "w") as f:
-        test.to_csv(f, index=False)
+        for d in train:
+            print(json.dumps(d, cls=DateTimeEncoder), file=f)
         logger.info("saved test {} rows".format(len(test)))
     logger.info("Done")
 

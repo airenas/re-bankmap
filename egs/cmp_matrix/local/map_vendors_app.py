@@ -1,10 +1,12 @@
 import argparse
+import json
 import sys
 
-import pandas as pd
+from jsonlines import jsonlines
 
 from bankmap.data import LEntry
-from bankmap.loaders.apps import load_vendor_apps
+from bankmap.loaders.apps import load_apps
+from bankmap.loaders.entries import DateTimeEncoder
 from bankmap.logger import logger
 
 
@@ -18,14 +20,20 @@ def main(argv):
 
     logger.info("Starting")
 
-    ledgers = pd.read_csv(args.ledgers, sep=',')
+    ledgers = []
+    with jsonlines.open(args.ledgers) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            ledgers.append(d)
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    logger.debug("Headers: {}".format(list(ledgers)))
-    logger.debug("\n{}".format(ledgers.head(n=10)))
-    l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
 
-    df = load_vendor_apps(args.input, l_entries)
-    df.to_csv(sys.stdout, index=False)
+    l_entries = [LEntry(l) for l in ledgers]
+
+    df_out = load_apps(args.input, l_entries, "Vendor")
+    for d in df_out:
+        print(json.dumps(d, cls=DateTimeEncoder), file=sys.stdout)
+    logger.info("wrote {} apps".format(len(df_out)))
     logger.info("Done")
 
 

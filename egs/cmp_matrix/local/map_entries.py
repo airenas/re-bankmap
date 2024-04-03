@@ -1,10 +1,11 @@
 import argparse
+import json
 import sys
 
-import pandas as pd
+from jsonlines import jsonlines
 
+from bankmap.loaders.entries import load_bank_recognitions_map, load_entries, DateTimeEncoder
 from bankmap.logger import logger
-from bankmap.loaders.entries import load_bank_recognitions_map, load_entries
 
 
 def main(argv):
@@ -19,11 +20,16 @@ def main(argv):
     logger.info("Starting")
     ba_map = load_bank_recognitions_map(args.input_map)
     logger.info("loading docs map {}".format(args.docs_map))
-    docs = pd.read_csv(args.docs_map, sep=',')
-    cv_map = {docs.iloc[i]["ID"]: (docs.iloc[i]["Ext_ID"], docs.iloc[i]["Vend_Cust_No"]) for i in range(len(docs))}
+    cv_map = {}
+    with jsonlines.open(args.docs_map) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            cv_map[d["id"]] = (d["ext_id"], d["cv_number"])  # TODO check ext_id is OK or is it changes with id
 
     df = load_entries(args.input, ba_map, cv_map)
-    df.to_csv(sys.stdout, index=False)
+    for v in df:
+        print(json.dumps(v, cls=DateTimeEncoder), file=sys.stdout)
     logger.info("Done")
 
 
