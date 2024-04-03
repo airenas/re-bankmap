@@ -1,10 +1,9 @@
 import json
 from datetime import datetime
 
-import pandas as pd
 from jsonlines import jsonlines
 
-from bankmap.data import e_str, Entry, PaymentType, Recognition, LType, e_str_ne, e_date_ne, e_str_e
+from bankmap.data import e_str, Entry, Recognition, LType, e_str_ne, e_date_ne, e_str_first
 from bankmap.logger import logger
 
 
@@ -27,12 +26,12 @@ def load_docs_map(file_name, _type: str):
             if i == 0:
                 logger.debug(f"Item: {d}")
             try:
-                id = e_str_ne(d, 'externalDocumentNumber')
+                e_id = e_str_ne(d, 'externalDocumentNumber')
                 cv = e_str_ne(d, 'recognizedAccountNumber')
                 iid = e_str_ne(d, 'appliedDocumentNumber')
-                ra = res.get(id, (set(), cv))
+                ra = res.get(e_id, (set(), cv))
                 ra[0].add(iid)
-                res[id] = ra
+                res[e_id] = ra
             except BaseException as err:
                 raise RuntimeError(f"wrong data: {str(err)}")
 
@@ -64,12 +63,6 @@ def is_recognized(param):
         if param != "91":  # special clients ID //todo workaround
             return True
     return False
-
-
-def iban(p):
-    if e_str(p.get('creditorIban')):
-        return e_str_e(p, 'creditorIban')
-    return e_str_e(p, 'debtorIban')
 
 
 entry_cols = ['Description', 'Message', 'CdtDbtInd', 'Amount', 'Date', 'IBAN', 'E2EId',
@@ -105,7 +98,7 @@ def load_entries(file_name, ba_map, cv_map):
                             'transactionType': e_str(d.get('transactionType')),
                             'amount': d.get('amount'),
                             'date': e_date_ne(d, 'operationDate'),
-                            'iban': iban(d),
+                            'iban': e_str_first(d, ['creditorIban', 'debtorIban']),
                             'e2eId': d.get('endToEndId'),
                             'recAccount': rec_no,
                             'currency': d.get('accountCurrency'),
@@ -136,12 +129,6 @@ def non_empty_str(s1, s2):
     return s1
 
 
-def get_name(d, credit):
-    if credit:
-        return e_str(d.get('creditorName'))
-    return e_str(d.get('debtorName'))
-
-
 def load_lines(file_name):
     logger.info("loading {}".format(file_name))
     res = []
@@ -155,15 +142,14 @@ def load_lines(file_name):
             if ext_id in found:
                 continue
             found.add(ext_id)
-            credit = PaymentType.from_s(d['transactionType']) == PaymentType.CRDT
 
             if e_str(d.get('operationDate')) != '':
-                value = {'description': get_name(d, credit),
+                value = {'description': e_str_first(d, ['creditorName', 'debtorName']),
                          'message': d.get('transactionText'),
                          'transactionType': e_str(d.get('transactionType')),
                          'amount': d.get('statementAmount'),
                          'date': e_str_ne(d, 'operationDate'),
-                         'iban': iban(d),
+                         'iban': e_str_first(d, ['creditorIban', 'debtorIban']),
                          'e2eId': d.get('endToEndId'),
                          'recAccount': "",
                          'currency': d.get('accountCurrency'),
@@ -179,15 +165,4 @@ def load_lines(file_name):
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (e[1].date.timestamp(), e[0]))
     res = [v[1] for v in sr]
-    return res
-
-
-# return unique company ibans - used for detecting company
-def get_ibans(file_name):
-    logger.info("loading entries {}".format(file_name))
-    df = pd.read_csv(file_name, sep=',')
-    logger.info("loaded entries {} rows".format(len(df)))
-
-    res = [v for v in df[df["Acct_Id_IBAN"].notnull()]["Acct_Id_IBAN"].unique()]
-    res += [v for v in df[df["Acct_Id_Othr_Id"].notnull()]["Acct_Id_Othr_Id"].unique()]
     return res
