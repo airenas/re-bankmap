@@ -76,8 +76,8 @@ def main():
     if ok:
         save_res(res, args.company, args.output)
         sizes = res.get("info", {}).get("sizes", {})
-        mlflow.log_metric("lines", sizes.get("Bank_Statement_Lines", 0))
-        mlflow.log_metric("lines_checked", sizes.get("Bank_Statement_Lines", 0) - sizes.get("skipped_old", 0))
+        mlflow.log_metric("lines", sizes.get("bank_statement_lines", 0))
+        mlflow.log_metric("lines_checked", sizes.get("bank_statement_lines", 0) - sizes.get("skipped_old", 0))
         mlflow.log_metric("lines_skipped", sizes.get("skipped_old", 0))
         mlflow.log_metric("recommended_ai", sizes.get("recommended", 0) - sizes.get("recommended_tta", 0))
         mlflow.log_metric("recommended_tta", sizes.get("recommended_tta", 0))

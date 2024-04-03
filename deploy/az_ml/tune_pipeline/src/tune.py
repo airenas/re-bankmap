@@ -100,8 +100,9 @@ def process(company: str, in_file: str, out_container: str):
     limits, info = tune_limits(data_dir, cfg)
 
     info["app_version"] = app_ver
-    logger.info(json.dumps(info, indent=2))
+    logger.info(json.dumps(info, ensure_ascii=False, indent=2))
     logger.info("done tuning")
+    mlflow.log_metric("tine_count", info.get("sizes", {}).get("tune_count", 0))
 
     logger.info(make_tune_stats(cfg, info.get("sizes", {})))
     cfg = add_tune_into_cfg(cfg, limits, info.get("sizes", {}))
