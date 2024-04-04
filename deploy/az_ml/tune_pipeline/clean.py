@@ -8,6 +8,7 @@ from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
 from mlflow import MlflowClient
 from mlflow.entities import ViewType
+from mlflow.utils import get_results_from_paginated_fn
 from rich.console import Group
 from rich.live import Live
 from rich.panel import Panel
@@ -83,9 +84,21 @@ def delete_runs(to_date, experiments, name, mlflow_client: MlflowClient, queue):
     from_date = to_date - timedelta(hours=24 * 20)
     unix_timestamp = datetime.timestamp(from_date) * 1000
     filter_str = f'attributes.start_time > "{int(unix_timestamp)}"'
-    runs = mlflow_client.search_runs(experiment_ids=experiments, max_results=10000, order_by=["start_time DESC"],
-                                     filter_string=filter_str,
-                                     run_view_type=ViewType.ACTIVE_ONLY)
+
+    def pagination_wrapper_func(number_to_get, next_page_token):
+        return mlflow_client.search_runs(experiment_ids=experiments,
+                                  max_results=number_to_get,
+                                  order_by=["start_time DESC"],
+                                  filter_string=filter_str,
+                                  run_view_type=ViewType.ACTIVE_ONLY,
+                                  page_token=next_page_token)
+
+    runs = get_results_from_paginated_fn(
+        pagination_wrapper_func,
+        200,
+        10000,
+    )
+
     log_f(f"runs {len(runs)}")
     count = 0
     for r in runs:
@@ -115,6 +128,7 @@ def delete_experiments(to_date, opw: ProgressWrap, mlflow_client: MlflowClient, 
     log_f(f"experiments {len(experiments)}")
     opw.progress.update(opw.task, description=f"Deleting experiments...", total=len(experiments))
     for j, e in enumerate(experiments):
+        log_f(f"test {e.name}")
         runs = delete_runs(to_date, [e.experiment_id], e.name, mlflow_client, queue)
         if len(runs) == 0:
             log_f(f"{j} mark to delete {e.experiment_id} {e.name} {e.creation_time}")
