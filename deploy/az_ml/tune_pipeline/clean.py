@@ -2,17 +2,18 @@ import argparse
 import os
 import sys
 from datetime import datetime, timezone, timedelta
+from multiprocessing import Queue, Process
 
-import mlflow
 from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
+from mlflow import MlflowClient
 from mlflow.entities import ViewType
 from rich.console import Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 
-from bankmap.logger import logger
+log_f = print
 
 
 class Params:
@@ -56,55 +57,70 @@ class ProgressWrap:
         self.progress = progress
 
 
+def delete_worker(queue: Queue, mlflow_client, num):
+    while True:
+        (name, item) = queue.get()
+        if name == "exit":
+            print(f"exit {num}")
+            break
+        elif name == "run":
+            r_date = datetime.fromtimestamp(item.info.start_time / 1000, tz=timezone.utc)
+            r_name = item.data.tags.get('mlflow.note.content', item.data.tags.get('company', '??'))
+            print(f"({num}) try delete {item.info.run_id}, state = {item.info.lifecycle_stage}")
+            mlflow_client.delete_run(item.info.run_id)
+            print(f"({num}) deleted {r_date} {r_name} {item.info.run_id}")
+        elif name == "exp":
+            print(f"{num} try delete {item.experiment_id} {item.name} {item.creation_time}")
+            mlflow_client.delete_experiment(item.experiment_id)
+            print(f"{num} deleted {item.experiment_id} {item.name} {item.creation_time}")
+        else:
+            raise Exception(f"unknown delete task {name}")
+
+
 # return non deleted runs
-def delete_runs(to_date, experiments, name, pw: ProgressWrap):
-    logger.info(f"deleting to {to_date}")
-    logger.info(f"loading runs....")
+def delete_runs(to_date, experiments, name, mlflow_client: MlflowClient, queue):
+    log_f(f"loading runs....")
     from_date = to_date - timedelta(hours=24 * 20)
     unix_timestamp = datetime.timestamp(from_date) * 1000
     filter_str = f'attributes.start_time > "{int(unix_timestamp)}"'
-    logger.info(f"filter_str {filter_str}")
-    runs = mlflow.search_runs(experiment_ids=experiments, max_results=10000, order_by=["start_time ASC"],
-                              filter_string=filter_str,
-                              output_format="list", run_view_type=ViewType.ACTIVE_ONLY,
-                              search_all_experiments=True)
-    logger.info(f"runs {len(runs)}")
+    runs = mlflow_client.search_runs(experiment_ids=experiments, max_results=10000, order_by=["start_time DESC"],
+                                     filter_string=filter_str,
+                                     run_view_type=ViewType.ACTIVE_ONLY)
+    log_f(f"runs {len(runs)}")
     count = 0
     for r in runs:
         if is_ok(r, to_date):
             count += 1
 
-    logger.info(f"deleting {count}")
+    log_f(f"deleting {count}")
 
     res = []
-    pw.progress.update(pw.task, description=f"Deleting runs for {name}...", total=count)
-    pw.progress.update(pw.task, completed=0)
     for j, r in enumerate(runs):
         r_date = datetime.fromtimestamp(r.info.start_time / 1000, tz=timezone.utc)
         r_name = r.data.tags.get('mlflow.note.content', r.data.tags.get('company', '??'))
         if is_ok(r, to_date):
-            print(f"{j} delete {r_date} {r_name} {r.info.run_id}")
-            mlflow.delete_run(r.info.run_id)
-            pw.progress.update(pw.task, advance=1)
+            log_f(f"{j} mark to delete {r_date} {r_name} {r.info.run_id}")
+            queue.put(("run", r))
         elif not is_deleted(r):
             res.append(r)
+    log_f(f"non deletable {len(res)}")
     return res
 
 
-def delete_experiments(to_date, opw: ProgressWrap, pw: ProgressWrap):
-    logger.info(f"deleting empty experiments")
-    logger.info(f"loading experiments....")
-    experiments = mlflow.search_experiments(max_results=5000, order_by=["creation_time ASC"],
-                                            view_type=ViewType.ACTIVE_ONLY)
-    logger.info(f"experiments {len(experiments)}")
+def delete_experiments(to_date, opw: ProgressWrap, mlflow_client: MlflowClient, queue):
+    log_f(f"deleting empty experiments")
+    log_f(f"loading experiments....")
+    experiments = mlflow_client.search_experiments(max_results=5000, order_by=["creation_time ASC"],
+                                                   view_type=ViewType.ALL)
+    log_f(f"experiments {len(experiments)}")
     opw.progress.update(opw.task, description=f"Deleting experiments...", total=len(experiments))
     for j, e in enumerate(experiments):
-        runs = delete_runs(to_date, [e.experiment_id], e.name, pw)
+        runs = delete_runs(to_date, [e.experiment_id], e.name, mlflow_client, queue)
         if len(runs) == 0:
-            print(f"{j} delete {e.experiment_id} {e.name} {e.creation_time}")
-            mlflow.delete_experiment(e.experiment_id)
+            log_f(f"{j} mark to delete {e.experiment_id} {e.name} {e.creation_time}")
+            queue.put(("exp", e))
         else:
-            print(f"experiment {e.name}: skip delete")
+            log_f(f"experiment {e.name}: skip delete")
         opw.progress.update(opw.task, advance=1)
 
 
@@ -117,18 +133,18 @@ def main(argv):
     parser.add_argument("--days", nargs='?', type=int, default=20,
                         help="history in days to keep")
     args = parser.parse_args(args=argv)
-    logger.info("Starting")
+    log_f("Starting")
     params = Params()
-    logger.info(f"version : {params.version}")
-    logger.info(f"workspace_name : {params.workspace_name}")
-    logger.info(f"subscription_id : {params.subscription_id}")
+    log_f(f"version : {params.version}")
+    log_f(f"workspace_name : {params.workspace_name}")
+    log_f(f"subscription_id : {params.subscription_id}")
 
-    logger.info("Init client")
+    log_f("Init client")
     client = init_client(params)
 
     workspace = client.workspaces.get(params.workspace_name)
-    mlflow.set_tracking_uri(workspace.mlflow_tracking_uri)
-    logger.info(f"workspace.mlflow_tracking_uri={workspace.mlflow_tracking_uri}")
+    log_f(f"workspace.mlflow_tracking_uri={workspace.mlflow_tracking_uri}")
+    mlflow_client = MlflowClient(tracking_uri=workspace.mlflow_tracking_uri)
 
     to_date = datetime.now(timezone.utc) - timedelta(hours=24 * args.days)
 
@@ -136,21 +152,31 @@ def main(argv):
     overall_progress = Progress(*Progress.get_default_columns(), TimeElapsedColumn(), MofNCompleteColumn())
 
     progress_group = Group(Panel(Group(progress)), Panel(Group(overall_progress)), )
-    task = progress.add_task("Deleting runs...", total=100)
     overall_task = overall_progress.add_task("Deleting exps...", total=100)
+
+    queue = Queue()
+    num_workers = 10
+    processes = [Process(target=delete_worker, args=(queue, mlflow_client, i)) for i in range(num_workers)]
+    for process in processes:
+        process.start()
 
     with Live(progress_group, refresh_per_second=4):
         if args.run == "runs":
-            logger.info(f"Delete runs older than {to_date}")
-            delete_runs(to_date, [], "all exps",  ProgressWrap(progress, task))
+            log_f(f"Delete runs older than {to_date}")
+            delete_runs(to_date, [], "all exps")
         if args.run == "experiments":
-            logger.info(f"Delete empty experiments")
+            log_f(f"Delete empty experiments")
             delete_experiments(to_date, ProgressWrap(overall_progress, overall_task),
-                               ProgressWrap(progress, task))
-    logger.info("Done")
+                               mlflow_client, queue)
+
+    for _ in range(num_workers):
+        queue.put(("exit", None))
+    for process in processes:
+        process.join()
+    log_f("Done")
 
 
-logger.info("Done")
+log_f("Done")
 
 if __name__ == "__main__":
     main(sys.argv[1:])
