@@ -78,7 +78,8 @@ def add_alternatives(cfg, pred, was):
             continue
         was.add(rec.id)
         i += 1
-        alt.append({"item": to_dic_item(rec), "similarity": r["i"], "recommended": False})
+        alt.append(
+            {"item": to_dic_item(rec), "similarity": r["i"], "recommended": False, "details": prepare_sims(r["sim"])})
     return alt
 
 
@@ -284,6 +285,7 @@ if __name__ == "__main__":
     except BaseException as err:
         print(err)
         cfg = PredictionCfg()
+    cfg.tops = 5
     mappings, info = do_mapping(sys.argv[1], cfg=cfg)
     print(json.dumps(info.get("metrics", {}), ensure_ascii=False, indent=2))
     print(json.dumps(info.get("sizes", {}), ensure_ascii=False, indent=2))
