@@ -3,6 +3,10 @@ import datetime
 from bankmap.data import time_parser
 from bankmap.logger import logger
 
+## to mark item as recommended
+default_limit_value = 1.6
+recommended_confidence = 0.95
+
 
 def get_date(date):
     if date:
@@ -14,7 +18,7 @@ def get_date(date):
 
 
 class PredictionCfg:
-    def __init__(self, company="", limit=1.5, top_best=2, next_train=None, train_last=2000, limits=None,
+    def __init__(self, company="", limit=default_limit_value, top_best=2, next_train=None, train_last=2000, limits=None,
                  tune_count=None,
                  tune_date=None,
                  version=0,

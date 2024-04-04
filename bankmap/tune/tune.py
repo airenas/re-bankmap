@@ -1,3 +1,6 @@
+from bankmap.cfg import default_limit_value, recommended_confidence
+
+
 class Cmp:
     def __init__(self, _type, value, correct):
         self.type = _type
@@ -17,10 +20,16 @@ def fix_probabilities(res, bars):
     return res
 
 
+def get_bar_def_value(v):
+    if v > recommended_confidence:
+        return default_limit_value + 1
+    return default_limit_value
+
+
 def calc_limits(cmps, bars):
     res = {}
     if len(cmps) == 0:
-        res = {v: 2.5 for v in bars}
+        res = {v: get_bar_def_value(v) for v in bars}
     err, count = 0, 0
     for c in cmps:
         count += 1

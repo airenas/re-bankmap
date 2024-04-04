@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import numpy
 
-from bankmap.cfg import PredictionCfg
+from bankmap.cfg import PredictionCfg, recommended_confidence
 from bankmap.data import LEntry, Entry, LType, Ctx, PredictData, TextToAccount
 from bankmap.history_stats import Stats
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
@@ -63,7 +63,7 @@ def get_confidence(v, _type, cfg: PredictionCfg):
     if res:
         return res
     if v >= cfg.limit:
-        return 0.99
+        return recommended_confidence
     return 0.5
 
 
@@ -118,7 +118,8 @@ def predict_entry(ctx, pd, entry, cfg):
                 was.add(tta.account)
                 recognized = None
         if "main" not in res:
-            res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"], "recommended": cs >= 0.95,
+            res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"],
+                           "recommended": cs >= recommended_confidence,
                            "confidence_score": cs, "type": "Similarity", "details": prepare_sims(e["sim"])}
             was.add(recognized.id)
             logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
