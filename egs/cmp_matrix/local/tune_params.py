@@ -2,8 +2,8 @@ import argparse
 import sys
 
 import numpy as np
-import pandas as pd
 from hyperopt import fmin, tpe, hp
+from jsonlines import jsonlines
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
@@ -82,29 +82,39 @@ def main(argv):
 
     logger.info("Starting")
 
-    entries_t = pd.read_csv(args.input, sep=',')
+    entries_t = []
+    with jsonlines.open(args.input) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            entries_t.append(d)
     logger.info("loaded entries {} rows".format(len(entries_t)))
-    logger.info("Headers: {}".format(list(entries_t)))
-    logger.info("\n{}".format(entries_t.head(n=10)))
-    entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
+    entries = [Entry(i) for i in entries_t]
 
-    ledgers = pd.read_csv(args.ledgers, sep=',')
+    ledgers = []
+    with jsonlines.open(args.ledgers) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            ledgers.append(d)
     logger.info("loaded ledgers {} rows".format(len(ledgers)))
-    logger.info("Headers: {}".format(list(ledgers)))
-    logger.info("\n{}".format(ledgers.head(n=10)))
-    l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
+    l_entries = [LEntry(i) for i in ledgers]
 
-    apps_t = pd.read_csv(args.apps, sep=',')
+    apps_t = []
+    with jsonlines.open(args.apps) as reader:
+        for (i, d) in enumerate(reader):
+            if i == 0:
+                logger.debug(f"Item: {d}")
+            apps_t.append(d)
     logger.info("loaded apps {} rows".format(len(apps_t)))
-    logger.info("Headers: {}".format(list(apps_t)))
-    logger.info("\n{}".format(apps_t.head(n=10)))
-    apps = [App(apps_t.iloc[i]) for i in range(len(apps_t))]
+    apps = [App(i) for i in apps_t]
 
     arena = Arena(l_entries, apps)
 
     entries.sort(key=lambda e: e.date.timestamp() if e.date else 1)
     X_all = [e for e in entries if e.rec_id]
     logger.info("Dropped without cust/vend: {}".format(len(entries) - len(X_all)))
+    logger.info(f"Split at {args.split_at}")
     Xv = X_all[args.split_at:]
     X = X_all[:args.split_at]
     y = [e.rec_id for e in X]
