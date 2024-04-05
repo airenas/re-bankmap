@@ -34,11 +34,11 @@ ${out_dir}/docs_map.txt: ${out_dir}/c_docs_map.txt ${out_dir}/v_docs_map.txt
 	cat ${out_dir}/c_docs_map.txt > $@
 	cat ${out_dir}/v_docs_map.txt >> $@
 ${out_dir}/c_docs_map.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/extract_docs.py --name Cust \
+	$(python_cmd) local/extract_docs.py --name Customer \
 	    --input ${out_dir}/extracted/$(extr_dir)/customerRecognitions.jsonl > $@_
 	mv $@_ $@
 ${out_dir}/v_docs_map.txt: ${out_dir}/extracted/.done
-	$(python_cmd) local/extract_docs.py --name Vend \
+	$(python_cmd) local/extract_docs.py --name Vendor \
 	    --input ${out_dir}/extracted/$(extr_dir)/vendorRecognitions.jsonl > $@_
 	mv $@_ $@		
 ${out_dir}/entries.txt: ${out_dir}/entries.jsonl ${out_dir}/docs_map.txt

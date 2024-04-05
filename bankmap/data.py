@@ -60,6 +60,12 @@ class Recognition:
         self.no = no
         self.type = LType.from_s(_type)
 
+    def to_dict(self):
+        return {
+            'no': self.no,
+            'type': self.type.to_s()
+        }
+
 
 class Entry:
     def __init__(self, row):

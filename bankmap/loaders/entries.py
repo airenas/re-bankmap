@@ -22,7 +22,7 @@ def load_docs_map(file_name, _type: str):
                 e_id = e_str_ne(d, 'externalDocumentNumber')
                 cv = e_str_ne(d, 'recognizedAccountNumber')
                 iid = e_str_ne(d, 'appliedDocumentNumber')
-                ra = res.get(e_id, (set(), cv))
+                ra = res.get(e_id, (set(), Recognition(_type=_type, no=cv)))
                 ra[0].add(iid)
                 res[e_id] = ra
             except BaseException as err:
@@ -80,10 +80,11 @@ def load_entries(file_name, ba_map, cv_map):
             t_rec = ba_map.get(ext_id, None)
             if t_rec:
                 rec_no, tp = t_rec.no, t_rec.type
-            docs = cv_map.get(ext_id, ("", ""))
-            if docs[1] and docs[1] != rec_no:
+            docs = cv_map.get(ext_id, ("", None))
+            if docs[1] and (docs[1].no != rec_no or docs[1].type != tp):
                 logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
-                rec_no = docs[1]
+                rec_no, tp = docs[1].no, docs[1].type
+
 
             if e_str(d.get('operationDate')) != '':
                 res.append({'description': d.get('description'),

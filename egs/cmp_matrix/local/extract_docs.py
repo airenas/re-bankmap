@@ -18,7 +18,7 @@ def main(argv):
 
     res = load_docs_map(args.input, args.name)
     for k, v in res.items():
-        out_v = {"id": k, "ext_id": ";".join(v[0]), "cv_number": v[1]}
+        out_v = {"ext_id": k, "doc_ids": ";".join(v[0]), "map": v[1]}
         print(json_str(out_v), file=sys.stdout)
     logger.info("Done")
 

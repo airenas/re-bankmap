@@ -3,6 +3,7 @@ import sys
 
 from jsonlines import jsonlines
 
+from bankmap.data import Recognition
 from bankmap.loaders.entries import load_bank_recognitions_map, load_entries
 from bankmap.logger import logger
 from bankmap.utils.utils import json_str
@@ -25,7 +26,7 @@ def main(argv):
         for (i, d) in enumerate(reader):
             if i == 0:
                 logger.debug(f"Item: {d}")
-            cv_map[d["id"]] = (d["ext_id"], d["cv_number"])  # TODO check ext_id is OK or is it changes with id
+            cv_map[d["ext_id"]] = (d["doc_ids"], Recognition(_type=d["map"]["type"], no=d["map"]["no"]))
 
     df = load_entries(args.input, ba_map, cv_map)
     for v in df:
