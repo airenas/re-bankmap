@@ -65,8 +65,8 @@ def tune_limits(data_dir, cfg: PredictionCfg):
 
     start = time.time()
     logger.info("data dir {}".format(data_dir))
-    c_docs_map = load_docs_map(os.path.join(data_dir, "customerRecognitions.jsonl"), "Cust")
-    v_docs_map = load_docs_map(os.path.join(data_dir, "vendorRecognitions.jsonl"), "Vend")
+    c_docs_map = load_docs_map(os.path.join(data_dir, "customerRecognitions.jsonl"), "Customer")
+    v_docs_map = load_docs_map(os.path.join(data_dir, "vendorRecognitions.jsonl"), "Vendor")
     res_info = {"customer_recognitions": len(c_docs_map), "vendor_recognitions": len(v_docs_map)}
     cv_docs_map = c_docs_map
     cv_docs_map.update(v_docs_map)

@@ -32,7 +32,7 @@ def main(argv):
             print(json_str(d), file=f)
         logger.info("saved train {} rows".format(len(train)))
     with open(args.out_test, "w") as f:
-        for d in train:
+        for d in test:
             print(json_str(d), file=f)
         logger.info("saved test {} rows".format(len(test)))
     logger.info("Done")
