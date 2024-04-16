@@ -61,7 +61,7 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
                         'mapType': cd[1].to_s(),
                         'open': d['isOpen'],
                         'remainingAmount': d['remainingAmount']})
-
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res
 
 
@@ -94,6 +94,7 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
                         'open': d['isOpen'],
                         'remainingAmount': d['remainingAmount']})
 
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res
 
 
@@ -120,7 +121,7 @@ def load_gls(ledgers_file_name):
                         'mapType': MapType.UNUSED.to_s(),
                         'open': True,
                         'remainingAmount': 0})
-
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res
 
 
@@ -148,5 +149,5 @@ def load_ba(ledgers_file_name):
                         'mapType': MapType.UNUSED.to_s(),
                         'open': True,
                         'remainingAmount': 0})
-
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res

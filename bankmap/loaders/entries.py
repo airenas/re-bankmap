@@ -1,9 +1,6 @@
-import json
-from datetime import datetime
-
 from jsonlines import jsonlines
 
-from bankmap.data import e_str, Entry, Recognition, LType, e_str_ne, e_date_ne, e_str_first
+from bankmap.data import e_str, Entry, Recognition, LType, e_str_ne, e_date_ne, e_str_first, e_str_e
 from bankmap.logger import logger
 
 
@@ -28,8 +25,7 @@ def load_docs_map(file_name, _type: str):
             except BaseException as err:
                 raise RuntimeError(f"wrong data: {str(err)}")
 
-    logger.info(f"loaded entries {len(res)} rows")
-    # logger.debug("skipped future docs: {}".format(skip))
+    logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
 
 
@@ -45,9 +41,12 @@ def load_bank_recognitions_map(file_name):
             if not LType.supported(e_str_ne(d, 'balAccountType')):
                 continue
             no = e_str(d.get('statementExternalDocumentNumber'))
-            if no not in res:
-                res[no] = Recognition(_type=e_str_ne(d, 'balAccountType'), no=e_str_ne(d, 'balAccountNumber'))
-    logger.info("loaded bankAccountRecognitions {} rows".format(len(res)))
+            bal_acc_no = e_str_e(d, 'balAccountNumber')
+            if no not in res and bal_acc_no:
+                res[no] = Recognition(_type=e_str_ne(d, 'balAccountType'), no=bal_acc_no)
+            elif not bal_acc_no:
+                logger.info(f"skip empty balAccountNumber in {file_name}")
+    logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
 
 
@@ -85,7 +84,6 @@ def load_entries(file_name, ba_map, cv_map):
                 logger.info("change rec_no {} to {}".format(rec_no, docs[1]))
                 rec_no, tp = docs[1].no, docs[1].type
 
-
             if e_str(d.get('operationDate')) != '':
                 res.append({'description': d.get('description'),
                             'message': d.get('messageToRecipient'),
@@ -107,6 +105,7 @@ def load_entries(file_name, ba_map, cv_map):
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (e[1]['date'].timestamp(), e[0]))
     res = [v[1] for v in sr]
+    logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
 
 
@@ -159,4 +158,5 @@ def load_lines(file_name):
     sr = [v for v in enumerate(res)]
     sr.sort(key=lambda e: (e[1].date.timestamp(), e[0]))
     res = [v[1] for v in sr]
+    logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
