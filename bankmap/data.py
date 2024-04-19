@@ -337,7 +337,7 @@ class Arena:
         if self.date < dt:
             while self.date < dt:
                 ndt = self.date + timedelta(days=1)
-                logger.debug("Move to date  : {}".format(ndt))
+                # logger.debug("Move to date  : {}".format(ndt))
                 while self.from_entry < len(self.entries):
                     entry = self.entries[self.from_entry]
                     if entry.doc_date > ndt:
