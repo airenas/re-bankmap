@@ -13,7 +13,11 @@ def load_IBANs(file_name, _type):
                 logger.debug(f"Item: {d}")
             cust = e_str(d.get(_type + 'Number'))
             no = e_str_first(d, ['iban', 'bankAccountNumber'])
-            res[cust] = no
+            if no:
+                cv = res.get(cust, "")
+                if cv:
+                    no = f"{cv}:{no}"
+                res[cust] = no
     logger.info(f"loaded {len(res)} rows in {file_name}")
     return res
 

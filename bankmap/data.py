@@ -203,13 +203,19 @@ class LType(Enum):
         raise Exception("Unknown l type '{}'".format(self))
 
 
+def e_ibans(param: str):
+    if not param.strip():
+        return []
+    return param.casefold().split(":")
+
+
 class LEntry:
     def __init__(self, row):
         try:
             self.type = LType.from_s(e_str(row['type']))
             self.id = e_str(row['number'])  # vendor/cust/gl/ba
             self.name = e_str(row['name'])
-            self.iban = e_str(row['iban'])
+            self.iban = e_ibans(row['iban'])
             self.ext_doc = e_str(row['externalDocumentNumber'])
             self.doc_no = e_str(row['documentNumber'])
             self.doc_date = to_date(row['documentDate'])

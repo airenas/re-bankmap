@@ -72,13 +72,20 @@ def cached_name_sim(ctx, nl, ne):
     return res
 
 
+def iban_sim(l_ibans, e_iban):
+    for iban in l_ibans:
+        if len(iban) > 5 and iban == e_iban.casefold():
+            return 1
+    return 0
+
+
 def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res = []
     nl = ledger.name
     ne = entry.who
     res.append(1 if len(ne) > 0 and nl.casefold() == ne.casefold() else 0)
     res.append(cached_name_sim(ctx, nl, ne))
-    res.append(1 if len(ledger.iban) > 5 and ledger.iban.casefold() == entry.iban.casefold() else 0)
+    res.append(iban_sim(ledger.iban, entry.iban))
     res.append(1 if len(ledger.ext_doc) > 5 and ledger.ext_doc.casefold() in entry.msg.casefold() else 0)
     res.append(sf_sim(ledger.ext_doc, entry.msg) if len(ledger.ext_doc) > 5 else 0)
     res.append(date_sim(ledger.due_date, entry.date))
