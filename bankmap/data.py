@@ -1,4 +1,5 @@
 import datetime
+import re
 from datetime import timedelta
 from enum import Enum
 from typing import List, Dict
@@ -12,7 +13,7 @@ time_parser = parser()
 
 check_date_max = datetime.datetime.today() + timedelta(days=20 * 365)
 check_date_min = datetime.datetime.today() - timedelta(days=40 * 365)
-
+num_re = re.compile(r'\d+')
 
 class Ctx:
     def __init__(self, history_days: int = None, stats=None):
@@ -81,7 +82,8 @@ class Entry:
         self.type = PaymentType.from_s(row['transactionType'])
         self.doc_ids = e_str(row['recDocs'])
         self.rec_type = LType.from_s(row['recType'])
-        self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
+        # self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
+        self.msg_clean = num_re.sub('#', self.msg)
         self.e2e_id = e_str_e(row, 'e2eId')
 
     def to_str(self):

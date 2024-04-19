@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from bankmap.data import to_date, LType
+from bankmap.data import to_date, LType, num_re
 
 
 def test_to_date():
@@ -26,3 +26,7 @@ def test_ltype_supported():
     assert LType.supported("Vendor")
     assert LType.supported("G/L Account")
     assert LType.supported("Bank Account")
+
+
+def test_regexp_num():
+    assert "aa # asdasd #.#" == num_re.sub("#", "aa 6465464 asdasd 10.2555")
