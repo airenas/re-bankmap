@@ -40,7 +40,7 @@ def to_dic_entry(e: Entry):
             "bank_account": e.bank_account}
 
 
-def get_limits(limits, _type):
+def get_limits(limits, _type: str):
     if limits:
         return limits.get(_type, None)
     return None
@@ -55,8 +55,8 @@ def calc_confidence(v, limits):
     return None
 
 
-def get_confidence(v, _type, cfg: PredictionCfg):
-    res = calc_confidence(v, get_limits(cfg.limits, _type))
+def get_confidence(v, _type: LType, cfg: PredictionCfg):
+    res = calc_confidence(v, get_limits(cfg.limits, _type.to_s()))
     if res:
         return res
     res = calc_confidence(v, get_limits(cfg.limits, "all"))
