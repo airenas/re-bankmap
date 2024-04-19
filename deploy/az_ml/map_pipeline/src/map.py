@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import time
+from datetime import datetime
 
 import mlflow
 
@@ -85,7 +86,7 @@ def main():
     else:
         err_str = res.get('error', "Unknown error")
         mlflow.set_tag("Error", err_str)
-        mlflow.set_tag("LOG_STATUS", "FAILED")   # this does not work
+        mlflow.set_tag("LOG_STATUS", "FAILED")  # this does not work
         raise RuntimeError(err_str)
     mlflow.end_run()
 
@@ -124,6 +125,8 @@ def process(company: str, in_file: str, in_config_path: str):
         log_elapsed(start, "total", metrics)
         info["metrics"].update(metrics)
         info["app_version"] = app_ver
+        info["recognition_finished"] = datetime.now().isoformat()
+        info["file"] = os.path.basename(in_file)
         logger.info(json.dumps(info, indent=2))
         logger.info("done mapping")
         res = {"company": company, "mappings": mappings, "info": info}
