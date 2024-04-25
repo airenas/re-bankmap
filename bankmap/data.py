@@ -15,6 +15,7 @@ check_date_max = datetime.datetime.today() + timedelta(days=20 * 365)
 check_date_min = datetime.datetime.today() - timedelta(days=40 * 365)
 num_re = re.compile(r'\d+')
 
+
 class Ctx:
     def __init__(self, history_days: int = None, stats=None):
         self.name_sim_cache = {}
@@ -84,7 +85,7 @@ class Entry:
         self.rec_type = LType.from_s(row['recType'])
         # self.msg_clean = ''.join('#' if char.isdigit() else char for char in self.msg)
         self.msg_clean = num_re.sub('#', self.msg)
-        self.e2e_id = e_str_e(row, 'e2eId')
+        self.e2e_id = to_e2e(e_str_e(row, 'endToEndId'))
 
     def to_str(self):
         return "{} - {} - {}".format(self.who, self.msg, self.date)
@@ -211,6 +212,13 @@ def e_ibans(param: str):
     return param.casefold().split(":")
 
 
+def to_e2e(s):
+    res = s.casefold().strip()
+    if res == "notprovided" or res == "not_provided":
+        return ""
+    return res
+
+
 class LEntry:
     def __init__(self, row):
         try:
@@ -233,14 +241,17 @@ class LEntry:
             self.map_type = MapType.from_s(row['mapType'])
             self.open = e_str(row['open']) == 'True'
             self.remaining_amount = e_float(row, 'remainingAmount')
+            self.e2e_id = to_e2e(e_str_e(row, 'endToEndId'))
         except BaseException as err:
             raise Exception("Err: {}: for {}".format(err, row))
 
     def to_str(self):
-        return "{} - {}:{} - {}, {}[due {}], {}, {}, {}, {}".format(self.type, self.id, self.doc_no, self.name,
-                                                                    self.doc_date, self.due_date,
-                                                                    self.ext_doc,
-                                                                    self.doc_type, self.amount, self.map_type.to_s())
+        return "{} - {}:{} - {}, {}[due {}], {}, {}, {}, {}, {}".format(self.type, self.id, self.doc_no, self.name,
+                                                                        self.doc_date, self.due_date,
+                                                                        self.ext_doc,
+                                                                        self.doc_type, self.amount,
+                                                                        self.map_type.to_s(),
+                                                                        self.e2e_id)
 
 
 class TextToAccount:
@@ -333,6 +344,8 @@ class Arena:
         self.apps.sort(key=lambda e: e.apply_date.timestamp() if e.apply_date else 1)
         if len(self.entries) > 0:
             self.date = self.entries[0].doc_date - timedelta(days=1)
+        else:
+            self.date = datetime.datetime.now() - timedelta(days=100)
         self.playground: Dict[str, LEntry] = {}
         self.from_entry, self.from_apps = 0, 0
         logger.debug("Start date  : {}".format(self.date))
