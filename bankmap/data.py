@@ -32,8 +32,8 @@ class Ctx:
         # self.use_e2e = False
         if self.use_e2e:
             self.sim_weights = normalize_weights(sim_e2e, 3.5)
-        logger.info(f"use_e2e {self.use_e2e}")
-        logger.info(f"sim weights sum {np.sum(self.sim_weights)}")
+        logger.debug(f"use_e2e {self.use_e2e}")
+        logger.debug(f"sim weights sum {np.sum(self.sim_weights)}")
 
 
 class App:
@@ -227,7 +227,7 @@ def e_ibans(param: str):
 
 def to_e2e(s):
     res = s.casefold().strip()
-    if res == "notprovided" or res == "not_provided":
+    if res == "notprovided" or res == "not_provided" or res == "not provided":
         return ""
     return res
 
@@ -463,7 +463,7 @@ def use_e2e(entries: List[LEntry]):
     # returns true if exist at least 10 e2e ids
     c = 0
     for e in entries:
-        if len(e.e2e_id) > 5:
+        if len(e.e2e_id) > 1:
             c += 1
             if c > 10:
                 return True

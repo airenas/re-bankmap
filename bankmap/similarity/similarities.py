@@ -95,7 +95,7 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res.append(ctx.stats.who_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
 
     if ctx.use_e2e:
-        res.append(1 if len(ledger.e2e_id) > 5 and ledger.e2e_id.casefold() == entry.e2e_id.casefold() else 0)
+        res.append(1 if len(ledger.e2e_id) > 1 and ledger.e2e_id.casefold() == entry.e2e_id.casefold() else 0)
 
     return res
 

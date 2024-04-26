@@ -10,7 +10,7 @@ from tqdm import tqdm
 from bankmap.data import Entry, LEntry, App, Arena, Ctx, use_e2e
 from bankmap.history_stats import Stats
 from bankmap.logger import logger
-from bankmap.similarity.sim_weights import sim_imp
+from bankmap.similarity.sim_weights import sim_imp, sim_e2e
 from bankmap.similarity.similarities import similarity, prepare_history_map, param_names
 
 
@@ -50,8 +50,9 @@ def find_best(data, params):
 
 
 class Selector:
-    def __init__(self, mtrx):
+    def __init__(self, mtrx, ctx):
         self.mtrx = mtrx
+        self.ctx = ctx
 
     def predict(self, X, params):
         res = []
@@ -62,8 +63,11 @@ class Selector:
         return res
 
     def get_params(self, params):
-        out = np.array(sim_imp, copy=True)
-        for i, v in enumerate(param_names()):
+        w = sim_imp
+        if self.ctx.use_e2e:
+            w = sim_e2e
+        out = np.array(w, copy=True)
+        for i, v in enumerate(param_names(self.ctx)):
             out[i] = params.get(v, out[i])
         return out
 
@@ -132,7 +136,7 @@ def main(argv):
 
             mtrx.append(calc_sims(ctx, arena, X[i], entry_dic))
 
-    model = Selector(mtrx)
+    model = Selector(mtrx, ctx)
 
     mtrx_v = []
     with tqdm(desc="preparing val", total=len(Xv)) as pbar:
@@ -140,9 +144,9 @@ def main(argv):
             pbar.update(1)
             mtrx_v.append(calc_sims(ctx, arena, Xv[i], entry_dic))
 
-    model_v = Selector(mtrx_v)
+    model_v = Selector(mtrx_v, ctx)
 
-    param_grid = {v: hp.uniform(v, 0, 1) for v in param_names()}
+    param_grid = {v: hp.uniform(v, 0, 1) for v in param_names(ctx)}
 
     scores = []
 
