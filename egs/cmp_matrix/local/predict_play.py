@@ -5,7 +5,7 @@ import sys
 from jsonlines import jsonlines
 from tqdm import tqdm
 
-from bankmap.data import LEntry, App, Arena, Entry, Ctx
+from bankmap.data import LEntry, App, Arena, Entry, Ctx, use_e2e
 from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.similarity.similarities import similarity, sim_val, prepare_history_map
@@ -28,7 +28,7 @@ def get_best_account(ctx, arena, row, entry_dict):
     def check(e):
         nonlocal bv, be, b
         v = similarity(ctx, e, row, entry_dict)
-        out = sim_val(v)
+        out = sim_val(ctx, v)
         if bv < out:
             # logger.info("Found better: {} - {}".format(v[1:], out))
             bv = out
@@ -100,7 +100,7 @@ def main(argv):
         apps = [App(_i) for _i in apps_t]
         data.arena = Arena(l_entries, apps)
         stats = Stats(entries)
-        data.ctx = Ctx(history_days=args.history, stats=stats)
+        data.ctx = Ctx(history_days=args.history, stats=stats, use_e2e=use_e2e(l_entries))
         logger.debug("init ended")
 
     threads = 12

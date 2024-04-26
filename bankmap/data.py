@@ -4,9 +4,11 @@ from datetime import timedelta
 from enum import Enum
 from typing import List, Dict
 
+import numpy as np
 from dateutil.parser import parser
 
 from bankmap.logger import logger
+from bankmap.similarity.sim_weights import sim_imp, sim_e2e
 from bankmap.similarity.similarity import num_close
 
 time_parser = parser()
@@ -16,11 +18,22 @@ check_date_min = datetime.datetime.today() - timedelta(days=40 * 365)
 num_re = re.compile(r'\d+')
 
 
+def normalize_weights(sim_w, wanted):
+    return sim_w * (wanted / np.sum(sim_w))
+
+
 class Ctx:
-    def __init__(self, history_days: int = None, stats=None):
+    def __init__(self, history_days: int = None, stats=None, use_e2e=False):
         self.name_sim_cache = {}
         self.history = timedelta(days=history_days) if history_days is not None else None
         self.stats = stats
+        self.sim_weights = normalize_weights(sim_imp, 3.5)
+        self.use_e2e = use_e2e
+        # self.use_e2e = False
+        if self.use_e2e:
+            self.sim_weights = normalize_weights(sim_e2e, 3.5)
+        logger.info(f"use_e2e {self.use_e2e}")
+        logger.info(f"sim weights sum {np.sum(self.sim_weights)}")
 
 
 class App:
@@ -444,3 +457,14 @@ class Arena:
             logger.debug("Amount change from {} to {}".format(amount, res))
             res = 0
         return res
+
+
+def use_e2e(entries: List[LEntry]):
+    # returns true if exist at least 10 e2e ids
+    c = 0
+    for e in entries:
+        if len(e.e2e_id) > 5:
+            c += 1
+            if c > 10:
+                return True
+    return False

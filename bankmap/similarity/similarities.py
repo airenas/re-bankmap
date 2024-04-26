@@ -1,14 +1,9 @@
-import argparse
-import sys
 from typing import List
 
 import numpy as np
-import pandas as pd
-from tqdm import tqdm
 
 from bankmap.data import PaymentType, LEntry, Entry, LType, DocType, Ctx
 from bankmap.history_stats import stat_target_key
-from bankmap.logger import logger
 from bankmap.similarity.similarity import num_sim, date_sim, name_sim, sf_sim
 
 
@@ -99,128 +94,26 @@ def similarity(ctx: Ctx, ledger: LEntry, entry, prev_entries):
     res.append(ctx.stats.iban_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
     res.append(ctx.stats.who_msgc.prob(entry, stat_target_key(ledger.type.to_s(), ledger.id)))
 
+    if ctx.use_e2e:
+        res.append(1 if len(ledger.e2e_id) > 5 and ledger.e2e_id.casefold() == entry.e2e_id.casefold() else 0)
+
     return res
 
 
-def param_names():
+def param_names(ctx: Ctx):
+    if ctx.use_e2e:
+        return ["name_eq", "name_sim", "iban_match", "ext_doc", "ext_doc_sim",
+                "due_date", "entry_date", "amount_match", "curr_match",
+                "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob",
+                "e2e_id"]
     return ["name_eq", "name_sim", "iban_match", "ext_doc", "ext_doc_sim",
             "due_date", "entry_date", "amount_match", "curr_match",
             "payment_match", "who_prob", "iban_prob", "iban_msgc_prob", "who_msgc_prob"]
 
 
-sim_imp_S1 = np.array(
-    [
-        0.58871234, 0.36948084, 0.17431711, 0.33272096, 0.09060666,
-        0.22587429, 0.08930895, 0.29486793, 0.46856608,
-        0.2590398, 0.07337495, 0.20706663, 0.36512314, 0.18762794
-    ])
-
-sim_imp_H1 = np.array(
-    [
-        0.8628683352824896, 0.4119600389536562, 0.6448816283309591, 0.8220992872946082, 0.6091990029424436,
-        0.04003457024516763, 0.03379346086996538, 0.11086513462825098, 0.5701585268600046,
-        0.003388514260351194, 0.49816499132678915, 0.9610704617749053, 0.7178763016256616, 0.9949890908807503
-    ])
-
-# sim_imp = np.array([0.5, 1, 1, 2, 1, 0.1, .4, .3, 2, 1, 1])
-
-#
-sim_imp_old = np.array(
-    [0.8186772936240162, 0.7759601414574985, 0.6753879910769478, 0.4994282505355246, 0.2803354664424518,
-     0.04171040883215482, 0.1340896167558249, 0.1557017516787265, 0.870842041257321, 0.3213997112714011,
-     0.8643907665920119])
-sim_imp_old = np.array(
-    [0.25607128042919725, 0.5545392622091483, 0.7599922353939803, 0.592719292426318, 0.07245583461062449,
-     0.02032578022343305, 0.08793292752976331, 0.10274250393887863, 0.6743663682485446, 0.13389116467097448,
-     0.7315231039082373])
-sim_imp_S = np.array(
-    [
-        0.2819140025266791, 0.6606767297441343, 0.8631081348490344, 0.7778713844344313, 0.050954142742650636,
-        0.05557921271902616, 0.046839292985310164, 0.17834836216885652, 0.9174387124912131, 0.24304468217448924,
-        0.6207725177977753
-    ])
-sim_imp_H = np.array(
-    [
-        0.3449750597702491, 0.3151536386806773, 0.9002393928533151, 0.42182448381963883, 0.20410161825818382,
-        0.004099692328662934, 0.06602886071574558, 0.059467572404456284, 0.8381943803507718, 0.22441089863777464,
-        0.49163849484216277
-    ])
-sim_imp_H3 = np.array(
-    [
-        0.3942912413788648, 0.2182280759544389, 0.2083965633207662, 0.2760959484156407, 0.14594665067132784,
-        0.0001649041610409126, 0.0643040483489635, 0.17058212169293785, 0.8209759515680628, 0.03116974205230305,
-        0.6862174516242097, 0.3, 0.3, 0.3, 0.3
-    ])
-sim_imp_U2 = np.array(
-    [
-        0.4374178397438139, 0.8320182667619358, 0.34839284318279357, 0.2853718866008894, 0.5975536488446007,
-        0.05046288909147558, 0.01777328430479688, 0.06727564053399462, 0.962981334837424, 0.10480472303982617,
-        0.9245665686233056
-    ])
-
-sim_imp = sim_imp_S1
-
-
-def sim_val(v):
-    return np.dot(np.array(v), sim_imp)
+def sim_val(ctx: Ctx, v):
+    return np.dot(np.array(v), ctx.sim_weights)
 
 
 def to_str(param):
     return "{}:{} - {} - {}".format(param["Type"], param["No"], param["Name"], param["Due_Date"])
-
-
-def main(argv):
-    parser = argparse.ArgumentParser(description="Calculates similarity for one item",
-                                     epilog="E.g. " + sys.argv[0] + "",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--input", nargs='?', required=True, help="Input file of bank entries")
-    parser.add_argument("--ledgers", nargs='?', required=True, help="Ledgers file")
-    parser.add_argument("--i", nargs='?', required=True, help="Number of entries file to check")
-    parser.add_argument("--top", nargs='?', default=20, type=int, help="Show the top most similar items")
-    args = parser.parse_args(args=argv)
-
-    logger.info("Starting")
-
-    entries_t = pd.read_csv(args.input, sep=',')
-    logger.info("loaded cmp_matrix {} rows".format(len(entries_t)))
-    # logger.info("Headers: {}".format(list(entries_t)))
-    # logger.info("\n{}".format(entries_t.head(n=10)))
-    entries = [Entry(entries_t.iloc[i]) for i in range(len(entries_t))]
-
-    ledgers = pd.read_csv(args.ledgers, sep=',')
-    logger.info("loaded cmp_matrix {} rows".format(len(ledgers)))
-    # logger.info("Headers: {}".format(list(ledgers)))
-    # logger.info("\n{}".format(ledgers.head(n=10)))
-    l_entries = [LEntry(ledgers.iloc[i]) for i in range(len(ledgers))]
-
-    row = entries[int(args.i)]
-    logger.info("Testing bank entry: \n{}".format(entries_t.iloc[int(args.i)]))
-    entry_dic = {}
-    for e in entries:
-        k = e_key(e)
-        arr = entry_dic.get(k, [])
-        arr.append(e)
-        entry_dic[k] = arr
-
-    res = []
-    with tqdm(desc="comparing", total=len(l_entries)) as pbar:
-        for i in range(len(ledgers)):
-            pbar.update(1)
-            res.append({"i": i, "sim": similarity(l_entries[i], row, entry_dic), "entry": l_entries[i]})
-    res.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
-    logger.info("Res:")
-    i, was = 0, set()
-    for r in res:
-        if i > args.top:
-            break
-        if r["entry"].id in was:
-            continue
-        i += 1
-        was.add(r["entry"].id)
-        logger.info(
-            "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
-    logger.info("Done")
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

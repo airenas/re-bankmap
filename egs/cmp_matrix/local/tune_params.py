@@ -7,10 +7,11 @@ from jsonlines import jsonlines
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
-from bankmap.data import Entry, LEntry, App, Arena, Ctx
+from bankmap.data import Entry, LEntry, App, Arena, Ctx, use_e2e
 from bankmap.history_stats import Stats
 from bankmap.logger import logger
-from bankmap.similarity.similarities import similarity, sim_imp, prepare_history_map, param_names
+from bankmap.similarity.sim_weights import sim_imp
+from bankmap.similarity.similarities import similarity, prepare_history_map, param_names
 
 
 def calc_sims(ctx, arena, row, entry_dict):
@@ -124,7 +125,7 @@ def main(argv):
 
     mtrx = []
     stats = Stats(entries)
-    ctx = Ctx(history_days=args.history, stats=stats)
+    ctx = Ctx(history_days=args.history, stats=stats, use_e2e=use_e2e(l_entries))
     with tqdm(desc="preparing train", total=len(X)) as pbar:
         for i in range(len(X)):
             pbar.update(1)

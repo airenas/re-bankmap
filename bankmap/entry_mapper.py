@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import numpy
 
 from bankmap.cfg import PredictionCfg, recommended_confidence
-from bankmap.data import LEntry, Entry, LType, Ctx, PredictData, TextToAccount
+from bankmap.data import LEntry, Entry, LType, Ctx, PredictData, TextToAccount, use_e2e
 from bankmap.history_stats import Stats
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries, load_lines
 from bankmap.loaders.ledgers import load_gls, load_ba, load_vendor_sfs, load_customer_sfs
@@ -67,7 +67,7 @@ def get_confidence(v, _type: LType, cfg: PredictionCfg):
     return 0.5
 
 
-def add_alternatives(cfg, pred, was):
+def add_alternatives(ctx, cfg, pred, was):
     alt = []
     i = 1
     for r in pred:
@@ -79,12 +79,12 @@ def add_alternatives(cfg, pred, was):
         was.add(rec.id)
         i += 1
         alt.append(
-            {"item": to_dic_item(rec), "similarity": r["i"], "recommended": False, "details": prepare_sims(r["sim"])})
+            {"item": to_dic_item(rec), "similarity": r["i"], "recommended": False, "details": prepare_sims(ctx, r["sim"])})
     return alt
 
 
-def prepare_sims(similarities):
-    return dict(zip(param_names(), similarities))
+def prepare_sims(ctx, similarities):
+    return dict(zip(param_names(ctx), similarities))
 
 
 def predict_entry(ctx, pd, entry, cfg):
@@ -93,7 +93,7 @@ def predict_entry(ctx, pd, entry, cfg):
 
     def check(_e):
         v = similarity(ctx, _e, entry, pd.historical_entries)
-        out = sim_val(v)
+        out = sim_val(ctx, v)
         pred.append({"i": out, "sim": v, "entry": _e})
 
     for e in pd.gl_ba:
@@ -101,7 +101,7 @@ def predict_entry(ctx, pd, entry, cfg):
     for e in pd.sfs:
         check(e)
 
-    pred.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
+    pred.sort(key=lambda x: sim_val(ctx, x["sim"]), reverse=True)
     res = {"entry": to_dic_entry(entry)}
     recognized = None
     was = set()
@@ -120,12 +120,12 @@ def predict_entry(ctx, pd, entry, cfg):
         if "main" not in res:
             res["main"] = {"item": to_dic_item(recognized), "similarity": e["i"],
                            "recommended": cs >= recommended_confidence,
-                           "confidence_score": cs, "type": "Similarity", "details": prepare_sims(e["sim"])}
+                           "confidence_score": cs, "type": "Similarity", "details": prepare_sims(ctx, e["sim"])}
             was.add(recognized.id)
             logger.debug("best value: {:.3f}, recommended: {}, type: {}".format(e["i"], bool(e["i"] > cfg.limit),
                                                                                 recognized.type.to_s()))
 
-    res["alternatives"] = add_alternatives(cfg, pred, was)
+    res["alternatives"] = add_alternatives(ctx, cfg, pred, was)
     if recognized and recognized.type in [LType.VEND, LType.CUST]:
         predicted_docs = find_best_docs(pd.sfs, entry, recognized.id, recognized.type)
         res_docs = []
@@ -184,11 +184,11 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     gl_ba = [LEntry(r) for r in gl_df] + \
             [LEntry(r) for r in ba_df]
-    sfs = [LEntry(r) for r in customer_sf_df] + \
+    sfs_all = [LEntry(r) for r in customer_sf_df] + \
           [LEntry(r) for r in vendor_sf_df]
     start_t = log_elapsed(start_t, "prepare_ledgers")
 
-    sfs = [s for s in sfs if s.open]
+    sfs = [s for s in sfs_all if s.open]
     res_info["open_sfs"] = len(sfs)
     for s in sfs:
         s.amount = s.remaining_amount
@@ -220,7 +220,8 @@ def do_mapping(data_dir, cfg: PredictionCfg):
     stats = Stats(entries)
     stats.move(datetime.now() + timedelta(days=1))
     logger.info("move stats")
-    ctx = Ctx(stats=stats)
+    ctx = Ctx(stats=stats, use_e2e=use_e2e(sfs_all))
+    logger.info(f"use_e2e {ctx.use_e2e}")
     pd = PredictData(gl_ba=gl_ba, sfs=sfs, historical_entries=prepare_history_map(entries),
                      text_to_account_map=text_to_account_map)
     log_elapsed(start_t, "prepare_entries")
@@ -254,6 +255,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
 
     res_info["skipped_old"] = skip_old
     res_info["recommended"] = pr
+    res_info["use_e2e"] = ctx.use_e2e
     res_info["recommended_tta"] = pr_tta
     log_elapsed(start_t, "predicting")
     log_elapsed(start, "total_mapping")

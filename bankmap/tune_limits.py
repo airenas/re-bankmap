@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 from bankmap.cfg import PredictionCfg
-from bankmap.data import LEntry, Entry, Ctx, LType, Arena, App
+from bankmap.data import LEntry, Entry, Ctx, LType, Arena, App, use_e2e
 from bankmap.history_stats import Stats
 from bankmap.loaders.apps import load_apps
 from bankmap.loaders.entries import load_docs_map, load_bank_recognitions_map, load_entries
@@ -25,7 +25,7 @@ def get_best_account(ctx, arena, entry, entry_dict):
     def check(e):
         nonlocal bv, be
         v = similarity(ctx, e, entry, entry_dict)
-        out = sim_val(v)
+        out = sim_val(ctx, v)
         if bv < out:
             bv = out
             be = e
@@ -131,7 +131,9 @@ def tune_limits(data_dir, cfg: PredictionCfg):
     logger.info("predicting last {} entries".format(len(test)))
     res_info["tune_count"] = len(test)
     cmps = []
-    ctx = Ctx(stats=stats)
+    ctx = Ctx(stats=stats, use_e2e=use_e2e(l_entries))
+    logger.info(f"use_e2e {ctx.use_e2e}")
+    res_info["use_e2e"] = ctx.use_e2e
     pi, pr = 0, 0
     for i, entry in enumerate(test):
         be, bv = get_best_account(ctx, arena, entry, historical_entries)

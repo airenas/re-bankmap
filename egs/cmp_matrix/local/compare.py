@@ -5,8 +5,9 @@ import sys
 from jsonlines import jsonlines
 from sklearn.metrics import accuracy_score
 
-from bankmap.data import e_str, LType
+from bankmap.data import e_str, LType, Ctx
 from bankmap.logger import logger
+from bankmap.similarity.sim_weights import sim_e2e
 from bankmap.similarity.similarities import sim_val
 
 
@@ -87,14 +88,16 @@ def main(argv):
     y_pred_docs = [y.split('\t')[1] for y in y_pred_l[skip:]]
     y_pred_v = [json.loads(y.split('\t')[2]) for y in y_pred_l[skip:]]
 
-    y_pred_reject = [x if sim_val(y_pred_v[i]) > args.limit else 'rejected' for i, x in enumerate(y_pred)]
+    ctx = Ctx(use_e2e=len(y_pred_v[0]) == len(sim_e2e))
+
+    y_pred_reject = [x if sim_val(ctx, y_pred_v[i]) > args.limit else 'rejected' for i, x in enumerate(y_pred)]
 
     with open(args.out, 'w') as f:
         for i, y in enumerate(y_true):
             ir = i + skip
             v = y_pred_reject[i]
             vec = y_pred_v[i]
-            val = sim_val(vec)
+            val = sim_val(ctx, vec)
             if v == y and val > args.limit:
                 print("{}\t{}\t{}".format(ir, y, '' if y_rec_type[i] else 'empty'), file=f)
             else:
@@ -128,7 +131,7 @@ def main(argv):
             pa = y_pred_docs[i].split(";")
             ya = y.split(";")
             vec = y_pred_v[i]
-            val = sim_val(vec)
+            val = sim_val(ctx, vec)
             se, ie, de, r = 0, 0, 0, ""
             if val > args.limit:
                 a, se, ie, de = cmp_arr(ya, pa)

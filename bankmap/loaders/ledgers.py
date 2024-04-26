@@ -63,7 +63,9 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
                         'closedAtDate': e_date(d, 'closedAtDate'),
                         'mapType': cd[1].to_s(),
                         'open': d['isOpen'],
-                        'remainingAmount': d['remainingAmount']})
+                        'remainingAmount': d['remainingAmount'],
+                        'endToEndId': d['endToEndId'],
+                        })
     logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res
 
@@ -95,7 +97,8 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
                         'closedAtDate': e_date(d, 'closedAtDate'),
                         'mapType': cd[1].to_s(),
                         'open': d['isOpen'],
-                        'remainingAmount': d['remainingAmount']})
+                        'remainingAmount': d['remainingAmount'],
+                        })
 
     logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
     return res
