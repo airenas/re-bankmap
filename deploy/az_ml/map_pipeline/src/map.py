@@ -83,6 +83,7 @@ def main():
         mlflow.log_metric("recommended_ai", sizes.get("recommended", 0) - sizes.get("recommended_tta", 0))
         mlflow.log_metric("recommended_tta", sizes.get("recommended_tta", 0))
         mlflow.log_metric("recommended_percent", sizes.get("recommended_percent", 0))
+        mlflow.set_tag("e2e", sizes.get("use_e2e", False))
     else:
         err_str = res.get('error', "Unknown error")
         mlflow.set_tag("Error", err_str)
