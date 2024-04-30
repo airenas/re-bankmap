@@ -1,6 +1,7 @@
 from jsonlines import jsonlines
 
-from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType, e_str_ne, e_str_first, e_str_e
+from bankmap.data import e_str, e_date, e_currency, e_float, MapType, DocType, LType, e_str_ne, e_str_first, e_str_e, \
+    e_date_allow_empty
 from bankmap.logger import logger
 
 
@@ -42,7 +43,7 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
     names = load_names(cust_file_name)
 
     logger.info("loading {}".format(ledgers_file_name))
-    res = []
+    res, skip = [], 0
     with jsonlines.open(ledgers_file_name) as reader:
         for (i, d) in enumerate(reader):
             if i == 0:
@@ -51,7 +52,11 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
             if not dt or DocType.skip(dt):
                 continue
             _id = e_str_ne(d, 'customerNumber')
-            cd = names[_id]
+            cd = names.get(_id)
+            if cd is None:
+                logger.warning(f"No customer by number '{_id}'")
+                skip += 1
+                continue
             res.append({'type': LType.CUST.to_s(), "number": _id, 'name': cd[0],
                         'iban': ibans.get(_id, ''), 'documentNumber': d['documentNumber'],
                         'dueDate': e_date(d, 'dueDate'),
@@ -66,7 +71,7 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
                         'remainingAmount': d['remainingAmount'],
                         'endToEndId': d['endToEndId'],
                         })
-    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}, skipped {skip}")
     return res
 
 
@@ -76,7 +81,7 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
     names = load_names(vend_file_name)
 
     logger.info("loading {}".format(ledgers_file_name))
-    res = []
+    res, skip = [], 0
     with jsonlines.open(ledgers_file_name) as reader:
         for (i, d) in enumerate(reader):
             if i == 0:
@@ -85,10 +90,19 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
             if not dt or DocType.skip(dt):
                 continue
             _id = e_str_ne(d, 'vendorNumber')
-            cd = names[_id]
+            cd = names.get(_id)
+            if cd is None:
+                logger.warning(f"No vendor by number '{_id}'")
+                skip += 1
+                continue
+            due_date, d_ok = e_date_allow_empty(d, 'dueDate')
+            if not d_ok:
+                logger.warning(f"Wrong due date '{e_str_e(d, 'dueDate')}'")
+                skip += 1
+                continue
             res.append({'type': LType.VEND.to_s(), "number": _id, 'name': cd[0],
                         'iban': ibans.get(_id, ''), 'documentNumber': d['documentNumber'],
-                        'dueDate': e_date(d, 'dueDate'),
+                        'dueDate': due_date,
                         'documentDate': e_date(d, 'documentDate'),
                         'externalDocumentNumber': d['externalDocumentNumber'],
                         'amount': e_float(d, 'amount'),
@@ -100,7 +114,7 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
                         'remainingAmount': d['remainingAmount'],
                         })
 
-    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}")
+    logger.info(f"loaded {len(res)} rows in {ledgers_file_name}, skipped {skip}")
     return res
 
 

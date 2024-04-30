@@ -329,6 +329,17 @@ def e_date(d, name):
     return to_date(res)
 
 
+def e_date_allow_empty(d, name):
+    res = e_str_e(d, name)
+    if not res:
+        return None, True
+    try:
+        date_res = to_date(res)
+    except Exception as _e:
+        return None, False
+    return date_res, True
+
+
 def e_currency(p):
     if e_str(p) == "":
         return "EUR"
