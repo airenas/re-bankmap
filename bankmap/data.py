@@ -113,7 +113,7 @@ def to_date(p):
         res = datetime.datetime.fromisoformat(p)
         res = res.replace(tzinfo=None)
         if res > check_date_max or res < check_date_min:
-            raise Exception(f"Wrong date '{p}'")
+            logger.warning(f"Wrong date '{p}'")
         return res
     except BaseException as err:
         logger.error("date:'{}'".format(p))
