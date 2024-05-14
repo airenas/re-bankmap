@@ -25,16 +25,20 @@ def load_IBANs(file_name, _type):
 
 def load_names(file_name):
     logger.info("loading {}".format(file_name))
-    res = {}
+    res, skip = {}, 0
     with jsonlines.open(file_name) as reader:
         for (i, d) in enumerate(reader):
             if i == 0:
                 logger.debug(f"Item: {d}")
-            cust = e_str_ne(d, 'number')
-            name = e_str(d.get('name'))
-            method = MapType.from_s(e_str(d.get('applicationMethod')))
-            res[cust] = (name, method)
-    logger.info(f"loaded {len(res)} rows in {file_name}")
+            cust = e_str_e(d, 'number')
+            if cust:
+                name = e_str(d.get('name'))
+                method = MapType.from_s(e_str(d.get('applicationMethod')))
+                res[cust] = (name, method)
+            else:
+                logger.warning(f"Wrong record '{d}'")
+                skip += 1
+    logger.info(f"loaded {len(res)} rows in {file_name}, skipped {skip}")
     return res
 
 
