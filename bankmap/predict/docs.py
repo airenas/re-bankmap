@@ -66,7 +66,8 @@ def find_best_docs(sfs: List[LEntry], row: Entry, _id: str, _type: LType):
 
     # by due date
     def sort_due_key(e: LEntry):
-        _key = (row.date - e.due_date).total_seconds()
+        doc_date = e.due_date if e.due_date else e.doc_date
+        _key = (row.date - doc_date).total_seconds()
         if _key < 0:  # add minimal preference to on time payment
             _key = abs(_key) + 1
         return _key
