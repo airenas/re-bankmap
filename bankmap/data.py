@@ -155,7 +155,8 @@ class DocType(Enum):
     def from_s(s):
         if s == "Delspinigių pažyma" or s == "Invoice" or s == "SF" or s == "Finance Charge Memo":
             return DocType.SF
-        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo" or s == "Refund":
+        if s == "Grąž. paž." or s == "Grąžinimo pažyma" or s == "Grąžinimas" or s == "Credit Memo" or s == "Refund"\
+                or s == "Refund (Receipt)":
             return DocType.GRAZ_PAZ
         if s == "G/L Account":
             return DocType.GL
