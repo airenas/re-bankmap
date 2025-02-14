@@ -7,12 +7,13 @@ from bankmap.data import Entry, LEntry, LType, App, Arena, Ctx
 from bankmap.history_stats import Stats
 from bankmap.logger import logger
 from bankmap.predict.docs import find_best_docs
-from bankmap.similarity.similarities import sim_val, similarity, param_names, sim_imp, prepare_history_map
+from bankmap.similarity.sim_weights import sim_imp
+from bankmap.similarity.similarities import sim_val, similarity, param_names, prepare_history_map
 
 
-def show_sim_importance(sim):
+def show_sim_importance(ctx, sim):
     res = []
-    params = param_names()
+    params = param_names(ctx)
     for i, s in enumerate(sim):
         res.append((params[i], s, sim_imp[i], s * sim_imp[i]))
     res.sort(key=lambda v: -v[3])
@@ -86,7 +87,7 @@ def main(argv):
 
     def check(_e):
         v = similarity(ctx, _e, row, entry_dic)
-        out = sim_val(v)
+        out = sim_val(ctx, v)
         res.append({"i": out, "sim": v, "entry": _e})
 
     for e in arena.gl_entries:
@@ -94,7 +95,7 @@ def main(argv):
     for e in arena.playground.values():
         check(e)
 
-    res.sort(key=lambda x: sim_val(x["sim"]), reverse=True)
+    res.sort(key=lambda x: sim_val(ctx, x["sim"]), reverse=True)
     logger.info("\n\n=============================")
     logger.info("Recognized:")
     i, was = 0, set()
@@ -107,8 +108,8 @@ def main(argv):
         i += 1
         was.add(key)
         logger.info(
-            "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(r["sim"])))
-        show_sim_importance(r["sim"])
+            "\t{} ({}): {}, {} - {}".format(i, r["i"], r["entry"].to_str(), r["sim"], sim_val(ctx, r["sim"])))
+        show_sim_importance(ctx, r["sim"])
     logger.info("=============================\n\n")
     if res[0]["entry"].type in [LType.VEND, LType.CUST]:
         res = find_best_docs(arena.playground.values(), row, res[0]["entry"].id, res[0]["entry"].type)
