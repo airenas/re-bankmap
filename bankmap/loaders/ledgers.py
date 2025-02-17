@@ -55,7 +55,11 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
             dt = e_str(d['documentType'])
             if not dt or DocType.skip(dt):
                 continue
-            _id = e_str_ne(d, 'customerNumber')
+            _id = e_str_e(d, 'customerNumber')
+            if not _id:
+                logger.warning(f"No customer number")
+                skip += 1
+                continue
             cd = names.get(_id)
             if cd is None:
                 logger.warning(f"No customer by number '{_id}'")
@@ -93,7 +97,11 @@ def load_vendor_sfs(ledgers_file_name, ba_file_name, vend_file_name):
             dt = e_str(d['documentType'])
             if not dt or DocType.skip(dt):
                 continue
-            _id = e_str_ne(d, 'vendorNumber')
+            _id = e_str_e(d, 'vendorNumber')
+            if not _id:
+                logger.warning(f"No vendor number")
+                skip += 1
+                continue
             cd = names.get(_id)
             if cd is None:
                 logger.warning(f"No vendor by number '{_id}'")
