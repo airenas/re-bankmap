@@ -275,12 +275,13 @@ class TextToAccount:
 
 
 class TextToAccountMap:
-    def __init__(self, type_v, text, account, credit_account, debit_account):
+    def __init__(self, type_v, text, account, credit_account, debit_account, bank_account):
         self.type = type_v
         self.text = text
         self.account = account
         self.credit_account = credit_account
         self.debit_account = debit_account
+        self.bank_account = bank_account
 
 
 def e_str(p):

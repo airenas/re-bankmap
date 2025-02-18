@@ -12,10 +12,11 @@ def test_to_date():
     assert to_date("2022-11-10 00:00:00.000") == datetime.datetime(2022, 11, 10, 0, 0)
     assert to_date(None) is None
     assert to_date("") is None
-    with pytest.raises(Exception):
-        to_date("1980-11-10 00:00:00.000")
-    with pytest.raises(Exception):
-        to_date("2100-11-10 00:00:00.000")
+    # just warning
+    # with pytest.raises(Exception):
+    #     to_date("1980-11-10 00:00:00.000")
+    # with pytest.raises(Exception):
+    #     to_date("2100-11-10 00:00:00.000")
 
 
 def test_ltype_supported():

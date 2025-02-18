@@ -25,8 +25,14 @@ def matches_text(msg, part):
     return False
 
 
+def matches_bank(bank_account, ta_bank_account):
+    if ta_bank_account:
+        return ta_bank_account == bank_account
+    return True
+
+
 def map_text_to_account(row: Entry, maps: List[TextToAccountMap]):
     for m in maps:
-        if matches_text(row.msg, m.text):
+        if matches_bank(row.bank_account, m.bank_account) and matches_text(row.msg, m.text):
             return TextToAccount(_type=m.type, account=map_account(m, row.type))
     return None

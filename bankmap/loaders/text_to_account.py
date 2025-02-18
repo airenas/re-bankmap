@@ -22,9 +22,10 @@ def read_text_to_accounts(reader, name):
                                             account=e_str(d.get('balSourceNumber')),
                                             credit_account=e_str(d.get('creditAccountNumber')),
                                             debit_account=e_str(d.get('debitAccountNumber')),
+                                            bank_account=e_str(d.get('bankAccountNo'))
                                             ))
         except BaseException as err:
             raise RuntimeError(f"wrong data: {str(err)} in {name}")
-    res.sort(key=lambda e: -len(e.text))
+    res.sort(key=lambda e: (-len(e.bank_account), -len(e.text)))  # sort by non-empty bank account first
     logger.info(f"loaded {len(res)} rows")
     return res
