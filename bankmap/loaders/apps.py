@@ -1,6 +1,6 @@
 from jsonlines import jsonlines
 
-from bankmap.data import e_str_ne, e_date, e_date_ne, e_float
+from bankmap.data import e_str_ne, e_date, e_date_ne, e_float, e_str_e
 from bankmap.logger import logger
 
 
@@ -14,7 +14,10 @@ def load_apps(file_name, l_entries, _type):
         for (i, d) in enumerate(reader):
             if i == 0:
                 logger.debug(f"Item: {d}")
-            doc = e_str_ne(d, 'documentNumber')
+            doc = e_str_e(d, 'documentNumber')
+            if not doc:
+                logger.warning(f"no document number in {d}")
+                continue
             cv_no = l_map.get(doc, "")
 
             date = e_date(d, 'applicationCreatedDateTime')

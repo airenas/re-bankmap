@@ -55,6 +55,12 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
             dt = e_str(d['documentType'])
             if not dt or DocType.skip(dt):
                 continue
+            doc_no = e_str_e(d, 'documentNumber')
+            if not doc_no:
+                logger.warning(f"No document number")
+                skip += 1
+                continue
+
             _id = e_str_e(d, 'customerNumber')
             if not _id:
                 logger.warning(f"No customer number")
@@ -66,7 +72,7 @@ def load_customer_sfs(ledgers_file_name, ba_file_name, cust_file_name):
                 skip += 1
                 continue
             res.append({'type': LType.CUST.to_s(), "number": _id, 'name': cd[0],
-                        'iban': ibans.get(_id, ''), 'documentNumber': d['documentNumber'],
+                        'iban': ibans.get(_id, ''), 'documentNumber': doc_no,
                         'dueDate': e_date(d, 'dueDate'),
                         'documentDate': e_date(d, 'documentDate'),
                         'externalDocumentNumber': d['externalDocumentNumber'],
