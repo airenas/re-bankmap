@@ -240,7 +240,7 @@ def do_mapping(data_dir, cfg: PredictionCfg):
         if old_limit and entry.date < old_limit:
             skip_old += 1
             # add the item to the result anyway
-            e_res = {"entry": to_dic_entry(entry)}
+            e_res = {"entry": to_dic_entry(entry), "main": {}}
             predict_res.append(e_res)
             continue
         e_res = predict_entry(ctx, pd, entry, cfg)
